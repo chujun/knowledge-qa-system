@@ -16,7 +16,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档。
-下一步：补齐 MCP Tool 设计、MVP 实施计划。
+下一步：补齐 MVP 实施计划。
 尚未进入：编码实现。
 ```
 
@@ -27,6 +27,10 @@ docs/knowledge-qa-design-dev-flow-check.md
 - [ ] 确认后再进入 ER/API/MCP 细化，不直接开始编码。
 - [x] 每完成一个设计阶段，都补充阶段结论、已确认事项、待确认事项、风险点、下一步动作。
 - [ ] 每次进入实现前，明确实现范围、影响范围、数据/接口变化、验证命令、回滚方式。
+- [ ] 后续工作必须严格按照本 TODO 文档的章节顺序执行。
+- [ ] 未完成前序章节时，不得跳到后续章节继续产出文档或实现。
+- [ ] 如需调整执行顺序，必须先更新本 TODO 文档，说明调整原因，并经用户确认。
+- [ ] 每次继续工作前，先检查本 TODO 中第一个未完成任务，并从该任务开始推进。
 
 ## 1. 项目启动
 
@@ -353,23 +357,23 @@ GET  /api/v1/error-sets
 docs/knowledge-qa-mcp-tools.md
 ```
 
-- [ ] 定义 MCP Server 职责：适配 Agent，不承载核心业务逻辑。
-- [ ] 定义 MCP Tool 认证方式。
-- [ ] 定义 MCP Tool 与 HTTP API 的映射关系。
-- [ ] 定义 `qa_create_from_conversation`。
-- [ ] 定义 `qa_create_instant_check`。
-- [ ] 定义 `qa_search_topics`。
-- [ ] 定义 `qa_attach_to_topic`。
-- [ ] 定义 `qa_get_review_queue`。
-- [ ] 定义 `qa_confirm_ingestion`。
-- [ ] 定义每个 Tool 的输入 schema。
-- [ ] 定义每个 Tool 的输出 schema。
-- [ ] 定义 Agent 聊天框返回内容长度限制。
-- [ ] 定义题目预览数量限制。
-- [ ] 定义确认链接生成规则。
-- [ ] 定义外部 Agent 重复提交的幂等处理。
-- [ ] 定义外部会话上下文不足时的错误响应。
-- [ ] 编写 Codex / Claude Code 使用示例。
+- [x] 定义 MCP Server 职责：适配 Agent，不承载核心业务逻辑。
+- [x] 定义 MCP Tool 认证方式。
+- [x] 定义 MCP Tool 与 HTTP API 的映射关系。
+- [x] 定义 `qa_create_from_conversation`。
+- [x] 定义 `qa_create_instant_check`。
+- [x] 定义 `qa_search_topics`。
+- [x] 定义 `qa_attach_to_topic`。
+- [x] 定义 `qa_get_review_queue`。
+- [x] 定义 `qa_confirm_ingestion`。
+- [x] 定义每个 Tool 的输入 schema。
+- [x] 定义每个 Tool 的输出 schema。
+- [x] 定义 Agent 聊天框返回内容长度限制。
+- [x] 定义题目预览数量限制。
+- [x] 定义确认链接生成规则。
+- [x] 定义外部 Agent 重复提交的幂等处理。
+- [x] 定义外部会话上下文不足时的错误响应。
+- [x] 编写 Codex / Claude Code 使用示例。
 
 ## 10. 核心流程设计
 
@@ -593,7 +597,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 创建 ER 图文档。
 - [ ] 创建架构设计文档。
 - [x] 创建 API 草案文档。
-- [ ] 创建 MCP Tool 设计文档。
+- [x] 创建 MCP Tool 设计文档。
 - [ ] 创建核心流程文档。
 - [ ] 创建生成与质量校验文档。
 - [ ] 创建掌握画像模型文档。
@@ -636,11 +640,20 @@ docs/knowledge-qa-mvp-plan.md
 ## 22. 推荐下一步执行顺序
 
 ```text
-1. 先确认当前 TODO 和阶段门禁。
-2. 已生成 docs/knowledge-qa-domain-model.md。
-3. 已生成 docs/knowledge-qa-er-diagram.md。
-4. 已生成 docs/knowledge-qa-api-draft.md。
-5. 生成 docs/knowledge-qa-mcp-tools.md。
-6. 生成 docs/knowledge-qa-mvp-plan.md。
-7. 用户确认设计后，再进入实现计划。
+严格执行规则：
+必须按照本 TODO 文档的章节顺序推进。
+不得跳过仍有未完成任务的章节。
+如需调整顺序，先修改 TODO 并说明原因，经用户确认后再继续。
+
+当前正确顺序：
+1. 完成第 0 章阶段门禁中仍需确认的事项。
+2. 完成第 1 章项目启动中仍需确认的事项。
+3. 完成第 6 章架构设计，生成 docs/knowledge-qa-architecture.md。
+4. 完成第 10 章核心流程设计，生成 docs/knowledge-qa-core-flows.md。
+5. 完成第 11 章题目生成与质量校验细化。
+6. 完成第 12 章掌握画像和针对性提问细化。
+7. 完成第 13 章安全设计。
+8. 完成第 14 章可观测性设计。
+9. 完成第 15 章 MVP 实施计划。
+10. 用户确认设计后，再进入实现计划。
 ```
