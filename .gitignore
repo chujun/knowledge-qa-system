@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+.env
+.venv
+venv/
+ENV/
+env/
+.env.local
+
+# Node
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Data & Models
+*.csv
+*.xlsx
+*.json
+!package.json
+!tsconfig.json
+data/
+models/
+*.ckpt
+*.pt
+*.pth
+*.h5
+*.pkl
+*.pickle
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# 测试覆盖率
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# 临时文件
+tmp/
+temp/
+.cache/
