@@ -118,16 +118,24 @@ MVP 中 Agent 侧只做轻量确认，不做复杂编辑。详细编辑在知识
 
 ## 4. 核心业务对象
 
+字段说明规则：
+
+```text
+每个业务对象都需要记录创建时间和更新时间。
+字段命名使用英文名，文档中同时给出简体中文名。
+MVP 单用户运行，但核心业务对象预留 user_id。
+```
+
 ### 4.1 User 用户
 
 字段建议：
 
-```text
-id
-name
-created_at
-updated_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 用户 ID | 用户唯一标识 |
+| name | 用户名称 | 用户显示名称 |
+| created_at | 创建时间 | 用户创建时间 |
+| updated_at | 更新时间 | 用户最后更新时间 |
 
 MVP 可只有一个默认用户，但其他对象都要关联 `user_id`。
 
@@ -153,6 +161,20 @@ AI
 领域可信度、排序、名称可后续调整
 ```
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 知识领域 ID | 知识领域唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| name | 领域名称 | 例如 AI、计算机、摄影 |
+| description | 领域描述 | 领域范围说明 |
+| trust_policy | 可信度策略 | 该领域下来源可信度的默认策略 |
+| sort_order | 排序值 | 用户自定义展示顺序 |
+| status | 状态 | active / archived |
+| created_at | 创建时间 | 领域创建时间 |
+| updated_at | 更新时间 | 领域最后更新时间 |
+
 ### 4.3 KnowledgeTopic 知识主题
 
 知识主题是系统学习的主要入口，代表一组有体系的学习内容。
@@ -167,26 +189,41 @@ RAG 知识问答系统
 
 主题归属于某个知识领域。
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 知识主题 ID | 知识主题唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| domain_id | 知识领域 ID | 所属知识领域 |
+| name | 主题名称 | 例如 GitHub Actions |
+| description | 主题描述 | 主题学习范围说明 |
+| outline | 主题大纲 | 系统拆解出的主题结构 |
+| suggested_level | 建议难度层级 | 系统推荐的整体学习层级 |
+| status | 状态 | draft / pending_confirmation / confirmed / archived |
+| created_at | 创建时间 | 主题创建时间 |
+| updated_at | 更新时间 | 主题最后更新时间 |
+
 ### 4.4 KnowledgePoint 知识点
 
 知识点是主题下真正需要掌握的具体内容。
 
 字段建议：
 
-```text
-id
-user_id
-domain_id
-topic_id
-name
-description
-knowledge_type
-complexity_level
-suggested_difficulty
-status
-created_at
-updated_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 知识点 ID | 知识点唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| domain_id | 知识领域 ID | 所属知识领域 |
+| topic_id | 知识主题 ID | 所属知识主题 |
+| name | 知识点名称 | 具体需要掌握的知识点 |
+| description | 知识点描述 | 知识点范围说明 |
+| knowledge_type | 知识类型 | 概念类 / 操作类 / 原理类 / 场景应用类 / 方案评价类 / 事实信息类 |
+| complexity_level | 复杂度等级 | simple / medium / complex |
+| suggested_difficulty | 建议难度 | 1-5 |
+| status | 状态 | draft / pending_confirmation / confirmed / archived |
+| created_at | 创建时间 | 知识点创建时间 |
+| updated_at | 更新时间 | 知识点最后更新时间 |
 
 知识点需要标注知识类型和复杂度。
 
@@ -213,6 +250,20 @@ MVP 采用六类知识类型：
 评分规则
 ```
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 知识类型 ID | 知识类型唯一标识 |
+| user_id | 用户 ID | 所属用户，系统默认类型可为空 |
+| code | 类型编码 | concept / operation / principle / scenario_application / solution_evaluation / factual |
+| name | 类型名称 | 简体中文类型名 |
+| description | 类型描述 | 类型适用范围 |
+| explanation_template | 讲解模板 | 该类型默认核心讲解结构 |
+| status | 状态 | active / archived |
+| created_at | 创建时间 | 类型创建时间 |
+| updated_at | 更新时间 | 类型最后更新时间 |
+
 ### 4.6 CoreExplanation 核心知识讲解
 
 题目和答案不仅用于评分，也要帮助用户理解核心知识。
@@ -230,6 +281,37 @@ MVP 采用六类知识类型：
 
 核心知识讲解需要版本化、来源引用、生成模型和 Agent 元数据。
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 核心讲解 ID | 核心知识讲解唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| knowledge_point_id | 知识点 ID | 所属知识点 |
+| question_id | 题目 ID | 题目补充讲解关联的题目；知识点通用讲解可为空 |
+| explanation_scope | 讲解范围 | knowledge_point / question |
+| current_version_id | 当前版本 ID | 当前生效讲解版本 |
+| status | 状态 | draft / pending_confirmation / confirmed / archived |
+| created_at | 创建时间 | 讲解创建时间 |
+| updated_at | 更新时间 | 讲解最后更新时间 |
+
+### 4.6.1 CoreExplanationVersion 核心知识讲解版本
+
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 讲解版本 ID | 核心讲解版本唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| core_explanation_id | 核心讲解 ID | 所属核心讲解 |
+| version_no | 版本号 | 讲解版本序号 |
+| content | 讲解内容 | 按知识类型模板生成的讲解内容 |
+| source_reference_id | 来源引用 ID | 讲解依据来源 |
+| generation_record_id | 生成记录 ID | 讲解生成溯源 |
+| status | 状态 | draft / active / archived |
+| created_at | 创建时间 | 版本创建时间 |
+| updated_at | 更新时间 | 版本最后更新时间 |
+
 ### 4.7 Question 题目
 
 题目用于检测用户掌握情况。
@@ -243,19 +325,19 @@ MVP 采用六类知识类型：
 
 题目字段建议：
 
-```text
-id
-user_id
-knowledge_point_id
-question_type
-cognitive_dimension
-difficulty_level
-origin_type
-status
-current_version_id
-created_at
-updated_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 题目 ID | 题目唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| knowledge_point_id | 知识点 ID | 所属知识点 |
+| question_type | 题型 | subjective / choice |
+| cognitive_dimension | 认知维度 | understanding / differentiation / application / analysis / evaluation |
+| difficulty_level | 难度等级 | 1-5 |
+| origin_type | 题目来源类型 | confirmed_bank / generated_variant / instant_check / external_session_draft |
+| status | 状态 | draft / pending_confirmation / confirmed / temporary / archived |
+| current_version_id | 当前版本 ID | 当前生效题目版本 |
+| created_at | 创建时间 | 题目创建时间 |
+| updated_at | 更新时间 | 题目最后更新时间 |
 
 认知维度：
 
@@ -302,11 +384,45 @@ archived
 
 每次重新生成、编辑、替换或归档，都要保留版本记录和生成来源。
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 题目版本 ID | 题目版本唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| question_id | 题目 ID | 所属题目 |
+| version_no | 版本号 | 题目版本序号 |
+| stem | 题干 | 题目正文 |
+| options | 选项 | 选择题选项，主观题可为空 |
+| question_explanation | 题目补充讲解 | 说明本题考察点和常见误区 |
+| source_reference_id | 来源引用 ID | 题目依据来源 |
+| generation_record_id | 生成记录 ID | 题目生成溯源 |
+| status | 状态 | draft / active / archived |
+| created_at | 创建时间 | 版本创建时间 |
+| updated_at | 更新时间 | 版本最后更新时间 |
+
 ### 4.9 AnswerVersion 标准答案版本
 
 标准答案需要版本化。
 
 答题记录必须绑定当时使用的标准答案版本，便于追踪审计。
+
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 标准答案版本 ID | 标准答案版本唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| question_id | 题目 ID | 所属题目 |
+| question_version_id | 题目版本 ID | 对应题目版本 |
+| version_no | 版本号 | 答案版本序号 |
+| answer_content | 标准答案内容 | 用于评分和讲解的标准答案 |
+| key_points | 答案要点 | 标准答案关键点 |
+| source_reference_id | 来源引用 ID | 答案依据来源 |
+| generation_record_id | 生成记录 ID | 答案生成溯源 |
+| status | 状态 | draft / active / archived |
+| created_at | 创建时间 | 版本创建时间 |
+| updated_at | 更新时间 | 版本最后更新时间 |
 
 ### 4.10 ScoringRubricVersion 评分规则版本
 
@@ -323,29 +439,50 @@ archived
 AI 评分提示词版本
 ```
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 评分规则版本 ID | 评分规则版本唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| question_id | 题目 ID | 所属题目 |
+| question_version_id | 题目版本 ID | 对应题目版本 |
+| answer_version_id | 标准答案版本 ID | 对应标准答案版本 |
+| version_no | 版本号 | 评分规则版本序号 |
+| rubric_content | 评分规则内容 | 评分标准正文 |
+| scoring_points | 评分要点 | 评分细则 |
+| common_errors | 常见错误 | 常见错误和扣分规则 |
+| prompt_version | 评分提示词版本 | AI 评分使用的提示词版本 |
+| generation_record_id | 生成记录 ID | 评分规则生成溯源 |
+| status | 状态 | draft / active / archived |
+| created_at | 创建时间 | 版本创建时间 |
+| updated_at | 更新时间 | 版本最后更新时间 |
+
 ### 4.11 AnswerAttempt 答题记录
 
 记录用户每次答题。
 
 字段建议：
 
-```text
-id
-user_id
-question_id
-question_version_id
-answer_version_id
-rubric_version_id
-user_answer
-ai_score
-ai_level
-ai_diagnosis_tags
-user_confirmed_score
-user_confirmed_level
-score_diff_reason
-feedback
-created_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 答题记录 ID | 答题记录唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| question_id | 题目 ID | 所答题目 |
+| question_version_id | 题目版本 ID | 答题时使用的题目版本 |
+| answer_version_id | 标准答案版本 ID | 答题时使用的答案版本 |
+| rubric_version_id | 评分规则版本 ID | 答题时使用的评分规则版本 |
+| user_answer | 用户答案 | 用户原始作答内容 |
+| ai_score | AI 评分 | AI 给出的分数 |
+| ai_level | AI 等级 | AI 判断的掌握等级 |
+| ai_diagnosis_tags | AI 诊断标签 | 理解不足 / 应用不足等 |
+| user_confirmed_score | 用户确认评分 | 用户修正后的分数 |
+| user_confirmed_level | 用户确认等级 | 用户修正后的等级 |
+| score_diff_reason | 评分差异原因 | 用户修正 AI 评分的原因 |
+| feedback | 答题反馈 | 缺失点、讲解、追问建议 |
+| affects_mastery | 是否影响掌握度 | 是否计入长期掌握画像 |
+| created_at | 创建时间 | 答题记录创建时间 |
+| updated_at | 更新时间 | 答题记录最后更新时间 |
 
 用户可修正 AI 评分。系统需要保留 AI 评分、用户确认评分和差异原因。
 
@@ -362,6 +499,16 @@ AI 误判
 ### 4.12 MasteryProfile 掌握画像
 
 掌握画像不是单一分数，而是综合画像。
+
+掌握画像需要支持多个分析层级：
+
+```text
+知识领域掌握画像：用户在某个知识领域下的整体掌握情况
+知识主题掌握画像：用户在某个主题下的整体掌握情况
+知识点掌握画像：用户对单个知识点的五维掌握情况
+```
+
+因此 `MasteryProfile` 应当是可挂载到不同对象上的画像，而不是只绑定知识点。
 
 输入：
 
@@ -390,6 +537,30 @@ AI 误判
 建议下一步练习
 ```
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 掌握画像 ID | 掌握画像唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| target_type | 画像对象类型 | domain / topic / knowledge_point |
+| target_id | 画像对象 ID | 对应领域、主题或知识点 ID |
+| understanding_score | 理解分 | 理解维度掌握分 |
+| differentiation_score | 区分分 | 区分维度掌握分 |
+| application_score | 应用分 | 应用维度掌握分 |
+| analysis_score | 分析分 | 分析维度掌握分 |
+| evaluation_score | 评价分 | 评价维度掌握分 |
+| overall_score | 综合分 | 综合掌握分 |
+| overall_level | 综合等级 | 熟练 / 基本掌握 / 模糊 / 较弱 / 未掌握 |
+| weak_dimensions | 薄弱维度 | 当前薄弱的认知维度 |
+| weak_knowledge_points | 薄弱知识点 | 主题或领域画像下聚合出的薄弱知识点 |
+| error_reason_summary | 错误原因摘要 | 聚合后的错误原因 |
+| recent_performance | 近期表现 | 最近答题趋势 |
+| next_practice_suggestion | 下一步练习建议 | 推荐练习策略 |
+| calculated_at | 计算时间 | 本次画像计算时间 |
+| created_at | 创建时间 | 画像创建时间 |
+| updated_at | 更新时间 | 画像最后更新时间 |
+
 ### 4.13 ErrorSet 错误集
 
 错误集采用组合模型：
@@ -404,25 +575,45 @@ AI 误判
 
 系统目标不是只让用户重做错题，而是帮助用户知道为什么没掌握。
 
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 错误集 ID | 错误集唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| domain_id | 知识领域 ID | 可选，关联领域 |
+| topic_id | 知识主题 ID | 可选，关联主题 |
+| knowledge_point_id | 知识点 ID | 可选，关联知识点 |
+| question_id | 题目 ID | 关联错题 |
+| answer_attempt_id | 答题记录 ID | 产生错误的答题记录 |
+| cognitive_dimension | 认知维度 | 错误对应的维度 |
+| error_reason | 错误原因 | 概念混淆 / 应用不熟等 |
+| review_suggestion | 复盘建议 | 后续复习建议 |
+| status | 状态 | active / resolved / archived |
+| created_at | 创建时间 | 错误记录创建时间 |
+| updated_at | 更新时间 | 错误记录最后更新时间 |
+
 ### 4.14 SourceReference 来源引用
 
 题目、答案、核心讲解、评分规则都需要保留来源。
 
 字段建议：
 
-```text
-id
-source_type
-source_system
-source_title
-source_content
-source_summary
-source_url_or_file_id
-conversation_id
-source_timestamp
-trust_level
-created_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 来源引用 ID | 来源引用唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| source_type | 来源类型 | 外部会话 / 主题输入 / 即时问题 / 文档 / 网页 / 用户笔记 |
+| source_system | 来源系统 | Codex / Claude Code / ChatGPT / Claude / Web 等 |
+| source_title | 来源标题 | 来源材料标题 |
+| source_content | 来源内容 | 原始内容片段 |
+| source_summary | 来源摘要 | 来源内容摘要 |
+| source_url_or_file_id | 来源链接或文件 ID | URL、文件 ID 或内部引用 |
+| conversation_id | 会话 ID | 外部 AI 会话标识 |
+| source_timestamp | 来源时间 | 原始来源发生时间 |
+| trust_level | 可信度等级 | high / medium / low / custom |
+| created_at | 创建时间 | 来源引用创建时间 |
+| updated_at | 更新时间 | 来源引用最后更新时间 |
 
 来源类型：
 
@@ -443,21 +634,24 @@ created_at
 
 字段建议：
 
-```text
-id
-target_type
-target_id
-generation_type
-source_reference_id
-ai_agent
-model_name
-model_version
-prompt_version
-generation_params
-generated_at
-quality_score
-user_action
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 生成记录 ID | 生成记录唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| target_type | 生成对象类型 | domain / topic / knowledge_point / question / answer / rubric / explanation / quality_check |
+| target_id | 生成对象 ID | 被生成对象的 ID |
+| generation_type | 生成方式 | AI 生成 / 用户编辑 / 系统规则生成 |
+| source_reference_id | 来源引用 ID | 生成依据来源 |
+| ai_agent | AI Agent | Codex / Claude Code / ChatGPT / Claude / 自建 Agent |
+| model_name | 模型名称 | 例如 GPT-5.5、Minimax-M2.7-highspeed |
+| model_version | 模型版本 | 模型具体版本 |
+| prompt_version | 提示词版本 | 生成提示词版本 |
+| generation_params | 生成参数 | temperature、top_p 等 |
+| generated_at | 生成时间 | AI 生成发生时间 |
+| quality_score | 质量评分 | 生成结果质量分 |
+| user_action | 用户动作 | accepted / edited / rejected / pending |
+| created_at | 创建时间 | 记录创建时间 |
+| updated_at | 更新时间 | 记录最后更新时间 |
 
 需要记录题目、答案、评分规则、核心讲解、质量校验等生成来源。
 
@@ -467,23 +661,25 @@ user_action
 
 字段建议：
 
-```text
-id
-target_type
-target_id
-check_type
-check_agent
-check_model_name
-check_model_version
-prompt_version
-check_params
-overall_score
-result
-issues
-suggestions
-retry_count
-created_at
-```
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 质量校验记录 ID | 质量校验记录唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| target_type | 校验对象类型 | question / answer / rubric / explanation |
+| target_id | 校验对象 ID | 被校验对象 ID |
+| check_type | 校验类型 | rule_check / ai_check / user_confirmation |
+| check_agent | 校验 Agent | 执行校验的 Agent |
+| check_model_name | 校验模型名称 | 执行 AI 校验的模型 |
+| check_model_version | 校验模型版本 | 校验模型具体版本 |
+| prompt_version | 校验提示词版本 | 校验提示词版本 |
+| check_params | 校验参数 | 校验模型参数 |
+| overall_score | 综合质量分 | 0-100 |
+| result | 校验结果 | pass / warning / fail |
+| issues | 问题列表 | 校验发现的问题 |
+| suggestions | 修改建议 | 自动修正或人工处理建议 |
+| retry_count | 重试次数 | 自动修正次数 |
+| created_at | 创建时间 | 校验记录创建时间 |
+| updated_at | 更新时间 | 校验记录最后更新时间 |
 
 校验方式：
 
@@ -513,6 +709,23 @@ AI 校验
 ```
 
 MVP 可以先做事件日志，不必先做复杂审计页面。
+
+字段建议：
+
+| 英文字段名 | 简体中文名 | 说明 |
+|---|---|---|
+| id | 审计事件 ID | 审计事件唯一标识 |
+| user_id | 用户 ID | 所属用户 |
+| event_type | 事件类型 | 生成 / 确认 / 编辑 / 答题 / 评分 / 修正 / 归档等 |
+| target_type | 事件对象类型 | 事件关联对象类型 |
+| target_id | 事件对象 ID | 事件关联对象 ID |
+| actor_type | 操作者类型 | user / system / ai_agent |
+| actor_id | 操作者 ID | 用户 ID、系统 ID 或 Agent ID |
+| before_snapshot | 变更前快照 | 变更前关键数据 |
+| after_snapshot | 变更后快照 | 变更后关键数据 |
+| metadata | 元数据 | 额外上下文 |
+| created_at | 创建时间 | 审计事件创建时间 |
+| updated_at | 更新时间 | 审计事件最后更新时间 |
 
 ## 5. 核心知识讲解模板
 
@@ -889,6 +1102,49 @@ AI 评分
 近期表现
 ```
 
+掌握画像需要支持三个分析层级：
+
+```text
+知识领域掌握画像：
+用于回答“我在 AI、计算机、摄影等领域整体掌握得怎么样？”
+
+知识主题掌握画像：
+用于回答“我在 GitHub Actions、RAG 知识问答系统等主题下掌握得怎么样？”
+
+知识点掌握画像：
+用于回答“我对 workflow 触发条件、向量检索、光圈等具体知识点掌握得怎么样？”
+```
+
+三个层级不是三套完全不同的数据模型，而是同一个 `MasteryProfile` 根据 `target_type` 挂载到不同对象上。
+
+汇总关系：
+
+```text
+知识点画像
+-> 聚合为主题画像
+-> 聚合为领域画像
+```
+
+聚合时不能只做简单平均，应结合：
+
+```text
+知识点重要性
+题目难度
+答题次数
+最近表现
+错误原因
+用户确认修正
+临时题是否正式计入
+```
+
+这样系统既能做微观诊断，也能做宏观复盘：
+
+```text
+微观：某个知识点的应用维度偏弱
+中观：某个主题下分析题整体偏弱
+宏观：某个知识领域整体评价维度不足
+```
+
 针对性提问不是单独题库，而是一种练习生成策略。
 
 触发场景：
@@ -1016,7 +1272,7 @@ MVP 必做：
 正式入库状态流
 答题记录
 AI 评分 + 用户修正
-五维掌握画像
+领域/主题/知识点多层级五维掌握画像
 错误集
 来源引用
 Agent/模型元数据记录
@@ -1064,4 +1320,3 @@ AI 生成必须经过质量校验
 API 是业务底座，MCP 是 Agent 接入层
 掌握度应解释为什么薄弱，而不只是给分数
 ```
-
