@@ -15,6 +15,16 @@ model User {
   domains         KnowledgeDomain[]
   topics          KnowledgeTopic[]
   knowledgePoints KnowledgePoint[]
+  sourceReferences SourceReference[]
+  ingestionTasks   IngestionTask[]
+  reviewItems      ReviewItem[]
+  questions        Question[]
+  coreExplanations CoreExplanation[]
+  generationRecords GenerationRecord[]
+  qualityCheckRecords QualityCheckRecord[]
+  answerAttempts  AnswerAttempt[]
+  masteryProfiles MasteryProfile[]
+  errorSets       ErrorSet[]
 
   @@map("users")
 }
@@ -92,10 +102,319 @@ model KnowledgePoint {
   domain              KnowledgeDomain @relation(fields: [domainId], references: [id])
   topic               KnowledgeTopic  @relation(fields: [topicId], references: [id])
   knowledgeType       KnowledgeType   @relation(fields: [knowledgeTypeId], references: [id])
+  questions           Question[]
+  coreExplanations    CoreExplanation[]
 
   @@unique([topicId, name])
   @@index([userId, status])
   @@index([domainId, status])
   @@index([topicId, status])
   @@map("knowledge_points")
+}
+
+model SourceReference {
+  id                String          @id @default(cuid())
+  userId            String          @map("user_id")
+  sourceType        String          @map("source_type")
+  sourceSystem      String?         @map("source_system")
+  sourceTitle       String?         @map("source_title")
+  sourceContent     String?         @map("source_content")
+  sourceSummary     String?         @map("source_summary")
+  sourceUrlOrFileId String?         @map("source_url_or_file_id")
+  conversationId    String?         @map("conversation_id")
+  sourceTimestamp   DateTime?       @map("source_timestamp")
+  trustLevel        String          @default("medium") @map("trust_level")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  user              User            @relation(fields: [userId], references: [id])
+  ingestionTasks    IngestionTask[]
+
+  @@index([userId, sourceType])
+  @@index([sourceSystem, conversationId])
+  @@map("source_references")
+}
+
+model IngestionTask {
+  id                String           @id @default(cuid())
+  userId            String           @map("user_id")
+  ingestionType     String           @map("ingestion_type")
+  sourceReferenceId String?          @map("source_reference_id")
+  requestedBy       String           @map("requested_by")
+  instruction       String
+  status            String           @default("submitted")
+  idempotencyKey    String?          @map("idempotency_key")
+  resultPreviewJson String?          @map("result_preview_json")
+  errorMessage      String?          @map("error_message")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  user              User             @relation(fields: [userId], references: [id])
+  sourceReference   SourceReference? @relation(fields: [sourceReferenceId], references: [id])
+  reviewItems       ReviewItem[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([userId, ingestionType])
+  @@map("ingestion_tasks")
+}
+
+model ReviewItem {
+  id              String         @id @default(cuid())
+  userId          String         @map("user_id")
+  ingestionTaskId String?        @map("ingestion_task_id")
+  targetType      String         @map("target_type")
+  targetId        String         @map("target_id")
+  previewJson     String         @map("preview_json")
+  status          String         @default("pending")
+  confirmedAt     DateTime?      @map("confirmed_at")
+  rejectedAt      DateTime?      @map("rejected_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  user            User           @relation(fields: [userId], references: [id])
+  ingestionTask   IngestionTask? @relation(fields: [ingestionTaskId], references: [id])
+
+  @@index([userId, status])
+  @@index([ingestionTaskId])
+  @@map("review_items")
+}
+
+model Question {
+  id                 String                  @id @default(cuid())
+  userId             String                  @map("user_id")
+  knowledgePointId   String                  @map("knowledge_point_id")
+  questionType       String                  @map("question_type")
+  cognitiveDimension String                  @map("cognitive_dimension")
+  difficultyLevel    Int                     @default(3) @map("difficulty_level")
+  status             String                  @default("pending_confirmation")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  user               User                    @relation(fields: [userId], references: [id])
+  knowledgePoint     KnowledgePoint          @relation(fields: [knowledgePointId], references: [id])
+  versions           QuestionVersion[]
+  answerVersions     AnswerVersion[]
+  rubricVersions     ScoringRubricVersion[]
+  qualityChecks      QualityCheckRecord[]
+  answerAttempts     AnswerAttempt[]
+
+  @@index([userId, status])
+  @@index([knowledgePointId, status])
+  @@index([knowledgePointId, cognitiveDimension])
+  @@map("questions")
+}
+
+model QuestionVersion {
+  id              String    @id @default(cuid())
+  questionId      String    @map("question_id")
+  versionNo       Int       @map("version_no")
+  stem            String
+  contentJson     String?   @map("content_json")
+  sourceType      String    @default("ai_generated") @map("source_type")
+  modelName       String?   @map("model_name")
+  aiAgent         String?   @map("ai_agent")
+  promptVersion   String?   @map("prompt_version")
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  question        Question  @relation(fields: [questionId], references: [id])
+  answerAttempts  AnswerAttempt[]
+
+  @@unique([questionId, versionNo])
+  @@index([questionId, status])
+  @@map("question_versions")
+}
+
+model AnswerVersion {
+  id              String    @id @default(cuid())
+  questionId      String    @map("question_id")
+  versionNo       Int       @map("version_no")
+  answerText      String    @map("answer_text")
+  explanationText String?   @map("explanation_text")
+  sourceType      String    @default("ai_generated") @map("source_type")
+  modelName       String?   @map("model_name")
+  aiAgent         String?   @map("ai_agent")
+  promptVersion   String?   @map("prompt_version")
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  question        Question  @relation(fields: [questionId], references: [id])
+  answerAttempts  AnswerAttempt[]
+
+  @@unique([questionId, versionNo])
+  @@index([questionId, status])
+  @@map("answer_versions")
+}
+
+model ScoringRubricVersion {
+  id              String    @id @default(cuid())
+  questionId      String    @map("question_id")
+  versionNo       Int       @map("version_no")
+  rubricJson      String    @map("rubric_json")
+  sourceType      String    @default("ai_generated") @map("source_type")
+  modelName       String?   @map("model_name")
+  aiAgent         String?   @map("ai_agent")
+  promptVersion   String?   @map("prompt_version")
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  question        Question  @relation(fields: [questionId], references: [id])
+  answerAttempts  AnswerAttempt[]
+
+  @@unique([questionId, versionNo])
+  @@index([questionId, status])
+  @@map("scoring_rubric_versions")
+}
+
+model CoreExplanation {
+  id                 String                   @id @default(cuid())
+  userId             String                   @map("user_id")
+  knowledgePointId   String                   @map("knowledge_point_id")
+  status             String                   @default("pending_confirmation")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+  user               User                     @relation(fields: [userId], references: [id])
+  knowledgePoint     KnowledgePoint           @relation(fields: [knowledgePointId], references: [id])
+  versions           CoreExplanationVersion[]
+
+  @@index([userId, status])
+  @@index([knowledgePointId, status])
+  @@map("core_explanations")
+}
+
+model CoreExplanationVersion {
+  id                String          @id @default(cuid())
+  coreExplanationId String          @map("core_explanation_id")
+  versionNo         Int             @map("version_no")
+  title             String
+  explanationText   String          @map("explanation_text")
+  templateCode      String?         @map("template_code")
+  sourceType        String          @default("ai_generated") @map("source_type")
+  modelName         String?         @map("model_name")
+  aiAgent           String?         @map("ai_agent")
+  promptVersion     String?         @map("prompt_version")
+  status            String          @default("draft")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  coreExplanation   CoreExplanation @relation(fields: [coreExplanationId], references: [id])
+
+  @@unique([coreExplanationId, versionNo])
+  @@index([coreExplanationId, status])
+  @@map("core_explanation_versions")
+}
+
+model GenerationRecord {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  targetType      String   @map("target_type")
+  targetId        String   @map("target_id")
+  callType        String   @map("call_type")
+  modelName       String   @map("model_name")
+  modelVersion    String?  @map("model_version")
+  aiAgent         String   @map("ai_agent")
+  promptVersion   String   @map("prompt_version")
+  inputTokens     Int?     @map("input_tokens")
+  outputTokens    Int?     @map("output_tokens")
+  latencyMs       Int?     @map("latency_ms")
+  cost            Decimal? @map("cost")
+  status          String   @default("success")
+  promptHash      String?  @map("prompt_hash")
+  responseHash    String?  @map("response_hash")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, targetType, targetId])
+  @@index([modelName, aiAgent])
+  @@index([createdAt])
+  @@map("generation_records")
+}
+
+model QualityCheckRecord {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  questionId        String?   @map("question_id")
+  targetType        String    @map("target_type")
+  targetId          String    @map("target_id")
+  checkerType       String    @map("checker_type")
+  modelName         String?   @map("model_name")
+  aiAgent           String?   @map("ai_agent")
+  ruleResultJson    String?   @map("rule_result_json")
+  aiResultJson      String?   @map("ai_result_json")
+  autoFixCount      Int       @default(0) @map("auto_fix_count")
+  status            String    @default("pending")
+  passedAt          DateTime? @map("passed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  user              User      @relation(fields: [userId], references: [id])
+  question          Question? @relation(fields: [questionId], references: [id])
+
+  @@index([userId, status])
+  @@index([questionId, status])
+  @@index([targetType, targetId])
+  @@map("quality_check_records")
+}
+
+model AnswerAttempt {
+  id                     String                @id @default(cuid())
+  userId                 String                @map("user_id")
+  questionId             String                @map("question_id")
+  questionVersionId      String                @map("question_version_id")
+  answerVersionId        String                @map("answer_version_id")
+  scoringRubricVersionId String                @map("scoring_rubric_version_id")
+  userAnswer             String                @map("user_answer")
+  aiScore                Int                   @map("ai_score")
+  aiFeedback             String                @map("ai_feedback")
+  userConfirmedScore     Int?                  @map("user_confirmed_score")
+  scoreDiffReason        String?               @map("score_diff_reason")
+  finalScore             Int                   @map("final_score")
+  reasonTagsJson         String                @map("reason_tags_json")
+  affectsMastery         Boolean               @default(true) @map("affects_mastery")
+  status                 String                @default("ai_scored")
+  createdAt              DateTime              @default(now()) @map("created_at")
+  updatedAt              DateTime              @updatedAt @map("updated_at")
+  user                   User                  @relation(fields: [userId], references: [id])
+  question               Question              @relation(fields: [questionId], references: [id])
+  questionVersion        QuestionVersion       @relation(fields: [questionVersionId], references: [id])
+  answerVersion          AnswerVersion         @relation(fields: [answerVersionId], references: [id])
+  scoringRubricVersion   ScoringRubricVersion  @relation(fields: [scoringRubricVersionId], references: [id])
+
+  @@index([userId, status])
+  @@index([questionId, createdAt])
+  @@index([affectsMastery])
+  @@map("answer_attempts")
+}
+
+model MasteryProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  targetType          String   @map("target_type")
+  targetId            String   @map("target_id")
+  dimensionScoresJson String   @map("dimension_scores_json")
+  overallScore        Float    @map("overall_score")
+  evidenceCount       Int      @default(0) @map("evidence_count")
+  weakDimensionsJson  String   @map("weak_dimensions_json")
+  status              String   @default("active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  user                User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId, targetType])
+  @@index([overallScore])
+  @@map("mastery_profiles")
+}
+
+model ErrorSet {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  knowledgePointId   String   @map("knowledge_point_id")
+  attemptIdsJson     String   @map("attempt_ids_json")
+  dominantTagsJson   String   @map("dominant_tags_json")
+  status             String   @default("active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  user               User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, knowledgePointId])
+  @@index([userId, status])
+  @@index([knowledgePointId, status])
+  @@map("error_sets")
 }

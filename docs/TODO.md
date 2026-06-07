@@ -586,6 +586,12 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-07 npx playwright install chromium：下载超时，端到端测试阻塞。
 2026-06-07 手动离线安装 chrome-headless-shell-win64.zip 到 ms-playwright/chromium_headless_shell-1223。
 2026-06-07 npm run test:e2e：通过，1 条 Playwright E2E 测试。
+2026-06-07 cmd /c npx tsc --noEmit：通过。
+2026-06-07 cmd /c npm run test：通过，13 个测试文件，36 条测试用例；包含外部会话沉淀、待确认队列、确认/拒绝 API 集成测试。
+2026-06-07 cmd /c npm run test：通过，14 个测试文件，37 条测试用例；包含知识点生成题目、核心讲解、生成记录、质量校验和题目确认 API 集成测试。
+2026-06-07 cmd /c npm run build：通过，新增 generation/questions API 路由进入 Next.js 生产构建。
+2026-06-07 cmd /c npm run test：通过，15 个测试文件，38 条测试用例；包含答题提交、mock AI 评分、用户修正评分、掌握画像重算和错误集生成 API 集成测试。
+2026-06-07 cmd /c npm run build：通过，新增 answer-attempts/mastery-profiles/error-sets API 路由进入 Next.js 生产构建。
 ```
 
 ## 18. 部署上线

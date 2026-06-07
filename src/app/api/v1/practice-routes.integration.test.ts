@@ -1,0 +1,244 @@
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+import type { prisma as PrismaSingleton } from "@/lib/db/prisma";
+
+type PrismaModule = {
+  prisma: typeof PrismaSingleton;
+};
+
+describe("practice, scoring, mastery, and error set API routes", () => {
+  let prisma: PrismaModule["prisma"];
+  let dbPath: string;
+  let domainsRoute: typeof import("./domains/route");
+  let topicsRoute: typeof import("./topics/route");
+  let knowledgeTypesRoute: typeof import("./knowledge-types/route");
+  let knowledgePointsRoute: typeof import("./knowledge-points/route");
+  let generationRoute: typeof import("./generation/knowledge-point/route");
+  let confirmQuestionRoute: typeof import("./questions/[questionId]/confirm/route");
+  let attemptsRoute: typeof import("./questions/[questionId]/attempts/route");
+  let confirmScoreRoute: typeof import("./answer-attempts/[attemptId]/confirm-score/route");
+  let masteryProfilesRoute: typeof import("./mastery-profiles/route");
+  let errorSetsRoute: typeof import("./error-sets/route");
+
+  beforeAll(async () => {
+    vi.resetModules();
+    delete (globalThis as { prisma?: unknown }).prisma;
+
+    const tmpDir = path.join(process.cwd(), "tmp", "vitest");
+    mkdirSync(tmpDir, { recursive: true });
+
+    dbPath = path.join(tmpDir, `practice-routes-${Date.now()}.db`);
+    writeFileSync(dbPath, "");
+    process.env.DATABASE_URL = `file:${dbPath.replace(/\\/g, "/")}`;
+    process.env.KNOWLEDGE_QA_API_KEY = "test-api-key";
+
+    const prismaModule = (await import("@/lib/db/prisma")) as PrismaModule;
+    prisma = prismaModule.prisma;
+
+    await applyMigration("20260607172000_add_core_knowledge_models");
+    await applyMigration("20260607183000_add_ingestion_review_models");
+    await applyMigration("20260607184500_add_question_generation_models");
+    await applyMigration("20260607190000_add_attempt_mastery_models");
+
+    domainsRoute = await import("./domains/route");
+    topicsRoute = await import("./topics/route");
+    knowledgeTypesRoute = await import("./knowledge-types/route");
+    knowledgePointsRoute = await import("./knowledge-points/route");
+    generationRoute = await import("./generation/knowledge-point/route");
+    confirmQuestionRoute = await import("./questions/[questionId]/confirm/route");
+    attemptsRoute = await import("./questions/[questionId]/attempts/route");
+    confirmScoreRoute = await import(
+      "./answer-attempts/[attemptId]/confirm-score/route"
+    );
+    masteryProfilesRoute = await import("./mastery-profiles/route");
+    errorSetsRoute = await import("./error-sets/route");
+  });
+
+  afterAll(async () => {
+    await prisma?.$disconnect();
+
+    if (dbPath) {
+      rmSync(dbPath, { force: true });
+      rmSync(`${dbPath}-journal`, { force: true });
+    }
+  });
+
+  it("submits answers, confirms score, and updates mastery plus error set", async () => {
+    const fixture = await createConfirmedQuestionFixture();
+
+    const attemptResponse = await attemptsRoute.POST(
+      jsonRequest(
+        `http://localhost/api/v1/questions/${fixture.question_id}/attempts`,
+        {
+          user_answer: "我只记得它和 workflow 触发有关，但步骤还不完整。"
+        }
+      ),
+      {
+        params: Promise.resolve({ questionId: fixture.question_id })
+      }
+    );
+    const attemptBody = await attemptResponse.json();
+
+    expect(attemptResponse.status).toBe(201);
+    expect(attemptBody.data.status).toBe("ai_scored");
+    expect(attemptBody.data.ai_score).toBeGreaterThanOrEqual(0);
+    expect(attemptBody.data.affects_mastery).toBe(true);
+
+    const masteryAfterAiScore = await masteryProfilesRoute.GET(
+      authedRequest(
+        `http://localhost/api/v1/mastery-profiles?target_type=knowledge_point&target_id=${fixture.knowledge_point_id}`
+      )
+    );
+    const masteryAfterAiScoreBody = await masteryAfterAiScore.json();
+
+    expect(masteryAfterAiScore.status).toBe(200);
+    expect(masteryAfterAiScoreBody.data).toHaveLength(1);
+    expect(masteryAfterAiScoreBody.data[0].evidence_count).toBe(1);
+
+    const confirmResponse = await confirmScoreRoute.POST(
+      jsonRequest(
+        `http://localhost/api/v1/answer-attempts/${attemptBody.data.id}/confirm-score`,
+        {
+          user_confirmed_score: 45,
+          score_diff_reason: "答案遗漏关键步骤，AI 分数偏高"
+        }
+      ),
+      {
+        params: Promise.resolve({ attemptId: attemptBody.data.id })
+      }
+    );
+    const confirmBody = await confirmResponse.json();
+
+    expect(confirmResponse.status).toBe(200);
+    expect(confirmBody.data.status).toBe("user_confirmed");
+    expect(confirmBody.data.final_score).toBe(45);
+    expect(confirmBody.data.user_confirmed_score).toBe(45);
+
+    const masteryResponse = await masteryProfilesRoute.GET(
+      authedRequest(
+        `http://localhost/api/v1/mastery-profiles?target_type=knowledge_point&target_id=${fixture.knowledge_point_id}`
+      )
+    );
+    const masteryBody = await masteryResponse.json();
+
+    expect(masteryResponse.status).toBe(200);
+    expect(masteryBody.data[0].overall_score).toBeGreaterThan(0);
+    expect(masteryBody.data[0].weak_dimensions).toContain(
+      fixture.cognitive_dimension
+    );
+
+    const errorSetResponse = await errorSetsRoute.GET(
+      authedRequest(
+        `http://localhost/api/v1/error-sets?knowledge_point_id=${fixture.knowledge_point_id}&status=active`
+      )
+    );
+    const errorSetBody = await errorSetResponse.json();
+
+    expect(errorSetResponse.status).toBe(200);
+    expect(errorSetBody.data).toHaveLength(1);
+    expect(errorSetBody.data[0].attempt_ids).toContain(attemptBody.data.id);
+    expect(errorSetBody.data[0].dominant_tags).toContain("missing_key_point");
+  });
+
+  async function createConfirmedQuestionFixture() {
+    const unique = Date.now().toString();
+    const domainResponse = await domainsRoute.POST(
+      jsonRequest("http://localhost/api/v1/domains", {
+        name: `计算机 ${unique}`
+      })
+    );
+    const domainBody = await domainResponse.json();
+
+    const topicResponse = await topicsRoute.POST(
+      jsonRequest("http://localhost/api/v1/topics", {
+        domain_id: domainBody.data.id,
+        name: `GitHub Actions ${unique}`
+      })
+    );
+    const topicBody = await topicResponse.json();
+
+    const typesResponse = await knowledgeTypesRoute.GET(
+      authedRequest("http://localhost/api/v1/knowledge-types")
+    );
+    const typesBody = await typesResponse.json();
+    const conceptType = typesBody.data.find(
+      (type: { code: string }) => type.code === "concept"
+    );
+
+    const pointResponse = await knowledgePointsRoute.POST(
+      jsonRequest("http://localhost/api/v1/knowledge-points", {
+        domain_id: domainBody.data.id,
+        topic_id: topicBody.data.id,
+        knowledge_type_id: conceptType.id,
+        name: `workflow 触发条件 ${unique}`,
+        complexity_level: "medium",
+        suggested_difficulty: 3
+      })
+    );
+    const pointBody = await pointResponse.json();
+
+    const generationResponse = await generationRoute.POST(
+      jsonRequest("http://localhost/api/v1/generation/knowledge-point", {
+        knowledge_point_id: pointBody.data.id,
+        cognitive_dimensions: ["apply"],
+        question_count: 1
+      })
+    );
+    const generationBody = await generationResponse.json();
+    const question = generationBody.data.questions[0];
+
+    const confirmQuestionResponse = await confirmQuestionRoute.POST(
+      authedRequest(
+        `http://localhost/api/v1/questions/${question.id}/confirm`
+      ),
+      {
+        params: Promise.resolve({ questionId: question.id })
+      }
+    );
+    const confirmQuestionBody = await confirmQuestionResponse.json();
+
+    return {
+      knowledge_point_id: pointBody.data.id,
+      question_id: confirmQuestionBody.data.id,
+      cognitive_dimension: confirmQuestionBody.data.cognitive_dimension
+    };
+  }
+
+  async function applyMigration(migrationName: string) {
+    const migrationSql = readFileSync(
+      path.join(process.cwd(), "prisma", "migrations", migrationName, "migration.sql"),
+      "utf8"
+    );
+
+    for (const statement of splitSqlStatements(migrationSql)) {
+      await prisma.$executeRawUnsafe(statement);
+    }
+  }
+});
+
+function authedRequest(url: string) {
+  return new Request(url, {
+    headers: {
+      "x-api-key": "test-api-key"
+    }
+  });
+}
+
+function jsonRequest(url: string, body: unknown) {
+  return new Request(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": "test-api-key"
+    },
+    body: JSON.stringify(body)
+  });
+}
+
+function splitSqlStatements(sql: string) {
+  return sql
+    .split(/;\s*(?:\r?\n|$)/)
+    .map((statement) => statement.trim())
+    .filter(Boolean);
+}
