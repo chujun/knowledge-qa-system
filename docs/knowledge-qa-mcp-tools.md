@@ -47,7 +47,7 @@ Agent 能否提供完整会话、最近 N 轮、选中片段或摘要。
 下一步动作：
 
 ```text
-基于本文继续生成 MVP 实施计划。
+基于本文继续实现 MCP schema、Agent 本地模拟调用脚本和后端 API 映射。
 ```
 
 ## 1. MCP Server 职责
@@ -644,3 +644,94 @@ Tool schema 保持稳定，后端 API 可继续演进。
 当后端 API 返回长流程状态时，Tool 返回 review_url 和 ingestion_task_id，允许用户稍后查看。
 ```
 
+## 14. AI Agent MCP/Agent 调用能力验收标准
+
+系统验收时必须证明个人知识问答系统不是只能通过 Web 页面或普通 HTTP API 使用，而是具备可被外部 AI Agent 调用的沉淀入口。
+
+最低验收标准：
+
+```text
+1. 提供 MCP Tool schema 或等价 Agent Tool schema，且 schema 字段与本文定义一致。
+2. 至少支持 qa_create_from_conversation，用于从外部会话沉淀知识问答内容。
+3. Agent 调用时必须传入 source_system、instruction，以及 conversation_content 或 conversation_summary 之一。
+4. Tool 调用必须经过 API Key 或等价本地认证校验。
+5. Tool 调用必须创建或模拟创建 IngestionTask，并返回 ingestion_task_id。
+6. Tool 返回必须包含 topic_suggestion、knowledge_points_preview、questions_preview、review_url。
+7. review_url 必须指向知识问答系统的确认或编辑页面。
+8. 重复提交同一 source_system、conversation_id、instruction 时必须支持幂等处理。
+9. Agent 调用链路必须记录 ai_agent、model_name、model_version、prompt_version、latency_ms、status 等元数据，真实模型未接入时可使用 mock 值。
+10. 失败时必须返回结构化错误，不得只返回自然语言失败描述。
+```
+
+MVP 第一阶段允许用本地模拟 Agent 调用脚本完成验收，但脚本必须复用同一份 Tool schema 或与 MCP Tool 输入输出结构保持一致。
+
+## 15. 可模拟 Agent 调用验收场景
+
+场景名称：
+
+```text
+Codex 会话沉淀 GitHub Actions 知识点
+```
+
+前置条件：
+
+```text
+知识问答系统本地服务已启动。
+环境变量中已配置 KNOWLEDGE_QA_API_BASE_URL 和 KNOWLEDGE_QA_API_KEY。
+系统中允许 mock AI provider 生成知识点、核心讲解、题目预览和质量校验结果。
+```
+
+模拟调用输入：
+
+```json
+{
+  "tool": "qa_create_from_conversation",
+  "arguments": {
+    "source_system": "Codex",
+    "conversation_id": "codex-local-20260607-001",
+    "context_type": "summary",
+    "conversation_summary": "用户和 Codex 讨论了 GitHub Actions workflow 的触发条件、jobs、steps、runner 和 secrets 使用方式。",
+    "instruction": "围绕 GitHub Actions workflow 生成理解型和应用型问答，并进入待确认队列。",
+    "target_domain_hint": "计算机",
+    "direct_confirm": false,
+    "idempotency_key": "Codex:codex-local-20260607-001:github-actions-workflow"
+  }
+}
+```
+
+期望输出：
+
+```json
+{
+  "ingestion_task_id": "ing_mock_001",
+  "status": "pending_review",
+  "topic_suggestion": {
+    "domain_name": "计算机",
+    "topic_name": "GitHub Actions"
+  },
+  "knowledge_points_preview": [
+    "workflow 触发条件",
+    "jobs 与 steps 的关系",
+    "runner 与 secrets 的基础使用"
+  ],
+  "questions_preview": [
+    {
+      "stem": "GitHub Actions 中 jobs 和 steps 的区别是什么？",
+      "cognitive_dimension": "distinguish",
+      "difficulty_level": 2
+    }
+  ],
+  "review_url": "http://localhost:3000/review/ing_mock_001",
+  "message": "已生成待确认知识沉淀，可在知识问答系统中查看和编辑。"
+}
+```
+
+验收检查点：
+
+```text
+1. Agent 调用无需用户切换到知识问答系统页面即可发起。
+2. 调用结果在聊天框中可读，但不会返回完整题库和完整会话原文。
+3. 用户可以通过 review_url 进入知识问答系统查看详细内容并调整。
+4. 第二次使用相同 idempotency_key 调用时返回同一 ingestion_task_id 或明确的幂等命中结果。
+5. 系统记录本次调用的 source_system=Codex、ai_agent=Codex、model_name=chatgpt-5.5 或 mock、call_type=agent_ingestion。
+```
