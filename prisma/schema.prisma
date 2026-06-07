@@ -25,6 +25,7 @@ model User {
   answerAttempts  AnswerAttempt[]
   masteryProfiles MasteryProfile[]
   errorSets       ErrorSet[]
+  practiceSessions PracticeSession[]
 
   @@map("users")
 }
@@ -194,6 +195,7 @@ model Question {
   rubricVersions     ScoringRubricVersion[]
   qualityChecks      QualityCheckRecord[]
   answerAttempts     AnswerAttempt[]
+  practiceItems      PracticeSessionItem[]
 
   @@index([userId, status])
   @@index([knowledgePointId, status])
@@ -417,4 +419,41 @@ model ErrorSet {
   @@index([userId, status])
   @@index([knowledgePointId, status])
   @@map("error_sets")
+}
+
+model PracticeSession {
+  id             String                @id @default(cuid())
+  userId         String                @map("user_id")
+  sessionType    String                @map("session_type")
+  targetType     String                @map("target_type")
+  targetId       String                @map("target_id")
+  strategyJson   String                @map("strategy_json")
+  status         String                @default("created")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  user           User                  @relation(fields: [userId], references: [id])
+  items          PracticeSessionItem[]
+
+  @@index([userId, status])
+  @@index([userId, targetType, targetId])
+  @@map("practice_sessions")
+}
+
+model PracticeSessionItem {
+  id                String          @id @default(cuid())
+  practiceSessionId String          @map("practice_session_id")
+  questionId        String          @map("question_id")
+  orderNo           Int             @map("order_no")
+  selectionReason   String          @map("selection_reason")
+  sourceType        String          @default("confirmed_question") @map("source_type")
+  status            String          @default("pending")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  practiceSession   PracticeSession @relation(fields: [practiceSessionId], references: [id])
+  question          Question        @relation(fields: [questionId], references: [id])
+
+  @@unique([practiceSessionId, questionId])
+  @@index([practiceSessionId, orderNo])
+  @@index([questionId, status])
+  @@map("practice_session_items")
 }

@@ -20,6 +20,8 @@ describe("practice, scoring, mastery, and error set API routes", () => {
   let confirmScoreRoute: typeof import("./answer-attempts/[attemptId]/confirm-score/route");
   let masteryProfilesRoute: typeof import("./mastery-profiles/route");
   let errorSetsRoute: typeof import("./error-sets/route");
+  let practiceSessionsRoute: typeof import("./practice-sessions/route");
+  let practiceSessionRoute: typeof import("./practice-sessions/[practiceSessionId]/route");
 
   beforeAll(async () => {
     vi.resetModules();
@@ -40,6 +42,7 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     await applyMigration("20260607183000_add_ingestion_review_models");
     await applyMigration("20260607184500_add_question_generation_models");
     await applyMigration("20260607190000_add_attempt_mastery_models");
+    await applyMigration("20260607191500_add_practice_session_models");
 
     domainsRoute = await import("./domains/route");
     topicsRoute = await import("./topics/route");
@@ -53,6 +56,8 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     );
     masteryProfilesRoute = await import("./mastery-profiles/route");
     errorSetsRoute = await import("./error-sets/route");
+    practiceSessionsRoute = await import("./practice-sessions/route");
+    practiceSessionRoute = await import("./practice-sessions/[practiceSessionId]/route");
   });
 
   afterAll(async () => {
@@ -141,7 +146,83 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     expect(errorSetBody.data[0].dominant_tags).toContain("missing_key_point");
   });
 
-  async function createConfirmedQuestionFixture() {
+  it("creates a targeted practice session from weak dimensions and error sets", async () => {
+    const fixture = await createConfirmedQuestionFixture({
+      cognitiveDimensions: ["apply", "understand"],
+      questionCount: 2
+    });
+
+    const attemptResponse = await attemptsRoute.POST(
+      jsonRequest(
+        `http://localhost/api/v1/questions/${fixture.question_ids[0]}/attempts`,
+        {
+          user_answer: "workflow 触发，但我说不清实际步骤。"
+        }
+      ),
+      {
+        params: Promise.resolve({ questionId: fixture.question_ids[0] })
+      }
+    );
+    const attemptBody = await attemptResponse.json();
+
+    await confirmScoreRoute.POST(
+      jsonRequest(
+        `http://localhost/api/v1/answer-attempts/${attemptBody.data.id}/confirm-score`,
+        {
+          user_confirmed_score: 40,
+          score_diff_reason: "应用步骤缺失"
+        }
+      ),
+      {
+        params: Promise.resolve({ attemptId: attemptBody.data.id })
+      }
+    );
+
+    const sessionResponse = await practiceSessionsRoute.POST(
+      jsonRequest("http://localhost/api/v1/practice-sessions", {
+        session_type: "knowledge_point",
+        target_type: "knowledge_point",
+        target_id: fixture.knowledge_point_id,
+        strategy: {
+          prefer_weak_dimensions: true,
+          include_error_set: true,
+          question_count: 2
+        }
+      })
+    );
+    const sessionBody = await sessionResponse.json();
+
+    expect(sessionResponse.status).toBe(201);
+    expect(sessionBody.data.questions).toHaveLength(2);
+    expect(sessionBody.data.questions[0].question_id).toBe(
+      fixture.question_ids[0]
+    );
+    expect(sessionBody.data.questions[0].selection_reason).toContain(
+      "命中活跃错误集"
+    );
+    expect(sessionBody.data.questions[0].selection_reason).toContain(
+      "薄弱维度"
+    );
+
+    const detailResponse = await practiceSessionRoute.GET(
+      authedRequest(
+        `http://localhost/api/v1/practice-sessions/${sessionBody.data.id}`
+      ),
+      {
+        params: Promise.resolve({ practiceSessionId: sessionBody.data.id })
+      }
+    );
+    const detailBody = await detailResponse.json();
+
+    expect(detailResponse.status).toBe(200);
+    expect(detailBody.data.id).toBe(sessionBody.data.id);
+    expect(detailBody.data.questions[0].stem).toContain("workflow");
+  });
+
+  async function createConfirmedQuestionFixture(options?: {
+    cognitiveDimensions?: string[];
+    questionCount?: number;
+  }) {
     const unique = Date.now().toString();
     const domainResponse = await domainsRoute.POST(
       jsonRequest("http://localhost/api/v1/domains", {
@@ -181,27 +262,30 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     const generationResponse = await generationRoute.POST(
       jsonRequest("http://localhost/api/v1/generation/knowledge-point", {
         knowledge_point_id: pointBody.data.id,
-        cognitive_dimensions: ["apply"],
-        question_count: 1
+        cognitive_dimensions: options?.cognitiveDimensions ?? ["apply"],
+        question_count: options?.questionCount ?? 1
       })
     );
     const generationBody = await generationResponse.json();
-    const question = generationBody.data.questions[0];
+    const confirmedQuestions = [];
 
-    const confirmQuestionResponse = await confirmQuestionRoute.POST(
-      authedRequest(
-        `http://localhost/api/v1/questions/${question.id}/confirm`
-      ),
-      {
-        params: Promise.resolve({ questionId: question.id })
-      }
-    );
-    const confirmQuestionBody = await confirmQuestionResponse.json();
+    for (const question of generationBody.data.questions) {
+      const confirmQuestionResponse = await confirmQuestionRoute.POST(
+        authedRequest(
+          `http://localhost/api/v1/questions/${question.id}/confirm`
+        ),
+        {
+          params: Promise.resolve({ questionId: question.id })
+        }
+      );
+      confirmedQuestions.push((await confirmQuestionResponse.json()).data);
+    }
 
     return {
       knowledge_point_id: pointBody.data.id,
-      question_id: confirmQuestionBody.data.id,
-      cognitive_dimension: confirmQuestionBody.data.cognitive_dimension
+      question_id: confirmedQuestions[0].id,
+      question_ids: confirmedQuestions.map((question) => question.id),
+      cognitive_dimension: confirmedQuestions[0].cognitive_dimension
     };
   }
 

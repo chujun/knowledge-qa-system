@@ -592,6 +592,8 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-07 cmd /c npm run build：通过，新增 generation/questions API 路由进入 Next.js 生产构建。
 2026-06-07 cmd /c npm run test：通过，15 个测试文件，38 条测试用例；包含答题提交、mock AI 评分、用户修正评分、掌握画像重算和错误集生成 API 集成测试。
 2026-06-07 cmd /c npm run build：通过，新增 answer-attempts/mastery-profiles/error-sets API 路由进入 Next.js 生产构建。
+2026-06-07 cmd /c npm run test：通过，15 个测试文件，39 条测试用例；包含基于薄弱维度和活跃错误集创建针对性练习会话 API 集成测试。
+2026-06-07 cmd /c npm run build：通过，新增 practice-sessions API 路由进入 Next.js 生产构建。
 ```
 
 ## 18. 部署上线

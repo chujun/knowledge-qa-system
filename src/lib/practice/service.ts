@@ -23,6 +23,80 @@ export const confirmScoreSchema = z.object({
   score_diff_reason: z.string().trim().max(1000).optional()
 });
 
+export const createPracticeSessionSchema = z.object({
+  session_type: z.enum(["knowledge_point", "topic", "domain", "error_set"]).default("knowledge_point"),
+  target_type: z.enum(["knowledge_point", "topic", "domain"]),
+  target_id: z.string().min(1),
+  strategy: z
+    .object({
+      prefer_weak_dimensions: z.boolean().default(true),
+      include_error_set: z.boolean().default(true),
+      question_count: z.number().int().min(1).max(20).default(5),
+      difficulty_min: z.number().int().min(1).max(5).optional(),
+      difficulty_max: z.number().int().min(1).max(5).optional()
+    })
+    .default({})
+});
+
+export async function createPracticeSession(
+  input: z.infer<typeof createPracticeSessionSchema>
+) {
+  const user = await getDefaultUser();
+  const strategy = {
+    prefer_weak_dimensions: input.strategy.prefer_weak_dimensions ?? true,
+    include_error_set: input.strategy.include_error_set ?? true,
+    question_count: input.strategy.question_count ?? 5,
+    difficulty_min: input.strategy.difficulty_min,
+    difficulty_max: input.strategy.difficulty_max
+  };
+  const candidates = await selectPracticeQuestions({
+    userId: user.id,
+    targetType: input.target_type,
+    targetId: input.target_id,
+    strategy
+  });
+
+  if (candidates.length === 0) {
+    throw new Error("no_practice_questions_found");
+  }
+
+  const session = await prisma.practiceSession.create({
+    data: {
+      userId: user.id,
+      sessionType: input.session_type,
+      targetType: input.target_type,
+      targetId: input.target_id,
+      strategyJson: JSON.stringify(strategy),
+      status: "created",
+      items: {
+        create: candidates.map((candidate, index) => ({
+          questionId: candidate.question.id,
+          orderNo: index + 1,
+          selectionReason: candidate.reason,
+          sourceType: "confirmed_question",
+          status: "pending"
+        }))
+      }
+    },
+    include: practiceSessionInclude
+  });
+
+  return serializePracticeSession(session);
+}
+
+export async function getPracticeSession(practiceSessionId: string) {
+  const user = await getDefaultUser();
+  const session = await prisma.practiceSession.findFirst({
+    where: {
+      id: practiceSessionId,
+      userId: user.id
+    },
+    include: practiceSessionInclude
+  });
+
+  return session ? serializePracticeSession(session) : null;
+}
+
 export async function submitAnswerAttempt(
   questionId: string,
   input: z.infer<typeof submitAnswerAttemptSchema>
@@ -197,6 +271,188 @@ const attemptInclude = {
   answerVersion: true,
   scoringRubricVersion: true
 } satisfies Prisma.AnswerAttemptInclude;
+
+const practiceSessionInclude = {
+  items: {
+    include: {
+      question: {
+        include: {
+          versions: {
+            where: { status: "active" },
+            orderBy: { versionNo: "desc" },
+            take: 1
+          },
+          answerVersions: {
+            where: { status: "active" },
+            orderBy: { versionNo: "desc" },
+            take: 1
+          },
+          rubricVersions: {
+            where: { status: "active" },
+            orderBy: { versionNo: "desc" },
+            take: 1
+          }
+        }
+      }
+    },
+    orderBy: { orderNo: "asc" }
+  }
+} satisfies Prisma.PracticeSessionInclude;
+
+async function selectPracticeQuestions(params: {
+  userId: string;
+  targetType: "knowledge_point" | "topic" | "domain";
+  targetId: string;
+  strategy: {
+    prefer_weak_dimensions: boolean;
+    include_error_set: boolean;
+    question_count: number;
+    difficulty_min?: number;
+    difficulty_max?: number;
+  };
+}) {
+  const knowledgePointIds = await resolveKnowledgePointIds(
+    params.userId,
+    params.targetType,
+    params.targetId
+  );
+
+  if (knowledgePointIds.length === 0) {
+    return [];
+  }
+
+  const [profiles, errorSets, questions] = await Promise.all([
+    prisma.masteryProfile.findMany({
+      where: {
+        userId: params.userId,
+        targetType: "knowledge_point",
+        targetId: { in: knowledgePointIds },
+        status: "active"
+      }
+    }),
+    prisma.errorSet.findMany({
+      where: {
+        userId: params.userId,
+        knowledgePointId: { in: knowledgePointIds },
+        status: "active"
+      }
+    }),
+    prisma.question.findMany({
+      where: {
+        userId: params.userId,
+        knowledgePointId: { in: knowledgePointIds },
+        status: "confirmed",
+        ...(params.strategy.difficulty_min
+          ? { difficultyLevel: { gte: params.strategy.difficulty_min } }
+          : {}),
+        ...(params.strategy.difficulty_max
+          ? { difficultyLevel: { lte: params.strategy.difficulty_max } }
+          : {})
+      },
+      include: {
+        versions: {
+          where: { status: "active" },
+          orderBy: { versionNo: "desc" },
+          take: 1
+        },
+        answerVersions: {
+          where: { status: "active" },
+          orderBy: { versionNo: "desc" },
+          take: 1
+        },
+        rubricVersions: {
+          where: { status: "active" },
+          orderBy: { versionNo: "desc" },
+          take: 1
+        }
+      },
+      orderBy: [{ difficultyLevel: "asc" }, { createdAt: "desc" }]
+    })
+  ]);
+
+  const errorKnowledgePointIds = new Set(
+    errorSets.map((item) => item.knowledgePointId)
+  );
+  const weakDimensionsByPoint = new Map(
+    profiles.map((profile) => [
+      profile.targetId,
+      new Set(parseStringArray(profile.weakDimensionsJson))
+    ])
+  );
+
+  const scored = questions
+    .filter(
+      (question) =>
+        question.versions[0] &&
+        question.answerVersions[0] &&
+        question.rubricVersions[0]
+    )
+    .map((question) => {
+      let priority = 0;
+      const reasons = [];
+      const weakDimensions =
+        weakDimensionsByPoint.get(question.knowledgePointId) ?? new Set<string>();
+
+      if (
+        params.strategy.include_error_set &&
+        errorKnowledgePointIds.has(question.knowledgePointId)
+      ) {
+        priority += 100;
+        reasons.push("命中活跃错误集");
+      }
+
+      if (
+        params.strategy.prefer_weak_dimensions &&
+        weakDimensions.has(question.cognitiveDimension)
+      ) {
+        priority += 50;
+        reasons.push(`优先练习薄弱维度：${question.cognitiveDimension}`);
+      }
+
+      if (reasons.length === 0) {
+        reasons.push("补充正式题库覆盖");
+      }
+
+      return {
+        question,
+        priority,
+        reason: reasons.join("；")
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.priority - a.priority ||
+        b.question.difficultyLevel - a.question.difficultyLevel ||
+        b.question.createdAt.getTime() - a.question.createdAt.getTime()
+    );
+
+  return scored.slice(0, params.strategy.question_count);
+}
+
+async function resolveKnowledgePointIds(
+  userId: string,
+  targetType: "knowledge_point" | "topic" | "domain",
+  targetId: string
+) {
+  if (targetType === "knowledge_point") {
+    const point = await prisma.knowledgePoint.findFirst({
+      where: { id: targetId, userId, status: "confirmed" }
+    });
+    return point ? [point.id] : [];
+  }
+
+  const points = await prisma.knowledgePoint.findMany({
+    where: {
+      userId,
+      status: "confirmed",
+      ...(targetType === "topic" ? { topicId: targetId } : {}),
+      ...(targetType === "domain" ? { domainId: targetId } : {})
+    },
+    select: { id: true }
+  });
+
+  return points.map((point) => point.id);
+}
 
 async function recomputeKnowledgePointLearningState(knowledgePointId: string) {
   const user = await getDefaultUser();
@@ -428,6 +684,38 @@ function serializeErrorSet(errorSet: {
     status: errorSet.status,
     created_at: errorSet.createdAt.toISOString(),
     updated_at: errorSet.updatedAt.toISOString()
+  };
+}
+
+function serializePracticeSession(
+  session: Prisma.PracticeSessionGetPayload<{
+    include: typeof practiceSessionInclude;
+  }>
+) {
+  return {
+    id: session.id,
+    session_type: session.sessionType,
+    target_type: session.targetType,
+    target_id: session.targetId,
+    strategy: JSON.parse(session.strategyJson),
+    status: session.status,
+    questions: session.items.map((item) => ({
+      practice_session_item_id: item.id,
+      order_no: item.orderNo,
+      question_id: item.questionId,
+      question_version_id: item.question.versions[0]?.id ?? null,
+      answer_version_id: item.question.answerVersions[0]?.id ?? null,
+      scoring_rubric_version_id: item.question.rubricVersions[0]?.id ?? null,
+      stem: item.question.versions[0]?.stem ?? "",
+      question_type: item.question.questionType,
+      cognitive_dimension: item.question.cognitiveDimension,
+      difficulty_level: item.question.difficultyLevel,
+      selection_reason: item.selectionReason,
+      source_type: item.sourceType,
+      status: item.status
+    })),
+    created_at: session.createdAt.toISOString(),
+    updated_at: session.updatedAt.toISOString()
   };
 }
 
