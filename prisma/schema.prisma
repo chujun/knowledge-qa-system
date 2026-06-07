@@ -8,8 +8,94 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String           @id @default(cuid())
+  name            String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  domains         KnowledgeDomain[]
+  topics          KnowledgeTopic[]
+  knowledgePoints KnowledgePoint[]
+
+  @@map("users")
+}
+
+model KnowledgeDomain {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  name            String
+  description     String?
+  trustPolicyJson String?          @map("trust_policy_json")
+  sortOrder       Int              @default(0) @map("sort_order")
+  status          String           @default("active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  user            User             @relation(fields: [userId], references: [id])
+  topics          KnowledgeTopic[]
+  knowledgePoints KnowledgePoint[]
+
+  @@unique([userId, name])
+  @@index([userId, status])
+  @@map("knowledge_domains")
+}
+
+model KnowledgeTopic {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  domainId        String           @map("domain_id")
+  name            String
+  description     String?
+  outlineJson     String?          @map("outline_json")
+  suggestedLevel  String?          @map("suggested_level")
+  status          String           @default("confirmed")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  user            User             @relation(fields: [userId], references: [id])
+  domain          KnowledgeDomain  @relation(fields: [domainId], references: [id])
+  knowledgePoints KnowledgePoint[]
+
+  @@unique([domainId, name])
+  @@index([userId, status])
+  @@index([domainId, status])
+  @@map("knowledge_topics")
+}
+
+model KnowledgeType {
+  id                      String           @id @default(cuid())
+  userId                  String?          @map("user_id")
+  code                    String           @unique
+  name                    String
+  description             String?
+  explanationTemplateJson String           @map("explanation_template_json")
+  status                  String           @default("active")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
+  knowledgePoints         KnowledgePoint[]
+
+  @@index([status])
+  @@map("knowledge_types")
+}
+
+model KnowledgePoint {
+  id                  String          @id @default(cuid())
+  userId              String          @map("user_id")
+  domainId            String          @map("domain_id")
+  topicId             String          @map("topic_id")
+  knowledgeTypeId     String          @map("knowledge_type_id")
+  name                String
+  description         String?
+  complexityLevel     String          @default("medium") @map("complexity_level")
+  suggestedDifficulty Int             @default(3) @map("suggested_difficulty")
+  status              String          @default("confirmed")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  user                User            @relation(fields: [userId], references: [id])
+  domain              KnowledgeDomain @relation(fields: [domainId], references: [id])
+  topic               KnowledgeTopic  @relation(fields: [topicId], references: [id])
+  knowledgeType       KnowledgeType   @relation(fields: [knowledgeTypeId], references: [id])
+
+  @@unique([topicId, name])
+  @@index([userId, status])
+  @@index([domainId, status])
+  @@index([topicId, status])
+  @@map("knowledge_points")
 }

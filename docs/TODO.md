@@ -651,7 +651,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 确认链接使用本地 Web URL 还是其他形式？已确认：MVP 使用本地 Web URL。
 - [x] 质量校验超过自动修正次数后，是否允许用户编辑后重新触发校验？已确认：允许用户编辑后重新校验。
 - [x] 来源冲突确认是否进入统一待确认队列？已确认：来源冲突进入待确认队列，不自动覆盖 active 标准答案。
-- [ ] 最终确认 `docs/knowledge-qa-design-dev-flow-check.md` 中的阶段结论、待确认事项、风险点。当前延期到完整设计阶段结束后确认。
+- [x] 最终确认 `docs/knowledge-qa-design-dev-flow-check.md` 中的阶段结论、待确认事项、风险点。已于 2026-06-07 确认。
 
 ## 22. 推荐下一步执行顺序
 
