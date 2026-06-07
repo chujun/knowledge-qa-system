@@ -16,7 +16,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：按顺序推进测试验证、部署运行文档、测试验证文档和用户使用说明。
+下一步：先解除 Playwright Chromium 下载阻塞并完成核心端到端路径测试，再进入部署运行文档。
 当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架和 mock AI provider 初始验证。
 ```
 
@@ -571,11 +571,20 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 测试质量校验不通过自动修正。
 - [x] 测试自动修正超过次数进入待人工处理。
 - [x] 测试来源冲突需要用户确认。
-- [ ] 测试 API 鉴权。
-- [ ] 测试 MCP Tool 输入输出 schema。
-- [ ] 测试 AI Agent 通过 MCP/Agent 调用能力创建外部会话沉淀任务。
-- [ ] 测试 Agent 调用后返回主题建议、知识点列表、题目预览和确认/编辑链接。
-- [ ] 测试核心端到端路径。
+- [x] 测试 API 鉴权。
+- [x] 测试 MCP Tool 输入输出 schema。
+- [x] 测试 AI Agent 通过 MCP/Agent 调用能力创建外部会话沉淀任务。
+- [x] 测试 Agent 调用后返回主题建议、知识点列表、题目预览和确认/编辑链接。
+- [ ] 测试核心端到端路径。状态：blocked；`npm run test:e2e` 因 Playwright Chromium 浏览器二进制缺失失败，已两次尝试 `npx playwright install chromium`，均因外部下载超时未完成。
+
+验证记录：
+
+```text
+2026-06-07 npm run test：通过，10 个测试文件，30 条测试用例。
+2026-06-07 npm run build：通过，Next.js 生产构建成功。
+2026-06-07 npm run test:e2e：失败，缺少 Playwright Chromium 浏览器二进制。
+2026-06-07 npx playwright install chromium：下载超时，端到端测试阻塞。
+```
 
 ## 18. 部署上线
 
