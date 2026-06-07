@@ -24,6 +24,7 @@ env/
 node_modules/
 .next/
 out/
+tsconfig.tsbuildinfo
 playwright-report/
 test-results/
 *.log
