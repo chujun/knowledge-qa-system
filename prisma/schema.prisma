@@ -7,6 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// 中文表名：用户表
+/// 表说明：存储本地单用户或未来多用户账号的基础身份信息，是所有业务数据按用户隔离的根对象。
+/// 物理表名：users
 model User {
   id              String           @id @default(cuid())
   name            String
@@ -30,6 +33,9 @@ model User {
   @@map("users")
 }
 
+/// 中文表名：知识领域表
+/// 表说明：存储历史、计算机、AI、摄影等知识领域，用于组织主题、知识点和领域级掌握画像。
+/// 物理表名：knowledge_domains
 model KnowledgeDomain {
   id              String           @id @default(cuid())
   userId          String           @map("user_id")
@@ -49,6 +55,9 @@ model KnowledgeDomain {
   @@map("knowledge_domains")
 }
 
+/// 中文表名：知识主题表
+/// 表说明：存储某个知识领域下较成体系的学习主题，例如 GitHub Actions，用于承载主题大纲和知识点集合。
+/// 物理表名：knowledge_topics
 model KnowledgeTopic {
   id              String           @id @default(cuid())
   userId          String           @map("user_id")
@@ -70,6 +79,9 @@ model KnowledgeTopic {
   @@map("knowledge_topics")
 }
 
+/// 中文表名：知识类型表
+/// 表说明：存储概念类、操作类、原理类等知识类型及讲解模板，用于指导不同知识点的讲解和出题方式。
+/// 物理表名：knowledge_types
 model KnowledgeType {
   id                      String           @id @default(cuid())
   userId                  String?          @map("user_id")
@@ -86,6 +98,9 @@ model KnowledgeType {
   @@map("knowledge_types")
 }
 
+/// 中文表名：知识点表
+/// 表说明：存储可被讲解、出题、练习和评估的最小学习单元，并关联领域、主题和知识类型。
+/// 物理表名：knowledge_points
 model KnowledgePoint {
   id                  String          @id @default(cuid())
   userId              String          @map("user_id")
@@ -113,6 +128,9 @@ model KnowledgePoint {
   @@map("knowledge_points")
 }
 
+/// 中文表名：来源引用表
+/// 表说明：记录外部会话、文档、链接等知识来源，保留来源系统、原文或摘要和可信度，支持溯源审计。
+/// 物理表名：source_references
 model SourceReference {
   id                String          @id @default(cuid())
   userId            String          @map("user_id")
@@ -135,6 +153,9 @@ model SourceReference {
   @@map("source_references")
 }
 
+/// 中文表名：知识沉淀任务表
+/// 表说明：记录主题学习、即时掌握、外部会话沉淀等任务的输入、状态、预览结果和幂等键。
+/// 物理表名：ingestion_tasks
 model IngestionTask {
   id                String           @id @default(cuid())
   userId            String           @map("user_id")
@@ -158,6 +179,9 @@ model IngestionTask {
   @@map("ingestion_tasks")
 }
 
+/// 中文表名：待确认项表
+/// 表说明：存储 AI 生成后需要用户确认、编辑或拒绝的待办项，是正式入库前的统一业务闸门。
+/// 物理表名：review_items
 model ReviewItem {
   id              String         @id @default(cuid())
   userId          String         @map("user_id")
@@ -178,6 +202,9 @@ model ReviewItem {
   @@map("review_items")
 }
 
+/// 中文表名：题目表
+/// 表说明：存储题目的稳定业务身份、认知维度、难度、状态和所属知识点，具体题干通过题目版本表管理。
+/// 物理表名：questions
 model Question {
   id                 String                  @id @default(cuid())
   userId             String                  @map("user_id")
@@ -203,6 +230,9 @@ model Question {
   @@map("questions")
 }
 
+/// 中文表名：题目版本表
+/// 表说明：存储题干和题目内容的版本化快照，保留生成来源、模型和 Agent 信息，确保历史答题可追溯。
+/// 物理表名：question_versions
 model QuestionVersion {
   id              String    @id @default(cuid())
   questionId      String    @map("question_id")
@@ -224,6 +254,9 @@ model QuestionVersion {
   @@map("question_versions")
 }
 
+/// 中文表名：标准答案版本表
+/// 表说明：存储题目标准答案和答案讲解的版本化快照，支持答案迭代和历史答题绑定。
+/// 物理表名：answer_versions
 model AnswerVersion {
   id              String    @id @default(cuid())
   questionId      String    @map("question_id")
@@ -245,6 +278,9 @@ model AnswerVersion {
   @@map("answer_versions")
 }
 
+/// 中文表名：评分规则版本表
+/// 表说明：存储题目评分规则的版本化 JSON，答题评分必须绑定当时使用的评分规则版本。
+/// 物理表名：scoring_rubric_versions
 model ScoringRubricVersion {
   id              String    @id @default(cuid())
   questionId      String    @map("question_id")
@@ -265,6 +301,9 @@ model ScoringRubricVersion {
   @@map("scoring_rubric_versions")
 }
 
+/// 中文表名：核心讲解表
+/// 表说明：存储知识点核心讲解的稳定业务身份和状态，具体讲解内容通过核心讲解版本表管理。
+/// 物理表名：core_explanations
 model CoreExplanation {
   id                 String                   @id @default(cuid())
   userId             String                   @map("user_id")
@@ -281,6 +320,9 @@ model CoreExplanation {
   @@map("core_explanations")
 }
 
+/// 中文表名：核心讲解版本表
+/// 表说明：存储知识点核心讲解内容的版本化快照，并记录采用的知识类型模板、模型和 Agent 来源。
+/// 物理表名：core_explanation_versions
 model CoreExplanationVersion {
   id                String          @id @default(cuid())
   coreExplanationId String          @map("core_explanation_id")
@@ -302,6 +344,9 @@ model CoreExplanationVersion {
   @@map("core_explanation_versions")
 }
 
+/// 中文表名：生成记录表
+/// 表说明：记录 AI 生成题目、答案、评分规则、核心讲解等内容时的模型、Agent、提示词版本、token、耗时和成本。
+/// 物理表名：generation_records
 model GenerationRecord {
   id              String   @id @default(cuid())
   userId          String   @map("user_id")
@@ -329,6 +374,9 @@ model GenerationRecord {
   @@map("generation_records")
 }
 
+/// 中文表名：质量校验记录表
+/// 表说明：记录题目、答案、评分规则等内容的规则校验和 AI 质检结果，以及自动修正次数和通过状态。
+/// 物理表名：quality_check_records
 model QualityCheckRecord {
   id                String    @id @default(cuid())
   userId            String    @map("user_id")
@@ -354,6 +402,9 @@ model QualityCheckRecord {
   @@map("quality_check_records")
 }
 
+/// 中文表名：答题记录表
+/// 表说明：记录用户一次答题的答案、AI 评分、用户确认评分、错误原因标签和是否计入长期掌握画像。
+/// 物理表名：answer_attempts
 model AnswerAttempt {
   id                     String                @id @default(cuid())
   userId                 String                @map("user_id")
@@ -384,6 +435,9 @@ model AnswerAttempt {
   @@map("answer_attempts")
 }
 
+/// 中文表名：掌握画像表
+/// 表说明：存储知识点、主题或领域维度的五维掌握分、综合分、证据数量和薄弱维度摘要。
+/// 物理表名：mastery_profiles
 model MasteryProfile {
   id                  String   @id @default(cuid())
   userId              String   @map("user_id")
@@ -404,6 +458,9 @@ model MasteryProfile {
   @@map("mastery_profiles")
 }
 
+/// 中文表名：错误集表
+/// 表说明：按知识点聚合低分或用户修正后的错误答题记录，保存主要错误原因标签，用于复盘和针对性提问。
+/// 物理表名：error_sets
 model ErrorSet {
   id                 String   @id @default(cuid())
   userId             String   @map("user_id")
@@ -421,6 +478,9 @@ model ErrorSet {
   @@map("error_sets")
 }
 
+/// 中文表名：练习会话表
+/// 表说明：记录一次针对知识点、主题或领域的练习会话目标、选题策略和会话状态。
+/// 物理表名：practice_sessions
 model PracticeSession {
   id             String                @id @default(cuid())
   userId         String                @map("user_id")
@@ -439,6 +499,9 @@ model PracticeSession {
   @@map("practice_sessions")
 }
 
+/// 中文表名：练习会话题目表
+/// 表说明：记录练习会话中被选中的题目顺序、来源、状态和选题原因，支持解释为什么问这道题。
+/// 物理表名：practice_session_items
 model PracticeSessionItem {
   id                String          @id @default(cuid())
   practiceSessionId String          @map("practice_session_id")

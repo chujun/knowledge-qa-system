@@ -289,6 +289,8 @@ docs/knowledge-qa-er-diagram.md
 - [x] 判断是否新增 ModelCallRecord 表。
 - [x] 为每张表定义字段类型。
 - [x] 为每张表定义主键、外键、唯一约束。
+- [x] 为每张表补充中文表名和中文业务说明。当前落点：`prisma/schema.prisma` 模型文档注释与 `docs/knowledge-qa-data-dictionary.md`。
+- [x] 数据库规范：后续新增表必须同步补充中文表名、中文业务说明和物理表名说明；若后续迁移 PostgreSQL，需转换为数据库原生 `COMMENT ON TABLE`。
 - [x] 为常用查询定义索引。
 - [x] 定义状态字段枚举。
 - [x] 定义 JSON 字段范围。
@@ -594,6 +596,9 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-07 cmd /c npm run build：通过，新增 answer-attempts/mastery-profiles/error-sets API 路由进入 Next.js 生产构建。
 2026-06-07 cmd /c npm run test：通过，15 个测试文件，39 条测试用例；包含基于薄弱维度和活跃错误集创建针对性练习会话 API 集成测试。
 2026-06-07 cmd /c npm run build：通过，新增 practice-sessions API 路由进入 Next.js 生产构建。
+2026-06-07 Prisma 模型表级中文说明检查：通过，所有当前表均已补充中文表名、中文业务说明和物理表名说明。
+2026-06-07 cmd /c npm run test：通过，16 个测试文件，40 条测试用例；包含来源引用、生成记录和质量校验记录查询 API 集成测试。
+2026-06-07 cmd /c npm run build：通过，新增 source-references/generation-records/quality-checks API 路由进入 Next.js 生产构建。
 ```
 
 ## 18. 部署上线
@@ -630,6 +635,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 创建部署运行文档。
 - [x] 创建测试验证文档。
 - [x] 创建用户使用说明。
+- [x] 创建数据字典文档，记录所有当前表的英文模型名、物理表名、中文表名和业务说明。
 
 ## 20. Git 和交付管理
 
