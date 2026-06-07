@@ -629,28 +629,28 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 确认是否提交当前三份设计文档。当前决策：本轮不自动提交，除非用户明确要求。
 - [x] 提交前检查文档是否有占位符。
 - [x] 提交前检查 Markdown 链接。
-- [ ] 提交前检查 Mermaid 图是否可渲染。状态：partial；Mermaid 代码块围栏检查通过，但本机未安装 mmdc/mermaid-cli，尚未执行真实渲染。
+- [x] 提交前检查 Mermaid 图是否可渲染。已使用 mermaid-cli 11.15.0 渲染 15 个 Mermaid 图为 SVG，全部通过。
 - [x] 提交前确认没有密钥、隐私内容和模型 API Key。检查结果：仅发现占位符和脱敏示例，未发现真实密钥。
 - [x] 设计阶段提交建议信息：`docs: add knowledge qa system design docs`。
 - [x] 后续每个阶段单独提交，避免一次提交过大。
 
 ## 21. 当前待用户确认问题
 
-- [ ] MVP 第一版是否包含 Web UI？
-- [ ] MVP 第一版是否直接实现 MCP Tool，还是只实现 API 并设计 MCP schema？
-- [ ] 技术栈选择是什么？
-- [ ] 数据库使用 SQLite、PostgreSQL 还是其他？
-- [ ] AI 生成第一版是否使用真实模型，还是先用 mock 生成器？
+- [x] MVP 第一版是否包含 Web UI？已确认：包含基础 Web 页面。
+- [x] MVP 第一版是否直接实现 MCP Tool，还是只实现 API 并设计 MCP schema？已确认：第一阶段先实现 MCP schema 和本地模拟 Agent 调用，后续实现真实 MCP Server。
+- [x] 技术栈选择是什么？已确认：Next.js + TypeScript + SQLite + Prisma + React/Tailwind；API 使用 Next.js Route Handlers；测试使用 Vitest + Playwright。
+- [x] 数据库使用 SQLite、PostgreSQL 还是其他？已确认：MVP 第一版使用 SQLite。
+- [x] AI 生成第一版是否使用真实模型，还是先用 mock 生成器？已确认：先使用 mock AI provider，后续接 chatgpt-5.5。
 - [x] 是否新增 IngestionTask 作为沉淀任务对象？
 - [x] 是否新增 ReviewItem/ReviewQueue 作为待确认队列对象？
 - [x] 是否新增 PracticeSession 作为练习会话对象？
 - [x] 是否新增 ModelCallRecord 作为模型调用记录对象？
-- [ ] 是否统一使用 `deleted_at` 软删除？
-- [ ] 掌握画像实时更新还是异步重算？
-- [ ] 外部 Agent 调用 API/MCP 的认证方式是什么？
-- [ ] 确认链接使用本地 Web URL 还是其他形式？
-- [ ] 质量校验超过自动修正次数后，是否允许用户编辑后重新触发校验？
-- [ ] 来源冲突确认是否进入统一待确认队列？
+- [x] 是否统一使用 `deleted_at` 软删除？已确认：MVP 暂不强制所有表增加 deleted_at，后续需要用户删除能力时再统一引入。
+- [x] 掌握画像实时更新还是异步重算？已确认：第一版同步重算单个知识点画像，主题和领域画像查看时懒加载重算或后续异步任务重算。
+- [x] 外部 Agent 调用 API/MCP 的认证方式是什么？已确认：API/Agent 调用使用 API Key，支持 X-API-Key 或 Bearer。
+- [x] 确认链接使用本地 Web URL 还是其他形式？已确认：MVP 使用本地 Web URL。
+- [x] 质量校验超过自动修正次数后，是否允许用户编辑后重新触发校验？已确认：允许用户编辑后重新校验。
+- [x] 来源冲突确认是否进入统一待确认队列？已确认：来源冲突进入待确认队列，不自动覆盖 active 标准答案。
 - [ ] 最终确认 `docs/knowledge-qa-design-dev-flow-check.md` 中的阶段结论、待确认事项、风险点。当前延期到完整设计阶段结束后确认。
 
 ## 22. 推荐下一步执行顺序
@@ -662,14 +662,8 @@ docs/knowledge-qa-mvp-plan.md
 如需调整顺序，先修改 TODO 并说明原因，经用户确认后再继续。
 
 当前正确顺序：
-1. 完成第 1 章项目启动中仍需确认的事项。
-2. 完成第 6 章架构设计，生成 docs/knowledge-qa-architecture.md。
-3. 完成第 10 章核心流程设计，生成 docs/knowledge-qa-core-flows.md。
-4. 完成第 11 章题目生成与质量校验细化。
-5. 完成第 12 章掌握画像和针对性提问细化。
-6. 完成第 13 章安全设计。
-7. 完成第 14 章可观测性设计。
-8. 完成第 15 章 MVP 实施计划。
-9. 最终确认 docs/knowledge-qa-design-dev-flow-check.md。
-10. 用户确认设计后，再进入实现计划。
+1. 用户最终确认 docs/knowledge-qa-design-dev-flow-check.md 中的阶段结论、待确认事项、风险点。
+2. 如用户确认无调整，进入下一轮业务实现：数据模型和核心 API。
+3. 如用户提出调整，先更新相关设计文档和 TODO，再进入实现。
+4. 后续每个实现里程碑继续遵循实现前范围说明、验证命令、回滚方式和测试记录。
 ```
