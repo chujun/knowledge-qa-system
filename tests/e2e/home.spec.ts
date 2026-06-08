@@ -7,6 +7,9 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByText("当前页面已经读取真实本地数据")).toBeVisible();
   await expect(page.getByText("Local Runtime")).toBeVisible();
   await expect(page.getByRole("heading", { name: "创建知识结构" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "知识结构管理" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "题库管理" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "针对性练习" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
 });
@@ -66,4 +69,23 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   await page.getByRole("button", { name: "确认评分" }).click();
 
   await expect(page.getByText("user_confirmed")).toBeVisible();
+
+  await page.goto("/domains");
+  await expect(page.getByRole("heading", { name: "知识结构管理" })).toBeVisible();
+  await expect(page.getByText(domainName)).toBeVisible();
+  await expect(page.getByText(topicName)).toBeVisible();
+  await expect(page.getByText(pointName)).toBeVisible();
+
+  await page.goto("/questions");
+  await expect(page.getByRole("heading", { name: "题库管理" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: new RegExp(pointName) }).first()).toBeVisible();
+
+  await page.goto("/practice");
+  await expect(page.getByRole("heading", { name: "针对性练习" })).toBeVisible();
+  await page.getByLabel("练习知识点").selectOption({ label: pointName });
+  await page.getByLabel("练习题目数量").fill("1");
+  await page.getByRole("button", { name: "创建练习" }).click();
+
+  await expect(page.getByRole("heading", { name: "练习会话" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "去答题" }).first()).toBeVisible();
 });

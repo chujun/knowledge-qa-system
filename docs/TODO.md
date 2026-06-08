@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：进入交付整理，确认是否提交当前实现。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口和真实数据 Web 工作台初版。
+下一步：继续推进 Web 工作台基础管理化。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台和基础管理入口。
 ```
 
 ## 0. 阶段门禁
@@ -834,4 +834,57 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 21:08:59 cmd /c npm run docs:check-timestamps：通过。
 2026-06-08 21:08:59 cmd /c npm run build：通过，首页新增知识结构创建入口并进入 Next.js 生产构建。
 2026-06-08 21:08:59 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；MVP 浏览器学习闭环已通过浏览器创建领域、主题和知识点。
+```
+
+## 26. Web 工作台基础管理化
+
+本章用于补齐用户初看页面时最明显的功能缺口：从单个首页扩展为可浏览、可进入、可触发核心动作的基础管理界面。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/page.tsx、src/app/domains/page.tsx、src/app/questions/page.tsx、src/app/practice/page.tsx、src/app/practice/[practiceSessionId]/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页新增功能入口；新增知识结构列表页、题库列表页、针对性练习创建页和练习会话详情页。
+- 数据/接口变化：不新增数据库表；复用现有知识结构、题库、练习服务和 Server Action。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 回滚或恢复：回退新增页面、首页入口和 E2E 调整即可恢复到第 25 章状态。
+```
+
+- [x] 首页新增知识结构管理、题库管理、针对性练习快捷入口。
+- [x] 新增 `/domains` 知识结构管理页。
+- [x] `/domains` 按领域、主题、知识点展示层级数据。
+- [x] `/domains` 支持从知识点触发题目生成。
+- [x] 新增 `/questions` 题库管理页。
+- [x] `/questions` 支持查看题目状态、认知维度、难度并进入详情。
+- [x] `/questions` 支持确认入库和归档。
+- [x] 新增 `/practice` 针对性练习创建页。
+- [x] 新增 `/practice/[practiceSessionId]` 练习会话详情页。
+- [x] Playwright E2E 覆盖新增页面入口和练习创建路径。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+
+验收标准：
+
+```text
+用户可以通过浏览器完成基础管理路径：
+首页 -> 知识结构管理 -> 题库管理 -> 针对性练习 -> 练习会话 -> 题目详情。
+```
+
+验证记录：
+
+```text
+2026-06-08 21:40:23 新增 Web 工作台基础管理化实现：新增知识结构、题库、练习和练习会话页面，并扩展 E2E 覆盖。
+2026-06-08 21:46:40 cmd /c npx tsc --noEmit：第一次失败，原因是知识点类型在 TypeScript 中可能为空。
+2026-06-08 21:46:40 修正 `/domains` 知识点类型展示兜底为 `未标注类型`。
+2026-06-08 21:46:40 cmd /c npx tsc --noEmit：通过。
+2026-06-08 21:46:40 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 21:46:40 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 21:46:40 cmd /c npm run build：通过，新增 `/domains`、`/questions`、`/practice` 和 `/practice/[practiceSessionId]` 页面进入 Next.js 生产构建。
+2026-06-08 21:46:40 cmd /c npm run test:e2e：第一次失败，原因是题库页断言匹配到历史 E2E 题目导致严格模式冲突。
+2026-06-08 21:46:40 收窄 Playwright 断言为本轮唯一知识点题目标题。
+2026-06-08 21:46:40 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖首页入口、知识结构页、题库页、针对性练习页和练习会话详情页。
 ```
