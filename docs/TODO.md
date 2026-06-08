@@ -731,9 +731,9 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 答题提交 Web 操作。
 - [x] AI 评分和反馈展示。
 - [x] 用户确认/修正评分 Web 操作。
-- [ ] 掌握画像和错误集刷新验证。
-- [ ] MVP 本地启动、初始化和使用说明最终校验。
-- [ ] MVP 可运行版最终 E2E 闭环验证。
+- [x] 掌握画像和错误集刷新验证。
+- [x] MVP 本地启动、初始化和使用说明最终校验。
+- [x] MVP 可运行版最终 E2E 闭环验证。
 
 验收标准：
 
@@ -775,4 +775,18 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 16:12:10 cmd /c npx tsc --noEmit：通过。
 2026-06-08 16:12:10 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
 2026-06-08 16:12:10 cmd /c npm run build：通过。
+2026-06-08 20:28:11 掌握画像和错误集刷新验证：通过，既有 `practice-routes.integration.test.ts` 已覆盖答题、AI 评分、用户修正评分、知识点掌握画像重算、错误集生成和错误集解决。
+2026-06-08 20:33:25 更新 `docs/knowledge-qa-user-guide.md`：补齐 MVP 本地启动、`.env.local`、Prisma 初始化、健康检查和当前 Web 工作台能力说明。
+2026-06-08 20:33:25 更新 `docs/knowledge-qa-deployment.md`：补齐本地配置、SQLite 初始化、Agent Tool CLI 和 MCP stdio 自检命令。
+2026-06-08 20:33:25 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 20:33:25 cmd /c npx tsc --noEmit：通过。
+2026-06-08 20:33:25 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 20:33:25 cmd /c npm run build：通过。
+2026-06-08 20:46:20 更新 Playwright 配置：E2E 专用端口改为 3100，避免和用户浏览器使用的 3000 服务互相污染。
+2026-06-08 20:46:20 新增 MVP 浏览器学习闭环 E2E：API 准备知识点，浏览器生成题目、查看详情、确认入库、提交答案、查看 AI 评分、用户确认评分。
+2026-06-08 20:46:20 cmd /c npx tsc --noEmit：通过。
+2026-06-08 20:46:20 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 20:46:20 cmd /c npm run build：通过。
+2026-06-08 20:46:20 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试。
+2026-06-08 20:46:20 更新 `docs/knowledge-qa-user-guide.md` 和 `docs/knowledge-qa-deployment.md`：补充 E2E 使用 3100 专用端口，日常 Web/API 使用 3000。
 ```

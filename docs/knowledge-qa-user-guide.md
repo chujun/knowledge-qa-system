@@ -54,16 +54,40 @@ Playwright 首页 E2E 测试。
 
 ## 3. 本地启动
 
+当前 MVP 使用本地 Next.js 服务和 SQLite。Windows 环境建议始终用 `cmd /c npm ...`，避免 PowerShell 执行策略拦截 `npm.ps1`。
+
 安装依赖：
 
 ```powershell
 cmd /c npm install
 ```
 
+复制本地配置：
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+`.env.local` 至少包含：
+
+```text
+DATABASE_URL="file:./dev.db"
+KNOWLEDGE_QA_API_KEY="local-dev-key"
+DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_NAME="chatgpt-5.5"
+```
+
+初始化 Prisma Client 和 SQLite：
+
+```powershell
+cmd /c npm run prisma:generate
+cmd /c npx prisma db push
+```
+
 开发模式启动：
 
 ```powershell
-cmd /c npm run dev
+cmd /c npm run dev -- -p 3000
 ```
 
 浏览器访问：
@@ -76,6 +100,12 @@ http://localhost:3000
 
 ```text
 http://localhost:3000/api/health
+```
+
+健康检查中 `database` 应返回：
+
+```text
+ready
 ```
 
 ## 4. 本地配置
@@ -104,6 +134,19 @@ KNOWLEDGE_QA_API_KEY 用于后续 API 和 Agent/MCP 调用。
 ```
 
 ## 5. 预期业务使用方式
+
+当前 MVP Web 工作台已经支持以下浏览器操作：
+
+```text
+待确认项确认/拒绝
+知识点生成题目
+题目详情查看
+题目确认入库/归档
+答题提交
+AI 评分与反馈展示
+用户确认/修正评分
+掌握画像和错误集刷新
+```
 
 ### 5.1 主题学习入口
 
@@ -303,12 +346,24 @@ E2E 测试：
 cmd /c npm run test:e2e
 ```
 
+E2E 测试会启动或复用 Playwright 专用本地服务：
+
+```text
+http://127.0.0.1:3100
+```
+
+日常浏览器使用仍然访问：
+
+```text
+http://localhost:3000
+```
+
 当前通过状态：
 
 ```text
 单元测试：通过。
 生产构建：通过。
-E2E 测试：通过。
+E2E 测试：通过，包含首页冒烟和 MVP 浏览器学习闭环。
 ```
 
 ## 11. 常见问题
@@ -350,14 +405,13 @@ chromium_headless_shell-1223
 INSTALLATION_COMPLETE
 ```
 
-### 健康检查返回 database=not_initialized
+### 健康检查返回 database=unavailable
 
 说明：
 
 ```text
-当前 MVP 骨架尚未接入完整业务数据库初始化流程。
-这不是服务启动失败。
-后续完成 Prisma 业务表和迁移后，健康检查会扩展数据库状态。
+数据库不可用，通常是 DATABASE_URL 未配置、SQLite 文件不可写，或尚未执行 Prisma 初始化。
+请检查 .env.local，并执行 cmd /c npx prisma db push。
 ```
 
 ## 12. 后续功能说明

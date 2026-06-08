@@ -146,10 +146,32 @@ prisma/dev.db-journal
 cmd /c npm install
 ```
 
+复制本地配置：
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+MVP 本地建议使用：
+
+```text
+DATABASE_URL="file:./dev.db"
+KNOWLEDGE_QA_API_KEY="local-dev-key"
+DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_NAME="chatgpt-5.5"
+```
+
+生成 Prisma Client 并初始化 SQLite：
+
+```powershell
+cmd /c npm run prisma:generate
+cmd /c npx prisma db push
+```
+
 开发模式启动：
 
 ```powershell
-cmd /c npm run dev
+cmd /c npm run dev -- -p 3000
 ```
 
 生产构建：
@@ -190,6 +212,22 @@ cmd /c npm run prisma:generate
 cmd /c npm run prisma:migrate
 ```
 
+当前 MVP 本地试运行如果只需要把 Prisma schema 同步到 SQLite，可使用：
+
+```powershell
+cmd /c npx prisma db push
+```
+
+手工迁移目录已经包含：
+
+```text
+20260607172000_add_core_knowledge_models
+20260607183000_add_ingestion_review_models
+20260607184500_add_question_generation_models
+20260607190000_add_attempt_mastery_models
+20260607191500_add_practice_session_models
+```
+
 说明：
 
 ```text
@@ -217,10 +255,11 @@ Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000/api/health"
 {
   "data": {
     "status": "ok",
-    "database": "not_initialized",
+    "database": "ready",
+    "database_error": null,
     "model_provider": "mock",
     "version": "0.1.0",
-    "timestamp": "2026-06-07T00:00:00.000Z"
+    "timestamp": "2026-06-08T00:00:00.000Z"
   }
 }
 ```
@@ -249,6 +288,18 @@ cmd /c npm run test
 cmd /c npm run build
 cmd /c npm run test:e2e
 cmd /c npm run start
+```
+
+E2E 测试使用 Playwright 专用端口，避免和用户正在访问的 3000 开发服务互相污染：
+
+```text
+http://127.0.0.1:3100
+```
+
+日常 Web/API 服务仍使用：
+
+```text
+http://localhost:3000
 ```
 
 ## 8. 回滚步骤
@@ -349,14 +400,27 @@ MCP/Agent 第一阶段：
 
 ```text
 使用 src/lib/mcp/tools.ts 中的 schema 作为 Tool 契约。
-使用 src/lib/mcp/simulated-agent.ts 模拟 Agent 调用链路。
-后续真实 MCP Server 通过 KNOWLEDGE_QA_API_BASE_URL 和 KNOWLEDGE_QA_API_KEY 调用后端 API。
+使用 scripts/knowledge-qa-agent-tool.mjs 作为本地 Agent Tool CLI。
+使用 scripts/knowledge-qa-mcp-stdio.mjs 作为本地 MCP stdio server。
+后续完整 MCP Server 可复用同一 HTTP API 和 API Key。
 ```
 
-后续真实 MCP Server 建议环境变量：
+Agent/MCP 本地环境变量：
 
 ```text
 KNOWLEDGE_QA_API_BASE_URL=http://localhost:3000/api/v1
 KNOWLEDGE_QA_API_KEY=<local-api-key>
-KNOWLEDGE_QA_DEFAULT_USER_ID=<local-user-id>
+```
+
+Agent Tool CLI 自检：
+
+```powershell
+cmd /c npm run agent:tool -- --help
+```
+
+MCP stdio 自检：
+
+```powershell
+node scripts/knowledge-qa-mcp-stdio.mjs --self-check
+cmd /c npm run mcp:check
 ```
