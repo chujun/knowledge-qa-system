@@ -107,6 +107,24 @@ export default async function Home() {
             <Metric label="错误集" value={data.errorSets.total} />
           </section>
 
+          <section className="grid gap-4 md:grid-cols-3" aria-label="功能入口">
+            <WorkbenchLink
+              description="按领域、主题、知识点查看结构，并从任意知识点生成题目。"
+              href="/domains"
+              label="知识结构管理"
+            />
+            <WorkbenchLink
+              description="集中查看题目状态、认知维度、难度和题目详情。"
+              href="/questions"
+              label="题库管理"
+            />
+            <WorkbenchLink
+              description="基于正式题库、薄弱维度和错误集创建针对性练习。"
+              href="/practice"
+              label="针对性练习"
+            />
+          </section>
+
           <section id="领域">
             <Panel
               eyebrow="Knowledge Setup"
@@ -501,6 +519,29 @@ function Metric({ label, value }: { label: string; value: number }) {
       <p className="text-xs uppercase tracking-[0.18em] text-ink/55">{label}</p>
       <p className="mt-3 font-display text-4xl leading-none">{value}</p>
     </div>
+  );
+}
+
+function WorkbenchLink({
+  description,
+  href,
+  label
+}: {
+  description: string;
+  href: string;
+  label: string;
+}) {
+  return (
+    <Link
+      className="group border border-ink/15 bg-white/35 p-4 shadow-line transition hover:border-clay hover:bg-white/60"
+      href={href}
+    >
+      <span className="text-xs uppercase tracking-[0.18em] text-clay">Open</span>
+      <span className="mt-3 block text-2xl font-semibold group-hover:text-clay">
+        {label}
+      </span>
+      <span className="mt-3 block text-sm leading-6 text-ink/65">{description}</span>
+    </Link>
   );
 }
 
