@@ -38,6 +38,10 @@ export const createKnowledgePointSchema = z.object({
   status: z.enum(["draft", "pending_confirmation", "confirmed", "archived"]).optional()
 });
 
+export const updateKnowledgePointSchema = createKnowledgePointSchema
+  .omit({ domain_id: true, topic_id: true, knowledge_type_id: true })
+  .partial();
+
 export type DomainInput = z.infer<typeof createDomainSchema>;
 export type TopicInput = z.infer<typeof createTopicSchema>;
 export type KnowledgePointInput = z.infer<typeof createKnowledgePointSchema>;
@@ -303,6 +307,37 @@ export async function getKnowledgePoint(knowledgePointId: string) {
   });
 
   return point ? serializeKnowledgePoint(point) : null;
+}
+
+export async function updateKnowledgePoint(
+  knowledgePointId: string,
+  input: z.infer<typeof updateKnowledgePointSchema>
+) {
+  const user = await getDefaultUser();
+  const point = await prisma.knowledgePoint.update({
+    where: {
+      id: knowledgePointId,
+      userId: user.id
+    },
+    data: {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.complexity_level !== undefined
+        ? { complexityLevel: input.complexity_level }
+        : {}),
+      ...(input.suggested_difficulty !== undefined
+        ? { suggestedDifficulty: input.suggested_difficulty }
+        : {}),
+      ...(input.status !== undefined ? { status: input.status } : {})
+    },
+    include: { domain: true, topic: true, knowledgeType: true }
+  });
+
+  return serializeKnowledgePoint(point);
+}
+
+export async function archiveKnowledgePoint(knowledgePointId: string) {
+  return updateKnowledgePoint(knowledgePointId, { status: "archived" });
 }
 
 function normalizePage(page?: number) {

@@ -19,6 +19,9 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   const domainName = `E2E 计算机 ${unique}`;
   const topicName = `E2E GitHub Actions ${unique}`;
   const pointName = `E2E workflow 触发条件 ${unique}`;
+  const editedDomainName = `${domainName} 已编辑`;
+  const editedTopicName = `${topicName} 已编辑`;
+  const editedPointName = `${pointName} 已编辑`;
 
   await page.goto("/");
   await page.getByLabel("领域名称").fill(domainName);
@@ -75,6 +78,21 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   await expect(page.getByText(domainName)).toBeVisible();
   await expect(page.getByText(topicName)).toBeVisible();
   await expect(page.getByText(pointName)).toBeVisible();
+  await page.locator("article").filter({ hasText: domainName }).first().getByText("编辑领域").click();
+  await page.getByLabel(`${domainName} 领域名称`).fill(editedDomainName);
+  await page.getByRole("button", { name: "保存领域" }).click();
+  await expect(page.getByText(editedDomainName)).toBeVisible();
+
+  await openDetailsForControl(page, `${topicName} 主题名称`);
+  await page.getByLabel(`${topicName} 主题名称`).fill(editedTopicName);
+  await page.getByRole("button", { name: "保存主题" }).click();
+  await expect(page.getByText(editedTopicName)).toBeVisible();
+
+  await openDetailsForControl(page, `${pointName} 知识点名称`);
+  await page.getByLabel(`${pointName} 知识点名称`).fill(editedPointName);
+  await page.getByLabel(`${pointName} 建议难度`).fill("4");
+  await page.getByRole("button", { name: "保存知识点" }).click();
+  await expect(page.getByText(editedPointName)).toBeVisible();
 
   await page.goto("/questions");
   await expect(page.getByRole("heading", { name: "题库管理" })).toBeVisible();
@@ -82,10 +100,19 @@ test("runs the MVP browser learning loop", async ({ page }) => {
 
   await page.goto("/practice");
   await expect(page.getByRole("heading", { name: "针对性练习" })).toBeVisible();
-  await page.getByLabel("练习知识点").selectOption({ label: pointName });
+  await page.getByLabel("练习知识点").selectOption({ label: editedPointName });
   await page.getByLabel("练习题目数量").fill("1");
   await page.getByRole("button", { name: "创建练习" }).click();
 
   await expect(page.getByRole("heading", { name: "练习会话" })).toBeVisible();
   await expect(page.getByRole("link", { name: "去答题" }).first()).toBeVisible();
 });
+
+async function openDetailsForControl(page: import("@playwright/test").Page, label: string) {
+  await page.locator(`[aria-label="${label}"]`).evaluate((element) => {
+    const details = element.closest("details");
+    if (details) {
+      details.open = true;
+    }
+  });
+}

@@ -2,9 +2,14 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
 import {
+  archiveDomain,
+  archiveKnowledgePoint,
   listDomains,
   listKnowledgePoints,
-  listTopics
+  listTopics,
+  updateDomain,
+  updateKnowledgePoint,
+  updateTopic
 } from "@/lib/knowledge/service";
 import { generateForKnowledgePoint } from "@/lib/questions/service";
 
@@ -68,6 +73,41 @@ export default async function DomainsPage() {
                     </div>
                     <StatusBadge label={domain.status} />
                   </div>
+                  <details className="mt-5 border border-ink/10 bg-white/35 p-4">
+                    <summary className="cursor-pointer text-sm font-semibold text-ink">
+                      编辑领域
+                    </summary>
+                    <form action={updateDomainAction} className="mt-4 grid gap-3">
+                      <input name="domain_id" type="hidden" value={domain.id} />
+                      <input
+                        aria-label={`${domain.name} 领域名称`}
+                        className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                        defaultValue={domain.name}
+                        name="domain_name"
+                        required
+                      />
+                      <textarea
+                        aria-label={`${domain.name} 领域说明`}
+                        className="min-h-20 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                        defaultValue={domain.description ?? ""}
+                        name="domain_description"
+                        placeholder="领域说明，可选"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                          保存领域
+                        </button>
+                      </div>
+                    </form>
+                    {domain.status !== "archived" ? (
+                      <form action={archiveDomainAction} className="mt-2">
+                        <input name="domain_id" type="hidden" value={domain.id} />
+                        <button className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay">
+                          归档领域
+                        </button>
+                      </form>
+                    ) : null}
+                  </details>
 
                   <div className="mt-5 space-y-4">
                     {domainTopics.length === 0 ? (
@@ -93,6 +133,41 @@ export default async function DomainsPage() {
                               </div>
                               <StatusBadge label={topic.status} />
                             </div>
+                            <details className="mt-4 border border-ink/10 bg-white/40 p-3">
+                              <summary className="cursor-pointer text-sm font-semibold">
+                                编辑主题
+                              </summary>
+                              <form action={updateTopicAction} className="mt-3 grid gap-3">
+                                <input name="topic_id" type="hidden" value={topic.id} />
+                                <input
+                                  aria-label={`${topic.name} 主题名称`}
+                                  className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                  defaultValue={topic.name}
+                                  name="topic_name"
+                                  required
+                                />
+                                <textarea
+                                  aria-label={`${topic.name} 主题说明`}
+                                  className="min-h-20 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                  defaultValue={topic.description ?? ""}
+                                  name="topic_description"
+                                  placeholder="主题说明，可选"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                  <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                                    保存主题
+                                  </button>
+                                </div>
+                              </form>
+                              {topic.status !== "archived" ? (
+                                <form action={archiveTopicAction} className="mt-2">
+                                  <input name="topic_id" type="hidden" value={topic.id} />
+                                  <button className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay">
+                                    归档主题
+                                  </button>
+                                </form>
+                              ) : null}
+                            </details>
 
                             <div className="mt-4 grid gap-3 md:grid-cols-2">
                               {topicPoints.length === 0 ? (
@@ -120,6 +195,68 @@ export default async function DomainsPage() {
                                     <p className="mt-3 text-sm leading-6 text-ink/65">
                                       {point.description || "尚未补充知识点说明"}
                                     </p>
+                                    <details className="mt-4 border border-ink/10 bg-white/40 p-3">
+                                      <summary className="cursor-pointer text-sm font-semibold">
+                                        编辑知识点
+                                      </summary>
+                                      <form action={updateKnowledgePointAction} className="mt-3 grid gap-3">
+                                        <input
+                                          name="knowledge_point_id"
+                                          type="hidden"
+                                          value={point.id}
+                                        />
+                                        <input
+                                          aria-label={`${point.name} 知识点名称`}
+                                          className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                          defaultValue={point.name}
+                                          name="point_name"
+                                          required
+                                        />
+                                        <textarea
+                                          aria-label={`${point.name} 知识点说明`}
+                                          className="min-h-20 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                          defaultValue={point.description ?? ""}
+                                          name="point_description"
+                                          placeholder="知识点说明，可选"
+                                        />
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                          <select
+                                            aria-label={`${point.name} 复杂度`}
+                                            className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                            defaultValue={point.complexity_level}
+                                            name="complexity_level"
+                                          >
+                                            <option value="simple">simple</option>
+                                            <option value="medium">medium</option>
+                                            <option value="complex">complex</option>
+                                          </select>
+                                          <input
+                                            aria-label={`${point.name} 建议难度`}
+                                            className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                                            defaultValue={point.suggested_difficulty}
+                                            max={5}
+                                            min={1}
+                                            name="suggested_difficulty"
+                                            type="number"
+                                          />
+                                        </div>
+                                        <button className="w-fit border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                                          保存知识点
+                                        </button>
+                                      </form>
+                                      {point.status !== "archived" ? (
+                                        <form action={archiveKnowledgePointAction} className="mt-2">
+                                          <input
+                                            name="knowledge_point_id"
+                                            type="hidden"
+                                            value={point.id}
+                                          />
+                                          <button className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay">
+                                            归档知识点
+                                          </button>
+                                        </form>
+                                      ) : null}
+                                    </details>
                                     <form action={generateQuestionsAction} className="mt-4">
                                       <input
                                         name="knowledge_point_id"
@@ -149,6 +286,71 @@ export default async function DomainsPage() {
   );
 }
 
+async function updateDomainAction(formData: FormData) {
+  "use server";
+
+  await updateDomain(getRequiredFormValue(formData, "domain_id"), {
+    name: getRequiredFormValue(formData, "domain_name"),
+    description: getOptionalFormValue(formData, "domain_description")
+  });
+  revalidateStructurePaths();
+}
+
+async function archiveDomainAction(formData: FormData) {
+  "use server";
+
+  await archiveDomain(getRequiredFormValue(formData, "domain_id"));
+  revalidateStructurePaths();
+}
+
+async function updateTopicAction(formData: FormData) {
+  "use server";
+
+  await updateTopic(getRequiredFormValue(formData, "topic_id"), {
+    name: getRequiredFormValue(formData, "topic_name"),
+    description: getOptionalFormValue(formData, "topic_description")
+  });
+  revalidateStructurePaths();
+}
+
+async function archiveTopicAction(formData: FormData) {
+  "use server";
+
+  await updateTopic(getRequiredFormValue(formData, "topic_id"), {
+    status: "archived"
+  });
+  revalidateStructurePaths();
+}
+
+async function updateKnowledgePointAction(formData: FormData) {
+  "use server";
+
+  const difficulty = Number(getRequiredFormValue(formData, "suggested_difficulty"));
+  if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+    throw new Error("suggested_difficulty_invalid");
+  }
+
+  const complexityLevel = getRequiredFormValue(formData, "complexity_level");
+  if (!["simple", "medium", "complex"].includes(complexityLevel)) {
+    throw new Error("complexity_level_invalid");
+  }
+
+  await updateKnowledgePoint(getRequiredFormValue(formData, "knowledge_point_id"), {
+    name: getRequiredFormValue(formData, "point_name"),
+    description: getOptionalFormValue(formData, "point_description"),
+    complexity_level: complexityLevel as "simple" | "medium" | "complex",
+    suggested_difficulty: difficulty
+  });
+  revalidateStructurePaths();
+}
+
+async function archiveKnowledgePointAction(formData: FormData) {
+  "use server";
+
+  await archiveKnowledgePoint(getRequiredFormValue(formData, "knowledge_point_id"));
+  revalidateStructurePaths();
+}
+
 async function generateQuestionsAction(formData: FormData) {
   "use server";
 
@@ -162,6 +364,13 @@ async function generateQuestionsAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/domains");
   revalidatePath("/questions");
+}
+
+function revalidateStructurePaths() {
+  revalidatePath("/");
+  revalidatePath("/domains");
+  revalidatePath("/questions");
+  revalidatePath("/practice");
 }
 
 function TopNav({ current }: { current: string }) {
@@ -229,6 +438,15 @@ function getRequiredFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(`${name}_required`);
+  }
+
+  return value;
+}
+
+function getOptionalFormValue(formData: FormData, name: string) {
+  const value = formData.get(name);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return undefined;
   }
 
   return value;

@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进 Web 工作台基础管理化。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台和基础管理入口。
+下一步：继续推进 Web 知识结构维护能力。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口和知识结构维护入口。
 ```
 
 ## 0. 阶段门禁
@@ -887,4 +887,55 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 21:46:40 cmd /c npm run test:e2e：第一次失败，原因是题库页断言匹配到历史 E2E 题目导致严格模式冲突。
 2026-06-08 21:46:40 收窄 Playwright 断言为本轮唯一知识点题目标题。
 2026-06-08 21:46:40 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖首页入口、知识结构页、题库页、针对性练习页和练习会话详情页。
+```
+
+## 27. Web 知识结构维护能力
+
+本章用于补齐知识结构“只可创建、不可维护”的明显缺口，让用户可以在浏览器中编辑和归档已有领域、主题、知识点。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/knowledge/service.ts、src/app/domains/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：知识结构页新增领域编辑/归档、主题编辑/归档、知识点编辑/归档；E2E 覆盖编辑后继续创建练习。
+- 数据/接口变化：不新增数据库表；新增知识点更新和归档服务函数；主题归档复用既有 updateTopic；领域归档复用既有 archiveDomain。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 回滚或恢复：回退知识点更新服务、/domains 编辑表单、E2E 调整和文档记录即可恢复到第 26 章状态。
+```
+
+- [x] 服务层新增 `updateKnowledgePoint`。
+- [x] 服务层新增 `archiveKnowledgePoint`。
+- [x] `/domains` 支持编辑知识领域名称和说明。
+- [x] `/domains` 支持归档知识领域。
+- [x] `/domains` 支持编辑知识主题名称和说明。
+- [x] `/domains` 支持归档知识主题。
+- [x] `/domains` 支持编辑知识点名称、说明、复杂度和建议难度。
+- [x] `/domains` 支持归档知识点。
+- [x] Playwright E2E 覆盖领域、主题、知识点编辑路径。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+
+验收标准：
+
+```text
+用户可以通过浏览器维护知识结构：
+进入知识结构管理 -> 编辑领域 -> 编辑主题 -> 编辑知识点 -> 使用编辑后的知识点创建针对性练习。
+```
+
+验证记录：
+
+```text
+2026-06-08 21:53:47 新增 Web 知识结构维护能力：完成领域、主题、知识点编辑和归档入口，并扩展 E2E 覆盖。
+2026-06-08 21:59:40 cmd /c npx tsc --noEmit：通过。
+2026-06-08 21:59:40 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 21:59:40 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 21:59:40 cmd /c npm run build：通过，知识结构维护入口进入 Next.js 生产构建。
+2026-06-08 21:59:40 cmd /c npm run test:e2e：第一次失败，原因是历史 E2E 数据导致 `编辑主题` 文本选择器匹配多处。
+2026-06-08 21:59:40 修正 Playwright 编辑选择器：按当前唯一表单控件 aria-label 打开对应 details。
+2026-06-08 21:59:40 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖领域、主题、知识点编辑后继续创建练习。
+2026-06-08 21:59:40 cmd /c npx tsc --noEmit：补充重跑通过。
 ```
