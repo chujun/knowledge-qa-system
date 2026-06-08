@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进 Web 知识结构维护能力。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口和知识结构维护入口。
+下一步：继续推进题目详细编辑能力。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口和题目内容编辑入口。
 ```
 
 ## 0. 阶段门禁
@@ -938,4 +938,51 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 21:59:40 修正 Playwright 编辑选择器：按当前唯一表单控件 aria-label 打开对应 details。
 2026-06-08 21:59:40 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖领域、主题、知识点编辑后继续创建练习。
 2026-06-08 21:59:40 cmd /c npx tsc --noEmit：补充重跑通过。
+```
+
+## 28. Web 题目详细编辑能力
+
+本章用于补齐 AI 生成题目后的人工细修能力。用户可以在题目详情页编辑题干、标准答案、答案讲解和评分规则，系统以新版本方式保存，避免覆盖历史版本。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/questions/service.ts、src/app/questions/[questionId]/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：题目详情页新增人工编辑表单；保存后生成新的题目版本、答案版本和评分规则版本；正式题旧 active 版本归档，新版本 active。
+- 数据/接口变化：不新增数据库表；新增 `updateQuestionContent` 服务函数；人工编辑版本 source_type 为 `user_edited`。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 回滚或恢复：回退题目编辑服务、题目详情页编辑表单、E2E 调整和文档记录即可恢复到第 27 章状态。
+```
+
+- [x] 服务层新增 `updateQuestionContentSchema`。
+- [x] 服务层新增 `updateQuestionContent`。
+- [x] 人工编辑题干时创建新的 QuestionVersion。
+- [x] 人工编辑标准答案和讲解时创建新的 AnswerVersion。
+- [x] 人工编辑评分规则时创建新的 ScoringRubricVersion。
+- [x] 已确认题编辑后旧 active 版本自动归档，新版本 active。
+- [x] 题目详情页新增题干、标准答案、答案讲解和评分规则编辑表单。
+- [x] Playwright E2E 覆盖确认题目后编辑并查看新题干。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+
+验收标准：
+
+```text
+用户可以通过浏览器维护题目内容：
+进入题目详情 -> 确认入库 -> 编辑题干/答案/讲解/评分规则 -> 保存新版本 -> 页面展示新题干并保留版本审计。
+```
+
+验证记录：
+
+```text
+2026-06-08 22:12:43 新增 Web 题目详细编辑能力：完成题干、答案、讲解和评分规则人工编辑版本入口，并扩展 E2E 覆盖。
+2026-06-08 22:17:21 cmd /c npx tsc --noEmit：通过。
+2026-06-08 22:17:21 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 22:17:21 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 22:17:21 cmd /c npm run build：通过，题目详细编辑入口进入 Next.js 生产构建。
+2026-06-08 22:17:21 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖题目确认入库后编辑题干、答案和讲解并展示新题干。
 ```

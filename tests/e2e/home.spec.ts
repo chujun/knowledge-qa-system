@@ -58,6 +58,12 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   await expect(page.getByText("Question Detail")).toBeVisible();
   await page.getByRole("button", { name: "确认入库" }).click();
   await expect(page.getByText("confirmed").first()).toBeVisible();
+  const editedStem = `E2E 编辑后的题干 ${unique}`;
+  await page.getByLabel("编辑题干").fill(editedStem);
+  await page.getByLabel("编辑标准答案").fill("E2E 编辑后的标准答案，包含 workflow 触发条件、jobs 和 steps。");
+  await page.getByLabel("编辑答案讲解").fill("E2E 编辑后的答案讲解。");
+  await page.getByRole("button", { name: "保存新版本" }).click();
+  await expect(page.getByRole("heading", { name: editedStem })).toBeVisible();
 
   await page
     .getByPlaceholder("输入你的答案，提交后系统会进行 mock AI 评分。")

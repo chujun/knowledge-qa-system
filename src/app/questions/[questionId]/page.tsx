@@ -10,7 +10,8 @@ import {
 import {
   archiveQuestion,
   confirmQuestion,
-  getQuestion
+  getQuestion,
+  updateQuestionContent
 } from "@/lib/questions/service";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,11 @@ export default async function QuestionDetailPage({
 
   const attempts = await listAnswerAttempts({ questionId, pageSize: 5 });
   const activeAnswerVersion = question.answer_versions[0];
+  const rubricJson = JSON.stringify(
+    question.scoring_rubric_version?.rubric ?? {},
+    null,
+    2
+  );
 
   return (
     <main className="min-h-screen bg-paper text-ink">
@@ -92,6 +98,54 @@ export default async function QuestionDetailPage({
                 {activeAnswerVersion.explanation_text}
               </p>
             ) : null}
+          </Panel>
+
+          <Panel title="编辑题目内容" eyebrow="Manual Edit">
+            <form action={updateQuestionContentAction} className="space-y-3">
+              <input name="question_id" type="hidden" value={question.id} />
+              <label className="grid gap-2 text-sm">
+                <span className="text-ink/60">题干</span>
+                <textarea
+                  aria-label="编辑题干"
+                  className="min-h-28 w-full border border-ink/15 bg-white/60 p-3 text-sm leading-6 outline-none focus:border-clay"
+                  defaultValue={question.question_version?.stem ?? ""}
+                  name="stem"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span className="text-ink/60">标准答案</span>
+                <textarea
+                  aria-label="编辑标准答案"
+                  className="min-h-32 w-full border border-ink/15 bg-white/60 p-3 text-sm leading-6 outline-none focus:border-clay"
+                  defaultValue={question.answer_version?.answer_text ?? ""}
+                  name="answer_text"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span className="text-ink/60">答案讲解</span>
+                <textarea
+                  aria-label="编辑答案讲解"
+                  className="min-h-24 w-full border border-ink/15 bg-white/60 p-3 text-sm leading-6 outline-none focus:border-clay"
+                  defaultValue={activeAnswerVersion?.explanation_text ?? ""}
+                  name="explanation_text"
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span className="text-ink/60">评分规则 JSON</span>
+                <textarea
+                  aria-label="编辑评分规则"
+                  className="min-h-44 w-full border border-ink/15 bg-white/60 p-3 font-mono text-xs leading-5 outline-none focus:border-clay"
+                  defaultValue={rubricJson}
+                  name="rubric_json"
+                  required
+                />
+              </label>
+              <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                保存新版本
+              </button>
+            </form>
           </Panel>
 
           <Panel title="质量校验" eyebrow="Quality Check">
@@ -233,6 +287,21 @@ async function archiveQuestionAction(formData: FormData) {
   revalidatePath(`/questions/${questionId}`);
 }
 
+async function updateQuestionContentAction(formData: FormData) {
+  "use server";
+
+  const questionId = getRequiredFormValue(formData, "question_id");
+  await updateQuestionContent(questionId, {
+    stem: getRequiredFormValue(formData, "stem"),
+    answer_text: getRequiredFormValue(formData, "answer_text"),
+    explanation_text: getOptionalFormValue(formData, "explanation_text"),
+    rubric: parseRubricJson(getRequiredFormValue(formData, "rubric_json"))
+  });
+  revalidatePath("/");
+  revalidatePath("/questions");
+  revalidatePath(`/questions/${questionId}`);
+}
+
 async function submitAnswerAction(formData: FormData) {
   "use server";
 
@@ -348,4 +417,13 @@ function getOptionalFormValue(formData: FormData, name: string) {
   }
 
   return value;
+}
+
+function parseRubricJson(value: string) {
+  const parsed = JSON.parse(value) as unknown;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("rubric_json_object_required");
+  }
+
+  return parsed as Record<string, unknown>;
 }

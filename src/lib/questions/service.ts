@@ -392,6 +392,94 @@ export async function archiveQuestion(questionId: string) {
   return serializeQuestionWithVersions(question);
 }
 
+export async function updateQuestionContent(
+  questionId: string,
+  input: z.infer<typeof updateQuestionContentSchema>
+) {
+  const user = await getDefaultUser();
+  const question = await prisma.$transaction(async (tx) => {
+    const existing = await tx.question.findFirstOrThrow({
+      where: {
+        id: questionId,
+        userId: user.id
+      },
+      include: {
+        versions: { orderBy: { versionNo: "desc" }, take: 1 },
+        answerVersions: { orderBy: { versionNo: "desc" }, take: 1 },
+        rubricVersions: { orderBy: { versionNo: "desc" }, take: 1 }
+      }
+    });
+
+    const versionStatus = existing.status === "confirmed" ? "active" : "draft";
+
+    if (existing.status === "confirmed") {
+      await tx.questionVersion.updateMany({
+        where: { questionId: existing.id, status: "active" },
+        data: { status: "archived" }
+      });
+      await tx.answerVersion.updateMany({
+        where: { questionId: existing.id, status: "active" },
+        data: { status: "archived" }
+      });
+      await tx.scoringRubricVersion.updateMany({
+        where: { questionId: existing.id, status: "active" },
+        data: { status: "archived" }
+      });
+    }
+
+    await tx.questionVersion.create({
+      data: {
+        questionId: existing.id,
+        versionNo: (existing.versions[0]?.versionNo ?? 0) + 1,
+        stem: input.stem,
+        contentJson: JSON.stringify({
+          manually_edited: true,
+          edited_at: new Date().toISOString()
+        }),
+        sourceType: "user_edited",
+        modelName: null,
+        aiAgent: "User",
+        promptVersion: "manual-edit-v1",
+        status: versionStatus
+      }
+    });
+
+    await tx.answerVersion.create({
+      data: {
+        questionId: existing.id,
+        versionNo: (existing.answerVersions[0]?.versionNo ?? 0) + 1,
+        answerText: input.answer_text,
+        explanationText: input.explanation_text,
+        sourceType: "user_edited",
+        modelName: null,
+        aiAgent: "User",
+        promptVersion: "manual-edit-v1",
+        status: versionStatus
+      }
+    });
+
+    await tx.scoringRubricVersion.create({
+      data: {
+        questionId: existing.id,
+        versionNo: (existing.rubricVersions[0]?.versionNo ?? 0) + 1,
+        rubricJson: JSON.stringify(input.rubric),
+        sourceType: "user_edited",
+        modelName: null,
+        aiAgent: "User",
+        promptVersion: "manual-edit-v1",
+        status: versionStatus
+      }
+    });
+
+    return tx.question.findFirstOrThrow({
+      where: { id: existing.id },
+      include: questionDetailInclude
+    });
+  });
+
+  return serializeQuestionWithVersions(question);
+}
+
 const questionDetailInclude = {
   versions: { orderBy: { versionNo: "desc" } },
   answerVersions: { orderBy: { versionNo: "desc" } },
