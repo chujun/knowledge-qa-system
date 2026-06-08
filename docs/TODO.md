@@ -16,7 +16,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续按新增里程碑推进 Web 工作台可操作化和浏览器端知识结构创建。
+下一步：进入交付整理，确认是否提交当前实现。
 当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口和真实数据 Web 工作台初版。
 ```
 
