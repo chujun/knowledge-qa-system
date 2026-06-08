@@ -207,6 +207,33 @@ export async function confirmScore(
   return serializeAttempt(attempt);
 }
 
+export async function listAnswerAttempts(params: {
+  questionId?: string | null;
+  page?: number;
+  pageSize?: number;
+}) {
+  const user = await getDefaultUser();
+  const page = Math.max(1, params.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+  const where: Prisma.AnswerAttemptWhereInput = {
+    userId: user.id,
+    ...(params.questionId ? { questionId: params.questionId } : {})
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.answerAttempt.findMany({
+      where,
+      include: attemptInclude,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.answerAttempt.count({ where })
+  ]);
+
+  return { items: items.map(serializeAttempt), page, pageSize, total };
+}
+
 export async function listMasteryProfiles(params: {
   targetType?: string | null;
   targetId?: string | null;

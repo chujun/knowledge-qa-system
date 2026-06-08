@@ -1,7 +1,17 @@
-import { listReviewItems } from "@/lib/ingestion/service";
+import { revalidatePath } from "next/cache";
+import Link from "next/link";
+
+import {
+  confirmReviewItem,
+  listReviewItems,
+  rejectReviewItem
+} from "@/lib/ingestion/service";
 import { listKnowledgePoints } from "@/lib/knowledge/service";
 import { listErrorSets, listMasteryProfiles } from "@/lib/practice/service";
-import { listQuestions } from "@/lib/questions/service";
+import {
+  generateForKnowledgePoint,
+  listQuestions
+} from "@/lib/questions/service";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +114,28 @@ export default async function Home() {
                     <p className="mt-3 text-sm text-ink/65">
                       {item.target_type} · {formatDate(item.created_at)}
                     </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <form action={confirmReviewItemAction}>
+                        <input
+                          name="review_item_id"
+                          type="hidden"
+                          value={item.review_item_id}
+                        />
+                        <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                          确认入库
+                        </button>
+                      </form>
+                      <form action={rejectReviewItemAction}>
+                        <input
+                          name="review_item_id"
+                          type="hidden"
+                          value={item.review_item_id}
+                        />
+                        <button className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay">
+                          拒绝
+                        </button>
+                      </form>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -126,6 +158,12 @@ export default async function Home() {
                     <p className="mt-3 text-sm leading-6 text-ink/65">
                       {point.description || "尚未补充摘要"}
                     </p>
+                    <form action={generateQuestionsAction} className="mt-4">
+                      <input name="knowledge_point_id" type="hidden" value={point.id} />
+                      <button className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                        生成题目
+                      </button>
+                    </form>
                   </article>
                 ))}
               </div>
@@ -159,9 +197,9 @@ export default async function Home() {
 
             <Panel
               eyebrow="Question Bank"
-              title="下一道可练习题"
+              title="最近生成题目"
               empty={!firstQuestion}
-              emptyText="暂无正式题。先围绕某个知识点生成题目并确认入库。"
+              emptyText="暂无题目。先围绕某个知识点生成题目，再确认入库。"
               id="题库"
             >
               {firstQuestion ? (
@@ -180,8 +218,14 @@ export default async function Home() {
                     {firstQuestion.question_version?.stem ?? "题干版本缺失"}
                   </h3>
                   <p className="mt-5 text-sm leading-7 text-ink/70">
-                    题目来自正式题库。后续会在这里接入答题提交、AI 评分和用户确认评分。
+                    题目已进入题库流程。待确认题需要确认入库后，才会进入正式练习和长期掌握画像。
                   </p>
+                  <Link
+                    className="mt-5 inline-block border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+                    href={`/questions/${firstQuestion.id}`}
+                  >
+                    查看详情
+                  </Link>
                 </article>
               ) : null}
             </Panel>
@@ -222,12 +266,43 @@ async function loadWorkbenchData() {
     await Promise.all([
       listReviewItems({ status: "pending", pageSize: 5 }),
       listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
-      listQuestions({ status: "confirmed", pageSize: 5 }),
+      listQuestions({ pageSize: 5 }),
       listMasteryProfiles({ pageSize: 5 }),
       listErrorSets({ status: "active", pageSize: 5 })
     ]);
 
   return { reviewItems, knowledgePoints, questions, mastery, errorSets };
+}
+
+async function confirmReviewItemAction(formData: FormData) {
+  "use server";
+
+  const reviewItemId = getRequiredFormValue(formData, "review_item_id");
+  await confirmReviewItem(reviewItemId, {
+    include_existing_attempts_in_mastery: false
+  });
+  revalidatePath("/");
+}
+
+async function rejectReviewItemAction(formData: FormData) {
+  "use server";
+
+  const reviewItemId = getRequiredFormValue(formData, "review_item_id");
+  await rejectReviewItem(reviewItemId);
+  revalidatePath("/");
+}
+
+async function generateQuestionsAction(formData: FormData) {
+  "use server";
+
+  const knowledgePointId = getRequiredFormValue(formData, "knowledge_point_id");
+  await generateForKnowledgePoint({
+    knowledge_point_id: knowledgePointId,
+    cognitive_dimensions: ["understand", "apply"],
+    question_count: 2,
+    direct_confirm: false
+  });
+  revalidatePath("/");
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
@@ -279,6 +354,14 @@ function getReviewTitle(preview: unknown) {
   }
 
   const record = preview as Record<string, unknown>;
+  const topicSuggestion = record.topic_suggestion;
+  if (topicSuggestion && typeof topicSuggestion === "object") {
+    const topic = topicSuggestion as Record<string, unknown>;
+    if (typeof topic.topic_name === "string") {
+      return topic.topic_name;
+    }
+  }
+
   if (typeof record.suggested_topic === "string") {
     return record.suggested_topic;
   }
@@ -295,4 +378,13 @@ function formatDate(value: string) {
     dateStyle: "short",
     timeStyle: "short"
   }).format(new Date(value));
+}
+
+function getRequiredFormValue(formData: FormData, name: string) {
+  const value = formData.get(name);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${name}_required`);
+  }
+
+  return value;
 }

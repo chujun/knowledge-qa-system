@@ -719,3 +719,60 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 15:35:57 重启本地 Next.js dev server：通过，保留 codegraph 进程。
 2026-06-08 15:35:57 cmd /c npm run test:e2e：通过，1 条 Playwright E2E 测试。
 ```
+
+## 24. MVP 可运行版剩余任务
+
+本章用于把 `.agent-flow.md` 中的下一步事项正式任务化，避免只在状态文件中记录、但 `TODO.md` 无法看出后续代办。
+
+- [x] 待确认队列确认/拒绝 Web 操作。
+- [x] 知识点生成题目入口。
+- [x] 题目详情查看。
+- [x] 题目确认入库和归档 Web 操作。
+- [x] 答题提交 Web 操作。
+- [x] AI 评分和反馈展示。
+- [x] 用户确认/修正评分 Web 操作。
+- [ ] 掌握画像和错误集刷新验证。
+- [ ] MVP 本地启动、初始化和使用说明最终校验。
+- [ ] MVP 可运行版最终 E2E 闭环验证。
+
+验收标准：
+
+```text
+用户可以仅通过浏览器完成核心闭环：
+知识点 -> 生成题目 -> 确认入库 -> 答题 -> AI 评分 -> 用户确认/修正评分 -> 掌握画像/错误集更新。
+```
+
+验证记录：
+
+```text
+2026-06-08 15:44:01 cmd /c npx tsc --noEmit：通过。
+2026-06-08 15:47:31 cmd /c npx tsc --noEmit：第一次并发执行时失败，原因是与 next build 同时读写 `.next/types`。
+2026-06-08 15:47:31 cmd /c npm run build：通过。
+2026-06-08 15:47:31 cmd /c npx tsc --noEmit：串行重跑通过。
+2026-06-08 15:53:54 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 15:53:54 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 15:53:54 cmd /c npm run test:e2e：第一次失败，原因是测试仍断言旧标题 `下一道可练习题`。
+2026-06-08 15:53:54 更新 Playwright 首页断言为 `最近生成题目`。
+2026-06-08 15:53:54 cmd /c npm run test:e2e：第二次超时，原因是旧 Next dev server 处于开发错误刷新页。
+2026-06-08 15:53:54 重启本地 Next.js dev server：通过，保留 codegraph 进程。
+2026-06-08 15:53:54 cmd /c npm run test:e2e：通过，1 条 Playwright E2E 测试。
+2026-06-08 15:56:19 cmd /c npx tsc --noEmit：失败，题目详情页误用主答案摘要对象的 `explanation_text` 字段。
+2026-06-08 15:56:19 修正题目详情页，改用完整 `answer_versions[0].explanation_text`。
+2026-06-08 15:58:50 cmd /c npm run build：通过，新增 `/questions/[questionId]` 动态页面进入构建结果。
+2026-06-08 15:58:50 cmd /c npx tsc --noEmit：串行重跑通过。
+2026-06-08 15:58:50 cmd /c npm run test:e2e：通过，1 条 Playwright E2E 测试。
+2026-06-08 16:00:16 cmd /c npx tsc --noEmit：第一次并发执行时失败，原因是与 next build 同时读写 `.next/types`。
+2026-06-08 16:00:16 cmd /c npm run build：通过。
+2026-06-08 16:00:16 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 16:00:16 cmd /c npx tsc --noEmit：串行重跑通过。
+2026-06-08 16:00:16 cmd /c npm run test:e2e：通过，1 条 Playwright E2E 测试。
+2026-06-08 16:06:17 cmd /c npx tsc --noEmit：通过。
+2026-06-08 16:06:17 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 16:06:17 cmd /c npm run build：通过。
+2026-06-08 16:06:17 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 16:06:17 cmd /c npm run test:e2e：超时，原因是旧 Next dev server 处于开发错误刷新页。
+2026-06-08 16:06:17 重启本地 Next.js dev server：未执行，提权请求因 Codex 使用额度限制被系统拒绝。
+2026-06-08 16:12:10 cmd /c npx tsc --noEmit：通过。
+2026-06-08 16:12:10 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 16:12:10 cmd /c npm run build：通过。
+```
