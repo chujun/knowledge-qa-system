@@ -15,6 +15,13 @@ export const generateForKnowledgePointSchema = z.object({
   direct_confirm: z.boolean().default(false)
 });
 
+export const updateQuestionContentSchema = z.object({
+  stem: z.string().trim().min(1).max(4000),
+  answer_text: z.string().trim().min(1).max(8000),
+  explanation_text: z.string().trim().max(8000).optional(),
+  rubric: z.record(z.string(), z.unknown())
+});
+
 export async function generateForKnowledgePoint(
   input: z.infer<typeof generateForKnowledgePointSchema>
 ) {
