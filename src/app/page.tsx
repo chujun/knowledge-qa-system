@@ -6,7 +6,15 @@ import {
   listReviewItems,
   rejectReviewItem
 } from "@/lib/ingestion/service";
-import { listKnowledgePoints } from "@/lib/knowledge/service";
+import {
+  createDomain,
+  createKnowledgePoint,
+  createTopic,
+  listDomains,
+  listKnowledgePoints,
+  listKnowledgeTypes,
+  listTopics
+} from "@/lib/knowledge/service";
 import { listErrorSets, listMasteryProfiles } from "@/lib/practice/service";
 import {
   generateForKnowledgePoint,
@@ -45,6 +53,8 @@ export default async function Home() {
             <nav className="space-y-1 text-sm">
               {[
                 ["待确认", data.reviewItems.total],
+                ["领域", data.domains.total],
+                ["主题", data.topics.total],
                 ["知识点", data.knowledgePoints.total],
                 ["题库", data.questions.total],
                 ["画像", data.mastery.total],
@@ -87,12 +97,136 @@ export default async function Home() {
             </div>
           </section>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5" aria-label="系统统计">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7" aria-label="系统统计">
             <Metric label="待确认" value={data.reviewItems.total} />
+            <Metric label="领域" value={data.domains.total} />
+            <Metric label="主题" value={data.topics.total} />
             <Metric label="知识点" value={data.knowledgePoints.total} />
             <Metric label="题目" value={data.questions.total} />
             <Metric label="画像" value={data.mastery.total} />
             <Metric label="错误集" value={data.errorSets.total} />
+          </section>
+
+          <section id="领域">
+            <Panel
+              eyebrow="Knowledge Setup"
+              title="创建知识结构"
+              empty={false}
+              emptyText=""
+            >
+              <div className="grid gap-4 lg:grid-cols-3">
+                <form action={createDomainAction} className="space-y-3 border border-ink/15 bg-white/45 p-4">
+                  <h3 className="text-lg font-semibold">知识领域</h3>
+                  <input
+                    aria-label="领域名称"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="domain_name"
+                    placeholder="例如：计算机、摄影、历史"
+                    required
+                  />
+                  <textarea
+                    aria-label="领域说明"
+                    className="min-h-24 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="domain_description"
+                    placeholder="领域说明，可选"
+                  />
+                  <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    创建领域
+                  </button>
+                </form>
+
+                <form action={createTopicAction} className="space-y-3 border border-ink/15 bg-white/45 p-4">
+                  <h3 className="text-lg font-semibold">知识主题</h3>
+                  <select
+                    aria-label="主题所属领域"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="domain_id"
+                    required
+                  >
+                    <option value="">选择领域</option>
+                    {data.domains.items.map((domain) => (
+                      <option key={domain.id} value={domain.id}>
+                        {domain.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    aria-label="主题名称"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="topic_name"
+                    placeholder="例如：GitHub Actions"
+                    required
+                  />
+                  <textarea
+                    aria-label="主题说明"
+                    className="min-h-24 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="topic_description"
+                    placeholder="主题说明，可选"
+                  />
+                  <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    创建主题
+                  </button>
+                </form>
+
+                <form action={createKnowledgePointAction} className="space-y-3 border border-ink/15 bg-white/45 p-4">
+                  <h3 className="text-lg font-semibold">知识点</h3>
+                  <select
+                    aria-label="知识点所属领域"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="domain_id"
+                    required
+                  >
+                    <option value="">选择领域</option>
+                    {data.domains.items.map((domain) => (
+                      <option key={domain.id} value={domain.id}>
+                        {domain.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="知识点所属主题"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="topic_id"
+                    required
+                  >
+                    <option value="">选择主题</option>
+                    {data.topics.items.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="知识点类型"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="knowledge_type_id"
+                    required
+                  >
+                    {data.knowledgeTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    aria-label="知识点名称"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="point_name"
+                    placeholder="例如：workflow 触发条件"
+                    required
+                  />
+                  <textarea
+                    aria-label="知识点说明"
+                    className="min-h-24 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    name="point_description"
+                    placeholder="知识点说明，可选"
+                  />
+                  <button className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    创建知识点
+                  </button>
+                </form>
+              </div>
+            </Panel>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[1fr_1fr]" id="待确认">
@@ -262,16 +396,72 @@ export default async function Home() {
 }
 
 async function loadWorkbenchData() {
-  const [reviewItems, knowledgePoints, questions, mastery, errorSets] =
-    await Promise.all([
-      listReviewItems({ status: "pending", pageSize: 5 }),
-      listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
-      listQuestions({ pageSize: 5 }),
-      listMasteryProfiles({ pageSize: 5 }),
-      listErrorSets({ status: "active", pageSize: 5 })
-    ]);
+  const [
+    reviewItems,
+    domains,
+    topics,
+    knowledgeTypes,
+    knowledgePoints,
+    questions,
+    mastery,
+    errorSets
+  ] = await Promise.all([
+    listReviewItems({ status: "pending", pageSize: 5 }),
+    listDomains({ pageSize: 20 }),
+    listTopics({ pageSize: 20 }),
+    listKnowledgeTypes(),
+    listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
+    listQuestions({ pageSize: 5 }),
+    listMasteryProfiles({ pageSize: 5 }),
+    listErrorSets({ status: "active", pageSize: 5 })
+  ]);
 
-  return { reviewItems, knowledgePoints, questions, mastery, errorSets };
+  return {
+    reviewItems,
+    domains,
+    topics,
+    knowledgeTypes,
+    knowledgePoints,
+    questions,
+    mastery,
+    errorSets
+  };
+}
+
+async function createDomainAction(formData: FormData) {
+  "use server";
+
+  await createDomain({
+    name: getRequiredFormValue(formData, "domain_name"),
+    description: getOptionalFormValue(formData, "domain_description")
+  });
+  revalidatePath("/");
+}
+
+async function createTopicAction(formData: FormData) {
+  "use server";
+
+  await createTopic({
+    domain_id: getRequiredFormValue(formData, "domain_id"),
+    name: getRequiredFormValue(formData, "topic_name"),
+    description: getOptionalFormValue(formData, "topic_description")
+  });
+  revalidatePath("/");
+}
+
+async function createKnowledgePointAction(formData: FormData) {
+  "use server";
+
+  await createKnowledgePoint({
+    domain_id: getRequiredFormValue(formData, "domain_id"),
+    topic_id: getRequiredFormValue(formData, "topic_id"),
+    knowledge_type_id: getRequiredFormValue(formData, "knowledge_type_id"),
+    name: getRequiredFormValue(formData, "point_name"),
+    description: getOptionalFormValue(formData, "point_description"),
+    complexity_level: "medium",
+    suggested_difficulty: 3
+  });
+  revalidatePath("/");
 }
 
 async function confirmReviewItemAction(formData: FormData) {
@@ -384,6 +574,15 @@ function getRequiredFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(`${name}_required`);
+  }
+
+  return value;
+}
+
+function getOptionalFormValue(formData: FormData, name: string) {
+  const value = formData.get(name);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return undefined;
   }
 
   return value;

@@ -1,65 +1,42 @@
 import { expect, test } from "@playwright/test";
 
-const apiHeaders = {
-  "x-api-key": "local-dev-key"
-};
-
 test("shows the local knowledge QA workspace", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "知识问答工作台" })).toBeVisible();
   await expect(page.getByText("当前页面已经读取真实本地数据")).toBeVisible();
   await expect(page.getByText("Local Runtime")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "创建知识结构" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
 });
 
-test("runs the MVP browser learning loop", async ({ page, request }) => {
+test("runs the MVP browser learning loop", async ({ page }) => {
   const unique = Date.now();
+  const domainName = `E2E 计算机 ${unique}`;
+  const topicName = `E2E GitHub Actions ${unique}`;
   const pointName = `E2E workflow 触发条件 ${unique}`;
 
-  const domainResponse = await request.post("/api/v1/domains", {
-    data: { name: `E2E 计算机 ${unique}` },
-    headers: apiHeaders
-  });
-  expect(domainResponse.ok()).toBe(true);
-  const domainBody = await domainResponse.json();
-
-  const topicResponse = await request.post("/api/v1/topics", {
-    data: {
-      domain_id: domainBody.data.id,
-      name: `E2E GitHub Actions ${unique}`
-    },
-    headers: apiHeaders
-  });
-  expect(topicResponse.ok()).toBe(true);
-  const topicBody = await topicResponse.json();
-
-  const typesResponse = await request.get("/api/v1/knowledge-types", {
-    headers: apiHeaders
-  });
-  expect(typesResponse.ok()).toBe(true);
-  const typesBody = await typesResponse.json();
-  const conceptType = typesBody.data.find(
-    (item: { code: string }) => item.code === "concept"
-  );
-  expect(conceptType).toBeTruthy();
-
-  const pointResponse = await request.post("/api/v1/knowledge-points", {
-    data: {
-      domain_id: domainBody.data.id,
-      topic_id: topicBody.data.id,
-      knowledge_type_id: conceptType.id,
-      name: pointName,
-      description: "E2E 准备的知识点",
-      complexity_level: "medium",
-      suggested_difficulty: 3
-    },
-    headers: apiHeaders
-  });
-  expect(pointResponse.ok()).toBe(true);
-
   await page.goto("/");
+  await page.getByLabel("领域名称").fill(domainName);
+  await page.getByLabel("领域说明").fill("E2E 通过浏览器创建的知识领域");
+  await page.getByRole("button", { name: "创建领域" }).click();
+
+  await expect(page.getByLabel("主题所属领域")).toContainText(domainName);
+  await page.getByLabel("主题所属领域").selectOption({ label: domainName });
+  await page.getByLabel("主题名称").fill(topicName);
+  await page.getByLabel("主题说明").fill("E2E 通过浏览器创建的知识主题");
+  await page.getByRole("button", { name: "创建主题" }).click();
+
+  await expect(page.getByLabel("知识点所属领域")).toContainText(domainName);
+  await expect(page.getByLabel("知识点所属主题")).toContainText(topicName);
+  await page.getByLabel("知识点所属领域").selectOption({ label: domainName });
+  await page.getByLabel("知识点所属主题").selectOption({ label: topicName });
+  await page.getByLabel("知识点类型").selectOption({ label: "概念类" });
+  await page.getByLabel("知识点名称").fill(pointName);
+  await page.getByLabel("知识点说明").fill("E2E 通过浏览器创建的知识点");
+  await page.getByRole("button", { name: "创建知识点" }).click();
+
   const pointCard = page.locator("article").filter({ hasText: pointName }).first();
   await expect(pointCard).toBeVisible();
   await pointCard.getByRole("button", { name: "生成题目" }).click();

@@ -16,7 +16,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续按新增里程碑推进 Web 工作台可操作化。
+下一步：继续按新增里程碑推进 Web 工作台可操作化和浏览器端知识结构创建。
 当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口和真实数据 Web 工作台初版。
 ```
 
@@ -789,4 +789,49 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 20:46:20 cmd /c npm run build：通过。
 2026-06-08 20:46:20 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试。
 2026-06-08 20:46:20 更新 `docs/knowledge-qa-user-guide.md` 和 `docs/knowledge-qa-deployment.md`：补充 E2E 使用 3100 专用端口，日常 Web/API 使用 3000。
+```
+
+## 25. Web 创建知识结构入口
+
+本章用于补齐 MVP 浏览器端起点：用户不需要先通过 API 或测试脚本创建基础知识结构，可以直接在首页创建知识领域、知识主题和知识点，再进入生成题目、确认入库、答题和评分闭环。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页新增知识领域、知识主题、知识点创建表单；E2E 从浏览器端创建知识结构。
+- 数据/接口变化：不新增数据库表和 API；复用既有知识结构服务。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 回滚或恢复：回退本章涉及的首页表单、E2E 调整和文档记录即可恢复到 API 预置知识结构的闭环。
+```
+
+- [x] 首页新增知识领域创建表单。
+- [x] 首页新增知识主题创建表单。
+- [x] 首页新增知识点创建表单。
+- [x] 首页统计和导航补充领域、主题数量。
+- [x] 表单控件补充可测试的无障碍标签。
+- [x] Playwright E2E 改为通过浏览器创建领域、主题和知识点。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+
+验收标准：
+
+```text
+用户可以仅通过浏览器完成完整起点和学习闭环：
+创建知识领域 -> 创建知识主题 -> 创建知识点 -> 生成题目 -> 查看详情 -> 确认入库 -> 答题 -> AI 评分 -> 用户确认/修正评分。
+```
+
+验证记录：
+
+```text
+2026-06-08 21:04:30 新增 Web 创建知识结构入口：完成首页领域、主题、知识点表单和浏览器 E2E 调整。
+2026-06-08 21:08:59 cmd /c npx tsc --noEmit：通过。
+2026-06-08 21:08:59 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 21:08:59 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 21:08:59 cmd /c npm run build：通过，首页新增知识结构创建入口并进入 Next.js 生产构建。
+2026-06-08 21:08:59 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；MVP 浏览器学习闭环已通过浏览器创建领域、主题和知识点。
 ```
