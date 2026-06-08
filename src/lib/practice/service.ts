@@ -265,6 +265,21 @@ export async function listErrorSets(params: {
   return { items: items.map(serializeErrorSet), page, pageSize, total };
 }
 
+export async function resolveErrorSet(errorSetId: string) {
+  const user = await getDefaultUser();
+  const errorSet = await prisma.errorSet.update({
+    where: {
+      id: errorSetId,
+      userId: user.id
+    },
+    data: {
+      status: "resolved"
+    }
+  });
+
+  return serializeErrorSet(errorSet);
+}
+
 const attemptInclude = {
   question: true,
   questionVersion: true,

@@ -16,7 +16,9 @@ describe("generation and question API routes", () => {
   let knowledgePointsRoute: typeof import("./knowledge-points/route");
   let generationRoute: typeof import("./generation/knowledge-point/route");
   let questionsRoute: typeof import("./questions/route");
+  let questionRoute: typeof import("./questions/[questionId]/route");
   let confirmQuestionRoute: typeof import("./questions/[questionId]/confirm/route");
+  let archiveQuestionRoute: typeof import("./questions/[questionId]/archive/route");
 
   beforeAll(async () => {
     vi.resetModules();
@@ -43,7 +45,9 @@ describe("generation and question API routes", () => {
     knowledgePointsRoute = await import("./knowledge-points/route");
     generationRoute = await import("./generation/knowledge-point/route");
     questionsRoute = await import("./questions/route");
+    questionRoute = await import("./questions/[questionId]/route");
     confirmQuestionRoute = await import("./questions/[questionId]/confirm/route");
+    archiveQuestionRoute = await import("./questions/[questionId]/archive/route");
   });
 
   afterAll(async () => {
@@ -108,6 +112,33 @@ describe("generation and question API routes", () => {
     expect(confirmBody.data.question_version.status).toBe("active");
     expect(confirmBody.data.answer_version.status).toBe("active");
     expect(confirmBody.data.scoring_rubric_version.status).toBe("active");
+
+    const detailResponse = await questionRoute.GET(
+      authedRequest(`http://localhost/api/v1/questions/${questionId}`),
+      {
+        params: Promise.resolve({ questionId })
+      }
+    );
+    const detailBody = await detailResponse.json();
+
+    expect(detailResponse.status).toBe(200);
+    expect(detailBody.data.question_versions).toHaveLength(1);
+    expect(detailBody.data.answer_versions).toHaveLength(1);
+    expect(detailBody.data.scoring_rubric_versions).toHaveLength(1);
+
+    const archiveResponse = await archiveQuestionRoute.POST(
+      authedRequest(`http://localhost/api/v1/questions/${questionId}/archive`),
+      {
+        params: Promise.resolve({ questionId })
+      }
+    );
+    const archiveBody = await archiveResponse.json();
+
+    expect(archiveResponse.status).toBe(200);
+    expect(archiveBody.data.status).toBe("archived");
+    expect(archiveBody.data.question_versions[0].status).toBe("archived");
+    expect(archiveBody.data.answer_versions[0].status).toBe("archived");
+    expect(archiveBody.data.scoring_rubric_versions[0].status).toBe("archived");
   });
 
   async function createKnowledgePointFixture() {

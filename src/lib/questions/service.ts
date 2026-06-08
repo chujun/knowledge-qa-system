@@ -290,6 +290,19 @@ export async function listQuestions(params: {
   };
 }
 
+export async function getQuestion(questionId: string) {
+  const user = await getDefaultUser();
+  const question = await prisma.question.findFirst({
+    where: {
+      id: questionId,
+      userId: user.id
+    },
+    include: questionDetailInclude
+  });
+
+  return question ? serializeQuestionWithVersions(question) : null;
+}
+
 export async function confirmQuestion(questionId: string) {
   const user = await getDefaultUser();
 
@@ -338,6 +351,46 @@ export async function confirmQuestion(questionId: string) {
     question.qualityChecks[0]
   );
 }
+
+export async function archiveQuestion(questionId: string) {
+  const user = await getDefaultUser();
+  const question = await prisma.$transaction(async (tx) => {
+    const existing = await tx.question.findFirstOrThrow({
+      where: {
+        id: questionId,
+        userId: user.id
+      }
+    });
+
+    await tx.questionVersion.updateMany({
+      where: { questionId: existing.id },
+      data: { status: "archived" }
+    });
+    await tx.answerVersion.updateMany({
+      where: { questionId: existing.id },
+      data: { status: "archived" }
+    });
+    await tx.scoringRubricVersion.updateMany({
+      where: { questionId: existing.id },
+      data: { status: "archived" }
+    });
+
+    return tx.question.update({
+      where: { id: existing.id },
+      data: { status: "archived" },
+      include: questionDetailInclude
+    });
+  });
+
+  return serializeQuestionWithVersions(question);
+}
+
+const questionDetailInclude = {
+  versions: { orderBy: { versionNo: "desc" } },
+  answerVersions: { orderBy: { versionNo: "desc" } },
+  rubricVersions: { orderBy: { versionNo: "desc" } },
+  qualityChecks: { orderBy: { createdAt: "desc" } }
+} satisfies Prisma.QuestionInclude;
 
 function buildCoreExplanation(pointName: string, knowledgeTypeName: string) {
   return `${pointName} 是一个${knowledgeTypeName}类知识点。学习时先理解它解决什么问题，再掌握关键组成部分，最后通过实际场景验证是否能独立应用。`;
@@ -480,6 +533,58 @@ function serializeGeneratedQuestion(
       : null,
     created_at: question.createdAt.toISOString(),
     updated_at: question.updatedAt.toISOString()
+  };
+}
+
+function serializeQuestionWithVersions(
+  question: Prisma.QuestionGetPayload<{ include: typeof questionDetailInclude }>
+) {
+  return {
+    ...serializeGeneratedQuestion(
+      question,
+      question.versions[0],
+      question.answerVersions[0],
+      question.rubricVersions[0],
+      question.qualityChecks[0]
+    ),
+    question_versions: question.versions.map((version) => ({
+      id: version.id,
+      version_no: version.versionNo,
+      stem: version.stem,
+      content: parseJson(version.contentJson),
+      source_type: version.sourceType,
+      model_name: version.modelName,
+      ai_agent: version.aiAgent,
+      prompt_version: version.promptVersion,
+      status: version.status,
+      created_at: version.createdAt.toISOString(),
+      updated_at: version.updatedAt.toISOString()
+    })),
+    answer_versions: question.answerVersions.map((version) => ({
+      id: version.id,
+      version_no: version.versionNo,
+      answer_text: version.answerText,
+      explanation_text: version.explanationText,
+      source_type: version.sourceType,
+      model_name: version.modelName,
+      ai_agent: version.aiAgent,
+      prompt_version: version.promptVersion,
+      status: version.status,
+      created_at: version.createdAt.toISOString(),
+      updated_at: version.updatedAt.toISOString()
+    })),
+    scoring_rubric_versions: question.rubricVersions.map((version) => ({
+      id: version.id,
+      version_no: version.versionNo,
+      rubric: JSON.parse(version.rubricJson),
+      source_type: version.sourceType,
+      model_name: version.modelName,
+      ai_agent: version.aiAgent,
+      prompt_version: version.promptVersion,
+      status: version.status,
+      created_at: version.createdAt.toISOString(),
+      updated_at: version.updatedAt.toISOString()
+    }))
   };
 }
 

@@ -20,6 +20,7 @@ describe("practice, scoring, mastery, and error set API routes", () => {
   let confirmScoreRoute: typeof import("./answer-attempts/[attemptId]/confirm-score/route");
   let masteryProfilesRoute: typeof import("./mastery-profiles/route");
   let errorSetsRoute: typeof import("./error-sets/route");
+  let resolveErrorSetRoute: typeof import("./error-sets/[errorSetId]/resolve/route");
   let practiceSessionsRoute: typeof import("./practice-sessions/route");
   let practiceSessionRoute: typeof import("./practice-sessions/[practiceSessionId]/route");
 
@@ -56,6 +57,7 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     );
     masteryProfilesRoute = await import("./mastery-profiles/route");
     errorSetsRoute = await import("./error-sets/route");
+    resolveErrorSetRoute = await import("./error-sets/[errorSetId]/resolve/route");
     practiceSessionsRoute = await import("./practice-sessions/route");
     practiceSessionRoute = await import("./practice-sessions/[practiceSessionId]/route");
   });
@@ -144,6 +146,19 @@ describe("practice, scoring, mastery, and error set API routes", () => {
     expect(errorSetBody.data).toHaveLength(1);
     expect(errorSetBody.data[0].attempt_ids).toContain(attemptBody.data.id);
     expect(errorSetBody.data[0].dominant_tags).toContain("missing_key_point");
+
+    const resolveResponse = await resolveErrorSetRoute.POST(
+      authedRequest(
+        `http://localhost/api/v1/error-sets/${errorSetBody.data[0].id}/resolve`
+      ),
+      {
+        params: Promise.resolve({ errorSetId: errorSetBody.data[0].id })
+      }
+    );
+    const resolveBody = await resolveResponse.json();
+
+    expect(resolveResponse.status).toBe(200);
+    expect(resolveBody.data.status).toBe("resolved");
   });
 
   it("creates a targeted practice session from weak dimensions and error sets", async () => {

@@ -11,6 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "agent:tool": "node scripts/knowledge-qa-agent-tool.mjs",
+    "mcp:stdio": "node scripts/knowledge-qa-mcp-stdio.mjs",
+    "mcp:check": "node scripts/check-mcp-stdio.mjs",
+    "docs:check-timestamps": "node scripts/check-verification-timestamps.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

@@ -1,4 +1,4 @@
-# 个人知识问答系统 TODO
+﻿# 个人知识问答系统 TODO
 
 日期：2026-06-06
 
@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：按顺序进入部署运行文档。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架和 mock AI provider 初始验证。
+下一步：继续按新增里程碑推进 Web 工作台可操作化。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口和真实数据 Web 工作台初版。
 ```
 
 ## 0. 阶段门禁
@@ -582,23 +582,34 @@ docs/knowledge-qa-mvp-plan.md
 验证记录：
 
 ```text
-2026-06-07 npm run test：通过，10 个测试文件，30 条测试用例。
-2026-06-07 npm run build：通过，Next.js 生产构建成功。
-2026-06-07 npm run test:e2e：失败，缺少 Playwright Chromium 浏览器二进制。
-2026-06-07 npx playwright install chromium：下载超时，端到端测试阻塞。
-2026-06-07 手动离线安装 chrome-headless-shell-win64.zip 到 ms-playwright/chromium_headless_shell-1223。
-2026-06-07 npm run test:e2e：通过，1 条 Playwright E2E 测试。
-2026-06-07 cmd /c npx tsc --noEmit：通过。
-2026-06-07 cmd /c npm run test：通过，13 个测试文件，36 条测试用例；包含外部会话沉淀、待确认队列、确认/拒绝 API 集成测试。
-2026-06-07 cmd /c npm run test：通过，14 个测试文件，37 条测试用例；包含知识点生成题目、核心讲解、生成记录、质量校验和题目确认 API 集成测试。
-2026-06-07 cmd /c npm run build：通过，新增 generation/questions API 路由进入 Next.js 生产构建。
-2026-06-07 cmd /c npm run test：通过，15 个测试文件，38 条测试用例；包含答题提交、mock AI 评分、用户修正评分、掌握画像重算和错误集生成 API 集成测试。
-2026-06-07 cmd /c npm run build：通过，新增 answer-attempts/mastery-profiles/error-sets API 路由进入 Next.js 生产构建。
-2026-06-07 cmd /c npm run test：通过，15 个测试文件，39 条测试用例；包含基于薄弱维度和活跃错误集创建针对性练习会话 API 集成测试。
-2026-06-07 cmd /c npm run build：通过，新增 practice-sessions API 路由进入 Next.js 生产构建。
-2026-06-07 Prisma 模型表级中文说明检查：通过，所有当前表均已补充中文表名、中文业务说明和物理表名说明。
-2026-06-07 cmd /c npm run test：通过，16 个测试文件，40 条测试用例；包含来源引用、生成记录和质量校验记录查询 API 集成测试。
-2026-06-07 cmd /c npm run build：通过，新增 source-references/generation-records/quality-checks API 路由进入 Next.js 生产构建。
+2026-06-07 00:00:00 npm run test：通过，10 个测试文件，30 条测试用例。
+2026-06-07 00:00:00 npm run build：通过，Next.js 生产构建成功。
+2026-06-07 00:00:00 npm run test:e2e：失败，缺少 Playwright Chromium 浏览器二进制。
+2026-06-07 00:00:00 npx playwright install chromium：下载超时，端到端测试阻塞。
+2026-06-07 00:00:00 手动离线安装 chrome-headless-shell-win64.zip 到 ms-playwright/chromium_headless_shell-1223。
+2026-06-07 00:00:00 npm run test:e2e：通过，1 条 Playwright E2E 测试。
+2026-06-07 00:00:00 cmd /c npx tsc --noEmit：通过。
+2026-06-07 00:00:00 cmd /c npm run test：通过，13 个测试文件，36 条测试用例；包含外部会话沉淀、待确认队列、确认/拒绝 API 集成测试。
+2026-06-07 00:00:00 cmd /c npm run test：通过，14 个测试文件，37 条测试用例；包含知识点生成题目、核心讲解、生成记录、质量校验和题目确认 API 集成测试。
+2026-06-07 00:00:00 cmd /c npm run build：通过，新增 generation/questions API 路由进入 Next.js 生产构建。
+2026-06-07 00:00:00 cmd /c npm run test：通过，15 个测试文件，38 条测试用例；包含答题提交、mock AI 评分、用户修正评分、掌握画像重算和错误集生成 API 集成测试。
+2026-06-07 00:00:00 cmd /c npm run build：通过，新增 answer-attempts/mastery-profiles/error-sets API 路由进入 Next.js 生产构建。
+2026-06-07 00:00:00 cmd /c npm run test：通过，15 个测试文件，39 条测试用例；包含基于薄弱维度和活跃错误集创建针对性练习会话 API 集成测试。
+2026-06-07 00:00:00 cmd /c npm run build：通过，新增 practice-sessions API 路由进入 Next.js 生产构建。
+2026-06-07 00:00:00 Prisma 模型表级中文说明检查：通过，所有当前表均已补充中文表名、中文业务说明和物理表名说明。
+2026-06-07 00:00:00 cmd /c npm run test：通过，16 个测试文件，40 条测试用例；包含来源引用、生成记录和质量校验记录查询 API 集成测试。
+2026-06-07 00:00:00 cmd /c npm run build：通过，新增 source-references/generation-records/quality-checks API 路由进入 Next.js 生产构建。
+2026-06-08 00:00:00 cmd /c npm run test：通过，17 个测试文件，45 条测试用例；包含 Agent/MCP 工具适配器到 HTTP API 的映射、API Key 传递和错误处理测试。
+2026-06-08 00:00:00 cmd /c npm run build：通过，Agent/MCP 工具适配层不影响 Next.js 生产构建。
+2026-06-08 00:00:00 cmd /c npm run agent:tool -- --help：通过，本地 Agent Tool CLI 可正常显示工具入口和调用说明。
+2026-06-08 00:00:00 node scripts/knowledge-qa-mcp-stdio.mjs --self-check：通过，本地 MCP stdio server 可返回 initialize 和 tools/list。
+2026-06-08 00:00:00 node scripts/check-mcp-stdio.mjs：通过，MCP stdio 自检脚本可执行。
+2026-06-08 15:00:00 cmd /c npm run docs:check-timestamps：通过，验证记录均使用 yyyy-MM-dd HH:mm:ss 格式。
+2026-06-08 15:00:00 cmd /c npx tsc --noEmit：通过。
+2026-06-08 15:00:00 node scripts/knowledge-qa-mcp-stdio.mjs --self-check：通过。
+2026-06-08 15:05:59 cmd /c npm run test：通过，17 个测试文件，45 条测试用例；包含题目详情、题目归档、错误集解决 API 集成测试。
+2026-06-08 15:05:59 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 15:05:59 cmd /c npm run build：通过，新增 questions/{id}/archive 和 error-sets/{id}/resolve API 路由进入 Next.js 生产构建。
 ```
 
 ## 18. 部署上线
@@ -645,6 +656,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 提交前检查 Markdown 链接。
 - [x] 提交前检查 Mermaid 图是否可渲染。已使用 mermaid-cli 11.15.0 渲染 15 个 Mermaid 图为 SVG，全部通过。
 - [x] 提交前确认没有密钥、隐私内容和模型 API Key。检查结果：仅发现占位符和脱敏示例，未发现真实密钥。
+- [x] 验证记录必须使用 `yyyy-MM-dd HH:mm:ss` 格式记录年月日时分秒，并通过 `npm run docs:check-timestamps` 检查。
 - [x] 设计阶段提交建议信息：`docs: add knowledge qa system design docs`。
 - [x] 后续每个阶段单独提交，避免一次提交过大。
 
@@ -680,4 +692,30 @@ docs/knowledge-qa-mvp-plan.md
 2. 如用户确认无调整，进入下一轮业务实现：数据模型和核心 API。
 3. 如用户提出调整，先更新相关设计文档和 TODO，再进入实现。
 4. 后续每个实现里程碑继续遵循实现前范围说明、验证命令、回滚方式和测试记录。
+```
+
+## 23. Web 工作台可用化
+
+- [x] 将首页从演示静态数据改为读取真实本地数据。
+- [x] 首页展示待确认队列、知识点、正式题库、掌握画像和错误集统计。
+- [x] 首页在数据为空时展示业务空态和下一步入口说明。
+- [x] Web 页面采用服务端读取业务服务的方式，不向浏览器暴露 API Key。
+- [x] 修正健康检查接口数据库状态，避免固定返回 `not_initialized`。
+- [x] 健康检查接口通过真实数据库查询返回 `database: ready / unavailable`。
+- [x] 更新 Playwright 首页 E2E，验证真实工作台入口。
+- [x] 浏览器访问 `http://localhost:3000` 返回 200。
+- [x] 浏览器访问 `http://localhost:3000/api/health` 返回 `database: ready`。
+
+验证记录：
+
+```text
+2026-06-08 15:35:57 cmd /c npx tsc --noEmit：通过。
+2026-06-08 15:35:57 cmd /c npm run docs:check-timestamps：通过。
+2026-06-08 15:35:57 Invoke-WebRequest http://localhost:3000：通过，返回 200。
+2026-06-08 15:35:57 Invoke-WebRequest http://localhost:3000/api/health：通过，返回 database: ready。
+2026-06-08 15:35:57 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-08 15:35:57 cmd /c npm run build：通过，首页为动态服务端页面。
+2026-06-08 15:35:57 cmd /c npm run test:e2e：第一次失败，原因是旧 dev server 占用 3000 且 `.next` 开发缓存处于坏状态。
+2026-06-08 15:35:57 重启本地 Next.js dev server：通过，保留 codegraph 进程。
+2026-06-08 15:35:57 cmd /c npm run test:e2e：通过，1 条 Playwright E2E 测试。
 ```

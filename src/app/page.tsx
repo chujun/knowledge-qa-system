@@ -1,47 +1,62 @@
-const reviewItems = [
-  { title: "GitHub Actions workflow 基础", count: "6 题", status: "待确认" },
-  { title: "RAG 质量校验规则", count: "4 题", status: "待编辑" },
-  { title: "AI Agent 外部会话沉淀", count: "3 题", status: "待确认" }
-];
+import { listReviewItems } from "@/lib/ingestion/service";
+import { listKnowledgePoints } from "@/lib/knowledge/service";
+import { listErrorSets, listMasteryProfiles } from "@/lib/practice/service";
+import { listQuestions } from "@/lib/questions/service";
 
-const mastery = [
-  { label: "理解", value: 82 },
-  { label: "区分", value: 70 },
-  { label: "应用", value: 64 },
-  { label: "分析", value: 58 },
-  { label: "评价", value: 51 }
-];
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+const dimensionLabels: Record<string, string> = {
+  understand: "理解",
+  distinguish: "区分",
+  apply: "应用",
+  analyze: "分析",
+  evaluate: "评价"
+};
+
+export default async function Home() {
+  const data = await loadWorkbenchData();
+  const firstQuestion = data.questions.items[0];
+  const firstProfile = data.mastery.items[0];
+  const firstPoint = data.knowledgePoints.items[0];
+  const dimensionScores = firstProfile?.dimension_scores ?? {};
+
   return (
     <main className="min-h-screen bg-paper text-ink">
-      <section className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-8 px-6 py-8 lg:grid-cols-[320px_1fr]">
-        <aside className="border-r border-ink/15 pr-0 lg:pr-8">
-          <div className="sticky top-8 space-y-10">
+      <section className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-8 px-5 py-7 lg:grid-cols-[300px_1fr] lg:px-6">
+        <aside className="border-ink/15 lg:border-r lg:pr-8">
+          <div className="sticky top-7 space-y-8">
             <div>
-              <p className="text-sm uppercase tracking-[0.28em] text-moss">Learn QA</p>
+              <p className="text-sm uppercase tracking-[0.22em] text-moss">Learn QA</p>
               <h1 className="mt-4 font-display text-5xl leading-none text-ink">
                 知识问答工作台
               </h1>
             </div>
 
-            <nav className="space-y-2 text-sm">
-              {["待确认", "主题", "练习", "画像", "Agent"].map((item) => (
+            <nav className="space-y-1 text-sm">
+              {[
+                ["待确认", data.reviewItems.total],
+                ["知识点", data.knowledgePoints.total],
+                ["题库", data.questions.total],
+                ["画像", data.mastery.total],
+                ["错误集", data.errorSets.total]
+              ].map(([item, total]) => (
                 <a
                   className="flex items-center justify-between border-b border-ink/15 py-3 text-ink transition hover:text-clay"
                   href={`#${item}`}
                   key={item}
                 >
                   <span>{item}</span>
-                  <span aria-hidden="true">-&gt;</span>
+                  <span className="font-mono text-xs text-ink/55">{total}</span>
                 </a>
               ))}
             </nav>
 
-            <div className="border border-ink/20 bg-white/35 p-5">
-              <p className="text-xs uppercase tracking-[0.22em] text-moss">Default Agent</p>
-              <p className="mt-3 text-2xl font-semibold">Codex</p>
-              <p className="mt-2 text-sm text-ink/65">chatgpt-5.5 · API Key · local service</p>
+            <div className="border border-ink/20 bg-white/40 p-5 shadow-line">
+              <p className="text-xs uppercase tracking-[0.22em] text-moss">Local Runtime</p>
+              <p className="mt-3 text-2xl font-semibold">Codex + mock AI</p>
+              <p className="mt-2 text-sm leading-6 text-ink/65">
+                Web 本地单用户；API/Agent 调用使用 API Key；MCP stdio 已预留。
+              </p>
             </div>
           </div>
         </aside>
@@ -49,65 +64,235 @@ export default function Home() {
         <div className="space-y-8">
           <section className="grid gap-4 border-b border-ink/15 pb-8 lg:grid-cols-[1.4fr_0.8fr]">
             <div>
-              <p className="text-sm uppercase tracking-[0.28em] text-clay">MVP Core Loop</p>
-              <h2 className="mt-4 max-w-3xl font-display text-6xl leading-[0.95]">
+              <p className="text-sm uppercase tracking-[0.22em] text-clay">MVP Core Loop</p>
+              <h2 className="mt-4 max-w-3xl font-display text-5xl leading-[0.98] lg:text-6xl">
                 从 AI 会话里提炼知识，再用问答检验掌握。
               </h2>
             </div>
             <div className="flex flex-col justify-end text-base leading-7 text-ink/72">
               <p>
-                当前骨架聚焦本地 Web + API：待确认入库、题目生成、质量校验、答题评分、
-                掌握画像，以及 Agent/MCP 调用验收。
+                当前页面已经读取真实本地数据：待确认队列、知识点、正式题库、掌握画像和错误集。
+                数据为空时会显示下一步入口，而不是演示假数据。
               </p>
             </div>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-3" id="待确认">
-            {reviewItems.map((item) => (
-              <article className="border border-ink/20 bg-white/40 p-5 shadow-line" key={item.title}>
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-display text-2xl leading-tight">{item.title}</h3>
-                  <span className="whitespace-nowrap bg-brass px-2 py-1 text-xs text-white">
-                    {item.status}
-                  </span>
-                </div>
-                <p className="mt-8 text-sm text-ink/65">{item.count} · 来源已记录 · 需人工确认</p>
-              </article>
-            ))}
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5" aria-label="系统统计">
+            <Metric label="待确认" value={data.reviewItems.total} />
+            <Metric label="知识点" value={data.knowledgePoints.total} />
+            <Metric label="题目" value={data.questions.total} />
+            <Metric label="画像" value={data.mastery.total} />
+            <Metric label="错误集" value={data.errorSets.total} />
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-[1fr_1fr]" id="待确认">
+            <Panel
+              eyebrow="Review Queue"
+              title="待确认入库"
+              empty={data.reviewItems.items.length === 0}
+              emptyText="暂无待确认内容。可以先通过 Agent CLI 或 MCP stdio 提交一次外部会话沉淀。"
+            >
+              <div className="space-y-3">
+                {data.reviewItems.items.map((item) => (
+                  <article className="border border-ink/15 bg-white/45 p-4" key={item.review_item_id}>
+                    <div className="flex items-start justify-between gap-4">
+                      <h3 className="text-lg font-semibold leading-snug">
+                        {getReviewTitle(item.preview)}
+                      </h3>
+                      <StatusBadge label={item.status} />
+                    </div>
+                    <p className="mt-3 text-sm text-ink/65">
+                      {item.target_type} · {formatDate(item.created_at)}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </Panel>
+
+            <Panel
+              eyebrow="Knowledge Structure"
+              title="知识点"
+              empty={data.knowledgePoints.items.length === 0}
+              emptyText="暂无知识点。先创建知识领域、主题和知识点后，题目生成与练习会更完整。"
+              id="知识点"
+            >
+              <div className="space-y-3">
+                {data.knowledgePoints.items.map((point) => (
+                  <article className="border border-ink/15 bg-white/45 p-4" key={point.id}>
+                    <div className="flex items-start justify-between gap-4">
+                      <h3 className="text-lg font-semibold leading-snug">{point.name}</h3>
+                      <StatusBadge label={point.status} />
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-ink/65">
+                      {point.description || "尚未补充摘要"}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </Panel>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[1fr_1fr]" id="画像">
-            <div className="border border-ink/20 bg-moss p-6 text-paper">
-              <p className="text-sm uppercase tracking-[0.24em] text-paper/70">Mastery Profile</p>
-              <h3 className="mt-3 font-display text-4xl">GitHub Actions</h3>
-              <div className="mt-8 space-y-4">
-                {mastery.map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-2 flex justify-between text-sm">
-                      <span>{item.label}</span>
-                      <span>{item.value}</span>
+            <Panel
+              eyebrow="Mastery Profile"
+              title={firstPoint?.name ?? "掌握画像"}
+              empty={!firstProfile}
+              emptyText="暂无长期掌握画像。完成一次正式题答题并确认评分后，这里会显示五维掌握情况。"
+            >
+              <div className="space-y-4">
+                {Object.entries(dimensionLabels).map(([dimension, label]) => {
+                  const value = Number(dimensionScores[dimension] ?? 0);
+                  return (
+                    <div key={dimension}>
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span>{label}</span>
+                        <span>{value}</span>
+                      </div>
+                      <div className="h-2 bg-ink/10">
+                        <div className="h-full bg-moss" style={{ width: `${value}%` }} />
+                      </div>
                     </div>
-                    <div className="h-2 bg-paper/25">
-                      <div className="h-full bg-paper" style={{ width: `${item.value}%` }} />
-                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+
+            <Panel
+              eyebrow="Question Bank"
+              title="下一道可练习题"
+              empty={!firstQuestion}
+              emptyText="暂无正式题。先围绕某个知识点生成题目并确认入库。"
+              id="题库"
+            >
+              {firstQuestion ? (
+                <article>
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge label={firstQuestion.status} />
+                    <span className="bg-ink/10 px-2 py-1 text-xs">
+                      {dimensionLabels[firstQuestion.cognitive_dimension] ??
+                        firstQuestion.cognitive_dimension}
+                    </span>
+                    <span className="bg-ink/10 px-2 py-1 text-xs">
+                      难度 {firstQuestion.difficulty_level}
+                    </span>
                   </div>
+                  <h3 className="mt-4 text-2xl font-semibold leading-snug">
+                    {firstQuestion.question_version?.stem ?? "题干版本缺失"}
+                  </h3>
+                  <p className="mt-5 text-sm leading-7 text-ink/70">
+                    题目来自正式题库。后续会在这里接入答题提交、AI 评分和用户确认评分。
+                  </p>
+                </article>
+              ) : null}
+            </Panel>
+          </section>
+
+          <section id="错误集">
+            <Panel
+              eyebrow="Error Sets"
+              title="错误集复盘"
+              empty={data.errorSets.items.length === 0}
+              emptyText="暂无活跃错误集。系统会在低分答题后按知识点和错误标签自动归集。"
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                {data.errorSets.items.map((item) => (
+                  <article className="border border-ink/15 bg-white/45 p-4" key={item.id}>
+                    <div className="flex items-start justify-between gap-4">
+                      <h3 className="text-lg font-semibold">知识点错误集</h3>
+                      <StatusBadge label={item.status} />
+                    </div>
+                    <p className="mt-3 text-sm text-ink/65">
+                      {item.dominant_tags.length > 0
+                        ? item.dominant_tags.join(" / ")
+                        : "暂无主导错误标签"}
+                    </p>
+                  </article>
                 ))}
               </div>
-            </div>
-
-            <div className="border border-ink/20 bg-white/45 p-6">
-              <p className="text-sm uppercase tracking-[0.24em] text-clay">Next Question</p>
-              <h3 className="mt-3 font-display text-4xl leading-tight">
-                如果 workflow 只想在 main 分支 push 时触发，应该怎么配置？
-              </h3>
-              <p className="mt-8 text-sm leading-7 text-ink/70">
-                系统选择这道题，是因为应用维度低于理解维度，且最近错误集中出现了 trigger
-                条件缺失。
-              </p>
-            </div>
+            </Panel>
           </section>
         </div>
       </section>
     </main>
   );
+}
+
+async function loadWorkbenchData() {
+  const [reviewItems, knowledgePoints, questions, mastery, errorSets] =
+    await Promise.all([
+      listReviewItems({ status: "pending", pageSize: 5 }),
+      listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
+      listQuestions({ status: "confirmed", pageSize: 5 }),
+      listMasteryProfiles({ pageSize: 5 }),
+      listErrorSets({ status: "active", pageSize: 5 })
+    ]);
+
+  return { reviewItems, knowledgePoints, questions, mastery, errorSets };
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="border border-ink/15 bg-white/35 p-4 shadow-line">
+      <p className="text-xs uppercase tracking-[0.18em] text-ink/55">{label}</p>
+      <p className="mt-3 font-display text-4xl leading-none">{value}</p>
+    </div>
+  );
+}
+
+function Panel({
+  children,
+  empty,
+  emptyText,
+  eyebrow,
+  id,
+  title
+}: {
+  children: React.ReactNode;
+  empty: boolean;
+  emptyText: string;
+  eyebrow: string;
+  id?: string;
+  title: string;
+}) {
+  return (
+    <section className="border border-ink/20 bg-white/30 p-5 shadow-line" id={id}>
+      <p className="text-xs uppercase tracking-[0.2em] text-clay">{eyebrow}</p>
+      <h2 className="mt-3 font-display text-4xl leading-none">{title}</h2>
+      <div className="mt-6">
+        {empty ? <p className="text-sm leading-7 text-ink/65">{emptyText}</p> : children}
+      </div>
+    </section>
+  );
+}
+
+function StatusBadge({ label }: { label: string }) {
+  return (
+    <span className="whitespace-nowrap bg-brass px-2 py-1 text-xs text-white">
+      {label}
+    </span>
+  );
+}
+
+function getReviewTitle(preview: unknown) {
+  if (!preview || typeof preview !== "object") {
+    return "待确认内容";
+  }
+
+  const record = preview as Record<string, unknown>;
+  if (typeof record.suggested_topic === "string") {
+    return record.suggested_topic;
+  }
+
+  if (Array.isArray(record.knowledge_points_preview)) {
+    return record.knowledge_points_preview.filter(Boolean).join(" / ") || "待确认知识点";
+  }
+
+  return "待确认内容";
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(value));
 }
