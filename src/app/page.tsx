@@ -123,6 +123,11 @@ export default async function Home() {
               href="/practice"
               label="针对性练习"
             />
+            <WorkbenchLink
+              description="查看 Agent 会话来源、模型生成调用和质量校验记录。"
+              href="/records"
+              label="调用记录"
+            />
           </section>
 
           <section id="领域">

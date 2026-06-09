@@ -12,6 +12,7 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "知识结构管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "题库管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "针对性练习" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "调用记录" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
 });
@@ -61,6 +62,13 @@ test("edits a pending review item before confirmation", async ({ page, request }
   await expect(page.getByRole("heading", { name: editedTopic })).toBeVisible();
   await expect(page.getByText("jobs 与 steps", { exact: true })).toBeVisible();
   await expect(page.getByText("分析", { exact: true })).toBeVisible();
+
+  await page.goto("/records");
+  await expect(page.getByRole("heading", { name: "Agent/MCP 调用记录" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Agent 会话来源" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Codex" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "模型生成调用" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "质量校验记录" })).toBeVisible();
 });
 
 test("runs the MVP browser learning loop", async ({ page, request }) => {

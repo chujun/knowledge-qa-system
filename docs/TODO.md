@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进 Agent/MCP Web 调用记录页。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口、待确认内容编辑入口和练习会话连续答题入口。
+下一步：继续推进 Web 页面体验与数据管理能力。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口、待确认内容编辑入口、练习会话连续答题入口和 Agent/MCP 调用记录页。
 ```
 
 ## 0. 阶段门禁
@@ -1148,4 +1148,56 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 10:06:40 cmd /c npm run docs:check-timestamps：通过。
 2026-06-09 10:09:15 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 10:09:15 已提示用户查看新功能：练习会话页可直接提交答案、查看进度和最近评分。
+```
+
+## 32. Web Agent/MCP 调用记录页
+
+本章用于补齐 Agent/MCP 调用与模型生成质检的 Web 可视化入口。用户可以在浏览器中集中查看外部 Agent 会话来源、模型生成调用、质量校验记录，用于分析 AI Agent 和大模型生成质量能力。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/records/page.tsx、src/app/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页新增“调用记录”入口；新增 `/records` 页面展示来源记录、生成调用记录和质量校验记录。
+- 数据/接口变化：不新增数据库表；复用 `listSourceReferences`、`listGenerationRecords`、`listQualityChecks` 和既有 API 数据结构。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退 `/records` 页面、首页入口、E2E 调整和文档记录即可恢复到第 31 章状态。
+```
+
+- [x] 新增 `/records` 调用记录页。
+- [x] `/records` 展示来源记录总数、生成调用总数和质量校验总数。
+- [x] `/records` 展示 Agent 会话来源、来源系统、会话 ID、摘要和原文长度。
+- [x] `/records` 展示模型生成调用的 AI Agent、模型、模型版本、Prompt、Token 和耗时。
+- [x] `/records` 展示质量校验的 checker、模型、AI Agent、自动修正次数和通过时间。
+- [x] 首页新增“调用记录”入口。
+- [x] Playwright E2E 覆盖首页入口和外部会话沉淀后的来源记录展示。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看 Agent/MCP 调用记录：
+首页 -> 调用记录 -> 查看 Agent 会话来源 -> 查看模型生成调用 -> 查看质量校验记录。
+```
+
+验证记录：
+
+```text
+2026-06-09 10:41:42 新增 Web Agent/MCP 调用记录页：完成 `/records` 页面、首页入口和 E2E 覆盖。
+2026-06-09 10:41:42 cmd /c npx tsc --noEmit：通过。
+2026-06-09 10:41:42 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 10:41:42 cmd /c npm run build：通过，新增 `/records` 动态页面进入 Next.js 生产构建。
+2026-06-09 10:41:42 cmd /c npm run test:e2e：第一次失败，原因是“模型生成调用”文本同时匹配说明文案和标题。
+2026-06-09 10:41:42 修正 Playwright：改用 heading 精确匹配调用记录页标题。
+2026-06-09 10:41:42 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、调用记录页和 MVP 浏览器学习闭环。
+2026-06-09 10:44:01 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 10:46:57 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 10:46:57 已提示用户查看新功能：首页可进入“调用记录”，也可直接访问 `/records`。
 ```
