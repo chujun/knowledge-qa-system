@@ -94,7 +94,62 @@ export async function getPracticeSession(practiceSessionId: string) {
     include: practiceSessionInclude
   });
 
-  return session ? serializePracticeSession(session) : null;
+  return session ? enrichPracticeSessionWithAttempts(serializePracticeSession(session)) : null;
+}
+
+export async function submitPracticeSessionItemAnswer(
+  practiceSessionId: string,
+  practiceSessionItemId: string,
+  input: z.infer<typeof submitAnswerAttemptSchema>
+) {
+  const user = await getDefaultUser();
+  const item = await prisma.practiceSessionItem.findFirst({
+    where: {
+      id: practiceSessionItemId,
+      practiceSessionId,
+      practiceSession: {
+        userId: user.id
+      }
+    },
+    include: {
+      practiceSession: {
+        include: {
+          items: true
+        }
+      }
+    }
+  });
+
+  if (!item) {
+    throw new Error("practice_session_item_not_found");
+  }
+
+  const attempt = await submitAnswerAttempt(item.questionId, input);
+
+  await prisma.practiceSessionItem.update({
+    where: { id: item.id },
+    data: { status: "answered" }
+  });
+
+  const allItemIds = item.practiceSession.items.map((sessionItem) => sessionItem.id);
+  const answeredCount = await prisma.practiceSessionItem.count({
+    where: {
+      id: { in: allItemIds },
+      OR: [{ status: "answered" }, { id: item.id }]
+    }
+  });
+
+  await prisma.practiceSession.update({
+    where: { id: practiceSessionId },
+    data: {
+      status:
+        answeredCount >= item.practiceSession.items.length
+          ? "completed"
+          : "in_progress"
+    }
+  });
+
+  return attempt;
 }
 
 export async function submitAnswerAttempt(
@@ -340,6 +395,8 @@ const practiceSessionInclude = {
     orderBy: { orderNo: "asc" }
   }
 } satisfies Prisma.PracticeSessionInclude;
+
+type SerializedAttempt = ReturnType<typeof serializeAttempt>;
 
 async function selectPracticeQuestions(params: {
   userId: string;
@@ -734,6 +791,8 @@ function serializePracticeSession(
     include: typeof practiceSessionInclude;
   }>
 ) {
+  const answeredCount = session.items.filter((item) => item.status === "answered").length;
+
   return {
     id: session.id,
     session_type: session.sessionType,
@@ -741,6 +800,11 @@ function serializePracticeSession(
     target_id: session.targetId,
     strategy: JSON.parse(session.strategyJson),
     status: session.status,
+    progress: {
+      total: session.items.length,
+      answered: answeredCount,
+      pending: Math.max(0, session.items.length - answeredCount)
+    },
     questions: session.items.map((item) => ({
       practice_session_item_id: item.id,
       order_no: item.orderNo,
@@ -754,10 +818,46 @@ function serializePracticeSession(
       difficulty_level: item.question.difficultyLevel,
       selection_reason: item.selectionReason,
       source_type: item.sourceType,
-      status: item.status
+      status: item.status,
+      latest_attempt: null as SerializedAttempt | null
     })),
     created_at: session.createdAt.toISOString(),
     updated_at: session.updatedAt.toISOString()
+  };
+}
+
+async function enrichPracticeSessionWithAttempts(
+  session: ReturnType<typeof serializePracticeSession>
+) {
+  const user = await getDefaultUser();
+  const questionIds = session.questions.map((question) => question.question_id);
+
+  if (questionIds.length === 0) {
+    return session;
+  }
+
+  const attempts = await prisma.answerAttempt.findMany({
+    where: {
+      userId: user.id,
+      questionId: { in: questionIds }
+    },
+    include: attemptInclude,
+    orderBy: { createdAt: "desc" }
+  });
+  const latestByQuestionId = new Map<string, SerializedAttempt>();
+
+  for (const attempt of attempts) {
+    if (!latestByQuestionId.has(attempt.questionId)) {
+      latestByQuestionId.set(attempt.questionId, serializeAttempt(attempt));
+    }
+  }
+
+  return {
+    ...session,
+    questions: session.questions.map((question) => ({
+      ...question,
+      latest_attempt: latestByQuestionId.get(question.question_id) ?? null
+    }))
   };
 }
 

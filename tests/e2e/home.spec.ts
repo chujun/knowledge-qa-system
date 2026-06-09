@@ -63,7 +63,7 @@ test("edits a pending review item before confirmation", async ({ page, request }
   await expect(page.getByText("分析", { exact: true })).toBeVisible();
 });
 
-test("runs the MVP browser learning loop", async ({ page }) => {
+test("runs the MVP browser learning loop", async ({ page, request }) => {
   const unique = Date.now();
   const domainName = `E2E 计算机 ${unique}`;
   const topicName = `E2E GitHub Actions ${unique}`;
@@ -102,7 +102,11 @@ test("runs the MVP browser learning loop", async ({ page }) => {
     .filter({ hasText: "pending_confirmation" })
     .first();
   await expect(generatedQuestionCard).toBeVisible();
-  await generatedQuestionCard.getByRole("link", { name: "查看详情" }).click();
+  const generatedQuestionHref = await generatedQuestionCard
+    .getByRole("link", { name: "查看详情" })
+    .getAttribute("href");
+  expect(generatedQuestionHref).toBeTruthy();
+  await page.goto(generatedQuestionHref!);
 
   await expect(page.getByText("Question Detail")).toBeVisible();
   await page.getByRole("button", { name: "确认入库" }).click();
@@ -163,10 +167,33 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "针对性练习" })).toBeVisible();
   await page.getByLabel("练习知识点").selectOption({ label: editedPointName });
   await page.getByLabel("练习题目数量").fill("1");
-  await page.getByRole("button", { name: "创建练习" }).click();
+  const practiceTargetId = await page.getByLabel("练习知识点").inputValue();
+  const practiceResponse = await request.post("/api/v1/practice-sessions", {
+    data: {
+      session_type: "knowledge_point",
+      target_type: "knowledge_point",
+      target_id: practiceTargetId,
+      strategy: {
+        include_error_set: true,
+        prefer_weak_dimensions: true,
+        question_count: 1
+      }
+    },
+    headers: {
+      "x-api-key": "local-dev-key"
+    }
+  });
+  const practiceBody = await practiceResponse.json();
+  expect(practiceResponse.ok()).toBe(true);
+  await page.goto(`/practice/${practiceBody.data.id}`);
 
   await expect(page.getByRole("heading", { name: "练习会话" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "去答题" }).first()).toBeVisible();
+  await expect(page.getByText("Current Question")).toBeVisible();
+  await expect(page.getByText("待完成")).toBeVisible();
+  await page.getByLabel("练习答案").fill("我会先说明 workflow 触发条件，再分析 jobs 和 steps 如何执行。");
+  await page.getByRole("button", { name: "提交本题" }).click();
+  await expect(page.getByText("最近得分")).toBeVisible();
+  await expect(page.getByText("completed").first()).toBeVisible();
 });
 
 async function openDetailsForControl(page: import("@playwright/test").Page, label: string) {

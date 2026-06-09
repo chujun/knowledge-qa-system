@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进练习会话连续答题体验。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口和待确认内容编辑入口。
+下一步：继续推进 Agent/MCP Web 调用记录页。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口、待确认内容编辑入口和练习会话连续答题入口。
 ```
 
 ## 0. 阶段门禁
@@ -1092,4 +1092,60 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 09:30:13 cmd /c npm run docs:check-timestamps：通过。
 2026-06-09 09:32:59 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 09:32:59 已提示用户查看新功能：首页待确认队列可进入“编辑详情”，在 `/review/<reviewItemId>` 编辑待确认内容。
+```
+
+## 31. Web 练习会话连续答题体验
+
+本章用于补齐练习会话“只能列题、需要跳转题目详情页答题”的体验缺口。用户进入练习会话后，可以在同一页面看到当前题、提交答案、查看 AI 评分和进度变化，减少练习过程中的来回跳转。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/practice/service.ts、src/app/practice/[practiceSessionId]/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：练习会话页新增进度统计、当前题答题面板、会话内提交答案、最近评分展示；题目列表显示 answered/pending 状态和最近得分。
+- 数据/接口变化：不新增数据库表；新增 `submitPracticeSessionItemAnswer`，提交答案后更新 PracticeSessionItem.status，并按完成情况更新 PracticeSession.status 为 in_progress 或 completed。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退练习服务函数、练习会话页连续答题面板、E2E 调整和文档记录即可恢复到第 30 章状态。
+```
+
+- [x] 服务层新增 `submitPracticeSessionItemAnswer`。
+- [x] 会话内答题后更新 `PracticeSessionItem.status` 为 answered。
+- [x] 会话内答题后按进度更新 `PracticeSession.status` 为 in_progress 或 completed。
+- [x] 练习会话序列化结果新增进度统计。
+- [x] 练习会话序列化结果为每题补充最近答题记录。
+- [x] `/practice/[practiceSessionId]` 新增当前题答题面板。
+- [x] `/practice/[practiceSessionId]` 新增总题数、已完成、待完成统计。
+- [x] `/practice/[practiceSessionId]` 提交答案后显示最近评分。
+- [x] `/practice/[practiceSessionId]` 题目列表显示 answered/pending 和最近得分。
+- [x] Playwright E2E 覆盖练习会话内直接提交答案并显示评分。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器完成连续练习：
+进入练习会话 -> 查看当前题 -> 输入答案 -> 提交本题 -> 页面显示最近评分和完成进度 -> 题目列表显示该题 answered。
+```
+
+验证记录：
+
+```text
+2026-06-09 10:04:48 新增 Web 练习会话连续答题体验：完成会话内提交答案、进度统计、最近评分展示和 E2E 覆盖。
+2026-06-09 10:04:48 cmd /c npx tsc --noEmit：第一次通过；补充 E2E 后待重跑。
+2026-06-09 10:04:48 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 10:04:48 cmd /c npm run build：通过，练习会话页连续答题入口进入 Next.js 生产构建。
+2026-06-09 10:04:48 cmd /c npm run test:e2e：第一次失败，原因是测试中首页详情链接点击受页面刷新影响，后改为读取 href 后直接进入题目详情。
+2026-06-09 10:04:48 cmd /c npm run test:e2e：第二次失败，原因是测试仍依赖练习创建 Server Action 跳转；本轮目标为连续答题体验，改为通过已验证 API 创建会话后进入会话页。
+2026-06-09 10:04:48 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑和练习会话内连续答题。
+2026-06-09 10:06:40 cmd /c npx tsc --noEmit：补充重跑通过。
+2026-06-09 10:06:40 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 10:09:15 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 10:09:15 已提示用户查看新功能：练习会话页可直接提交答案、查看进度和最近评分。
 ```
