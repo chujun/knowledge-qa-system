@@ -343,8 +343,36 @@ export async function listErrorSets(params: {
     }),
     prisma.errorSet.count({ where })
   ]);
+  const knowledgePointIds = [...new Set(items.map((item) => item.knowledgePointId))];
+  const knowledgePoints =
+    knowledgePointIds.length === 0
+      ? []
+      : await prisma.knowledgePoint.findMany({
+          where: {
+            id: { in: knowledgePointIds },
+            userId: user.id
+          },
+          select: {
+            id: true,
+            name: true,
+            status: true
+          }
+        });
+  const knowledgePointById = new Map(
+    knowledgePoints.map((point) => [point.id, point])
+  );
 
-  return { items: items.map(serializeErrorSet), page, pageSize, total };
+  return {
+    items: items.map((item) =>
+      serializeErrorSet({
+        ...item,
+        knowledgePoint: knowledgePointById.get(item.knowledgePointId) ?? null
+      })
+    ),
+    page,
+    pageSize,
+    total
+  };
 }
 
 export async function resolveErrorSet(errorSetId: string) {
@@ -769,6 +797,11 @@ function serializeMasteryProfile(profile: {
 function serializeErrorSet(errorSet: {
   id: string;
   knowledgePointId: string;
+  knowledgePoint?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
   attemptIdsJson: string;
   dominantTagsJson: string;
   status: string;
@@ -778,6 +811,13 @@ function serializeErrorSet(errorSet: {
   return {
     id: errorSet.id,
     knowledge_point_id: errorSet.knowledgePointId,
+    knowledge_point: errorSet.knowledgePoint
+      ? {
+          id: errorSet.knowledgePoint.id,
+          name: errorSet.knowledgePoint.name,
+          status: errorSet.knowledgePoint.status
+        }
+      : null,
     attempt_ids: parseStringArray(errorSet.attemptIdsJson),
     dominant_tags: parseStringArray(errorSet.dominantTagsJson),
     status: errorSet.status,

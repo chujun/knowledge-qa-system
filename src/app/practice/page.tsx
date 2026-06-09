@@ -11,7 +11,12 @@ import { listQuestions } from "@/lib/questions/service";
 
 export const dynamic = "force-dynamic";
 
-export default async function PracticePage() {
+export default async function PracticePage({
+  searchParams
+}: {
+  searchParams: Promise<{ knowledge_point_id?: string }>;
+}) {
+  const { knowledge_point_id: selectedKnowledgePointId } = await searchParams;
   const [points, confirmedQuestions, mastery, errorSets] = await Promise.all([
     listKnowledgePoints({ status: "confirmed", pageSize: 100 }),
     listQuestions({ status: "confirmed", pageSize: 1 }),
@@ -52,6 +57,7 @@ export default async function PracticePage() {
                   <select
                     aria-label="练习知识点"
                     className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
+                    defaultValue={selectedKnowledgePointId}
                     name="target_id"
                     required
                   >

@@ -12,6 +12,7 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "知识结构管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "题库管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "针对性练习" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "错误集管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "调用记录" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
@@ -145,6 +146,11 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   await page.getByRole("button", { name: "确认评分" }).click();
 
   await expect(page.getByText("user_confirmed")).toBeVisible();
+
+  await page.goto("/error-sets");
+  await expect(page.getByRole("heading", { name: "错误集管理" })).toBeVisible();
+  await expect(page.getByText(pointName).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "标记已解决" }).first()).toBeVisible();
 
   await page.goto("/domains");
   await expect(page.getByRole("heading", { name: "知识结构管理" })).toBeVisible();

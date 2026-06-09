@@ -124,6 +124,11 @@ export default async function Home() {
               label="针对性练习"
             />
             <WorkbenchLink
+              description="按知识点复盘错误标签，并将已复盘的错误集标记解决。"
+              href="/error-sets"
+              label="错误集管理"
+            />
+            <WorkbenchLink
               description="查看 Agent 会话来源、模型生成调用和质量校验记录。"
               href="/records"
               label="调用记录"
