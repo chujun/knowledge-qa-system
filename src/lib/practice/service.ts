@@ -313,8 +313,19 @@ export async function listMasteryProfiles(params: {
     }),
     prisma.masteryProfile.count({ where })
   ]);
+  const targetNames = await resolveMasteryTargetNames(user.id, items);
 
-  return { items: items.map(serializeMasteryProfile), page, pageSize, total };
+  return {
+    items: items.map((item) =>
+      serializeMasteryProfile({
+        ...item,
+        targetName: targetNames.get(`${item.targetType}:${item.targetId}`) ?? null
+      })
+    ),
+    page,
+    pageSize,
+    total
+  };
 }
 
 export async function listErrorSets(params: {
@@ -772,6 +783,7 @@ function serializeMasteryProfile(profile: {
   id: string;
   targetType: string;
   targetId: string;
+  targetName?: string | null;
   dimensionScoresJson: string;
   overallScore: number;
   evidenceCount: number;
@@ -784,6 +796,7 @@ function serializeMasteryProfile(profile: {
     id: profile.id,
     target_type: profile.targetType,
     target_id: profile.targetId,
+    target_name: profile.targetName,
     dimension_scores: JSON.parse(profile.dimensionScoresJson),
     overall_score: profile.overallScore,
     evidence_count: profile.evidenceCount,
@@ -792,6 +805,68 @@ function serializeMasteryProfile(profile: {
     created_at: profile.createdAt.toISOString(),
     updated_at: profile.updatedAt.toISOString()
   };
+}
+
+async function resolveMasteryTargetNames(
+  userId: string,
+  profiles: Array<{ targetType: string; targetId: string }>
+) {
+  const result = new Map<string, string>();
+  const idsByType = new Map<string, string[]>();
+
+  for (const profile of profiles) {
+    idsByType.set(profile.targetType, [
+      ...(idsByType.get(profile.targetType) ?? []),
+      profile.targetId
+    ]);
+  }
+
+  const [points, topics, domains] = await Promise.all([
+    resolveKnowledgePointNames(userId, idsByType.get("knowledge_point") ?? []),
+    resolveTopicNames(userId, idsByType.get("topic") ?? []),
+    resolveDomainNames(userId, idsByType.get("domain") ?? [])
+  ]);
+
+  for (const point of points) {
+    result.set(`knowledge_point:${point.id}`, point.name);
+  }
+
+  for (const topic of topics) {
+    result.set(`topic:${topic.id}`, topic.name);
+  }
+
+  for (const domain of domains) {
+    result.set(`domain:${domain.id}`, domain.name);
+  }
+
+  return result;
+}
+
+async function resolveKnowledgePointNames(userId: string, ids: string[]) {
+  return ids.length === 0
+    ? []
+    : prisma.knowledgePoint.findMany({
+        where: { id: { in: [...new Set(ids)] }, userId },
+        select: { id: true, name: true }
+      });
+}
+
+async function resolveTopicNames(userId: string, ids: string[]) {
+  return ids.length === 0
+    ? []
+    : prisma.knowledgeTopic.findMany({
+        where: { id: { in: [...new Set(ids)] }, userId },
+        select: { id: true, name: true }
+      });
+}
+
+async function resolveDomainNames(userId: string, ids: string[]) {
+  return ids.length === 0
+    ? []
+    : prisma.knowledgeDomain.findMany({
+        where: { id: { in: [...new Set(ids)] }, userId },
+        select: { id: true, name: true }
+      });
 }
 
 function serializeErrorSet(errorSet: {

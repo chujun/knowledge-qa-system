@@ -17,7 +17,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
 下一步：继续推进 Web 页面体验与数据管理能力。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口、待确认内容编辑入口、练习会话连续答题入口、Agent/MCP 调用记录页和错误集管理页。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口、待确认内容编辑入口、练习会话连续答题入口、Agent/MCP 调用记录页、错误集管理页和掌握画像管理页。
 ```
 
 ## 0. 阶段门禁
@@ -1254,4 +1254,57 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 11:03:00 cmd /c npm run docs:check-timestamps：通过。
 2026-06-09 11:05:43 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 11:05:43 已提示用户查看新功能：首页可进入“错误集管理”，也可直接访问 `/error-sets`。
+```
+
+## 34. Web 掌握画像管理页
+
+本章用于补齐掌握画像的集中查看能力。用户可以在浏览器中查看知识点、主题和领域维度的五维掌握分、综合分、薄弱维度和证据数量，并从知识点画像进入针对性练习。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/practice/service.ts、src/app/mastery/page.tsx、src/app/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页新增“掌握画像”入口；新增 `/mastery` 页面；掌握画像列表展示目标名称、五维分数、综合分、薄弱维度、证据数量和更新时间；知识点画像可进入针对练习。
+- 数据/接口变化：不新增数据库表；`listMasteryProfiles` 按 target_type/target_id 批量查询知识点、主题、领域名称并合并返回。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退掌握画像页面、服务层目标名称解析、首页入口、E2E 调整和文档记录即可恢复到第 33 章状态。
+```
+
+- [x] 服务层 `listMasteryProfiles` 返回 target_name。
+- [x] 服务层支持 knowledge_point、topic、domain 三类画像目标名称解析。
+- [x] 新增 `/mastery` 掌握画像管理页。
+- [x] `/mastery` 展示全部、知识点、主题、领域画像统计。
+- [x] `/mastery` 展示五维掌握分、综合分、薄弱维度和证据数量。
+- [x] `/mastery` 知识点画像支持进入针对练习。
+- [x] 首页新增“掌握画像”入口。
+- [x] Playwright E2E 覆盖答题评分后查看掌握画像页。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看掌握画像：
+首页 -> 掌握画像 -> 查看知识点五维分数和薄弱维度 -> 从知识点画像进入针对练习。
+```
+
+验证记录：
+
+```text
+2026-06-09 14:23:02 新增 Web 掌握画像管理页：完成 `/mastery` 页面、画像目标名称解析、首页入口和 E2E 覆盖。
+2026-06-09 14:23:02 cmd /c npx tsc --noEmit：通过。
+2026-06-09 14:23:02 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 14:23:02 cmd /c npm run build：通过，新增 `/mastery` 动态页面进入 Next.js 生产构建。
+2026-06-09 14:23:02 cmd /c npm run test:e2e：第一次失败，原因是“应用”文本在多个画像卡片中重复匹配。
+2026-06-09 14:23:02 修正 Playwright：收窄到当前知识点画像卡片内断言维度标签和针对练习入口。
+2026-06-09 14:23:02 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、掌握画像页和 MVP 浏览器学习闭环。
+2026-06-09 14:24:49 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 14:27:59 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 14:27:59 已提示用户查看新功能：首页可进入“掌握画像”，也可直接访问 `/mastery`。
 ```

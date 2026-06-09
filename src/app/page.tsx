@@ -124,6 +124,11 @@ export default async function Home() {
               label="针对性练习"
             />
             <WorkbenchLink
+              description="查看知识点、主题和领域维度的五维掌握分。"
+              href="/mastery"
+              label="掌握画像"
+            />
+            <WorkbenchLink
               description="按知识点复盘错误标签，并将已复盘的错误集标记解决。"
               href="/error-sets"
               label="错误集管理"
