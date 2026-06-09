@@ -5,7 +5,8 @@ import { listKnowledgePoints } from "@/lib/knowledge/service";
 import {
   createPracticeSession,
   listErrorSets,
-  listMasteryProfiles
+  listMasteryProfiles,
+  listPracticeSessions
 } from "@/lib/practice/service";
 import { listQuestions } from "@/lib/questions/service";
 
@@ -14,15 +15,28 @@ export const dynamic = "force-dynamic";
 export default async function PracticePage({
   searchParams
 }: {
-  searchParams: Promise<{ knowledge_point_id?: string }>;
+  searchParams: Promise<{
+    knowledge_point_id?: string;
+    session_status?: string;
+  }>;
 }) {
-  const { knowledge_point_id: selectedKnowledgePointId } = await searchParams;
-  const [points, confirmedQuestions, mastery, errorSets] = await Promise.all([
-    listKnowledgePoints({ status: "confirmed", pageSize: 100 }),
-    listQuestions({ status: "confirmed", pageSize: 1 }),
-    listMasteryProfiles({ pageSize: 20 }),
-    listErrorSets({ status: "active", pageSize: 20 })
-  ]);
+  const {
+    knowledge_point_id: selectedKnowledgePointId,
+    session_status: selectedSessionStatus
+  } = await searchParams;
+  const [points, confirmedQuestions, mastery, errorSets, sessions, allSessions] =
+    await Promise.all([
+      listKnowledgePoints({ status: "confirmed", pageSize: 100 }),
+      listQuestions({ status: "confirmed", pageSize: 1 }),
+      listMasteryProfiles({ pageSize: 20 }),
+      listErrorSets({ status: "active", pageSize: 20 }),
+      listPracticeSessions({
+        targetId: normalizeFilterValue(selectedKnowledgePointId),
+        status: normalizeFilterValue(selectedSessionStatus),
+        pageSize: 20
+      }),
+      listPracticeSessions({ pageSize: 1 })
+    ]);
 
   const canCreatePractice =
     points.items.length > 0 && confirmedQuestions.total > 0;
@@ -45,7 +59,7 @@ export default async function PracticePage({
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           <Metric label="正式题" value={confirmedQuestions.total} />
           <Metric label="掌握画像" value={mastery.total} />
-          <Metric label="活跃错误集" value={errorSets.total} />
+          <Metric label="练习会话" value={allSessions.total} />
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -125,6 +139,103 @@ export default async function PracticePage({
                 }))}
               />
             </div>
+          </Panel>
+        </section>
+
+        <section className="mt-8">
+          <Panel title="历史练习" eyebrow="Practice Sessions">
+            <form
+              className="grid gap-3 border border-ink/15 bg-white/35 p-4 md:grid-cols-[1fr_1fr_auto]"
+              method="get"
+            >
+              <label className="space-y-2 text-sm">
+                <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                  会话状态
+                </span>
+                <select
+                  className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                  defaultValue={selectedSessionStatus ?? ""}
+                  name="session_status"
+                >
+                  <option value="">全部状态</option>
+                  <option value="created">已创建</option>
+                  <option value="in_progress">进行中</option>
+                  <option value="completed">已完成</option>
+                </select>
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                  知识点
+                </span>
+                <select
+                  aria-label="筛选练习知识点"
+                  className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                  defaultValue={selectedKnowledgePointId ?? ""}
+                  name="knowledge_point_id"
+                >
+                  <option value="">全部知识点</option>
+                  {points.items.map((point) => (
+                    <option key={point.id} value={point.id}>
+                      {point.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex items-end gap-2">
+                <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                  筛选练习
+                </button>
+                <Link
+                  className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+                  href="/practice"
+                >
+                  清除
+                </Link>
+              </div>
+            </form>
+
+            <p className="mt-4 text-sm text-ink/55">
+              当前筛选结果 {sessions.total} 个练习会话
+            </p>
+            {sessions.items.length === 0 ? (
+              <p className="mt-4 text-sm leading-7 text-ink/65">
+                暂无匹配练习会话。可以先创建练习，或调整筛选条件。
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {sessions.items.map((session) => (
+                  <article
+                    className="border border-ink/15 bg-white/45 p-4"
+                    key={session.id}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap gap-2">
+                          <StatusBadge label={session.status} />
+                          <StatusBadge label={session.session_type} />
+                          <StatusBadge
+                            label={`${session.progress.answered}/${session.progress.total} 已答`}
+                          />
+                        </div>
+                        <h3 className="mt-4 text-xl font-semibold">
+                          {session.target_name ?? session.target_id}
+                        </h3>
+                        <p className="mt-2 text-sm text-ink/60">
+                          创建 {formatDate(session.created_at)} · 更新{" "}
+                          {formatDate(session.updated_at)}
+                        </p>
+                      </div>
+                      <Link
+                        className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+                        href={`/practice/${session.id}`}
+                      >
+                        进入练习
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </Panel>
         </section>
       </section>
@@ -235,6 +346,25 @@ function SignalList({
       ))}
     </div>
   );
+}
+
+function StatusBadge({ label }: { label: string }) {
+  return (
+    <span className="whitespace-nowrap bg-brass px-2 py-1 text-xs text-white">
+      {label}
+    </span>
+  );
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(value));
+}
+
+function normalizeFilterValue(value: string | undefined) {
+  return value && value.trim().length > 0 ? value : null;
 }
 
 function getRequiredFormValue(formData: FormData, name: string) {

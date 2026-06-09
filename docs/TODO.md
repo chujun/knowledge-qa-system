@@ -1424,3 +1424,58 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 15:23:47 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 15:23:47 已提示用户查看新功能：首页可进入“题库管理”，也可直接访问 `/questions` 使用筛选栏。
 ```
+
+## 37. Web 练习会话历史与筛选
+
+本章用于补齐练习会话管理能力。用户可以在针对性练习页查看历史练习会话，按会话状态和知识点筛选，并继续进入已有练习。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/practice/service.ts、src/app/practice/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：`/practice` 新增历史练习区域；展示练习会话总量、进度、目标知识点名称、创建/更新时间和进入练习入口；支持按会话状态和知识点筛选。
+- 数据/接口变化：不新增数据库表；新增 `listPracticeSessions` 服务方法，支持按 status、targetId 分页查询，并解析 knowledge_point 目标名称。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退练习会话列表服务、练习页历史练习 UI、E2E 调整和文档记录即可恢复到第 36 章状态。
+```
+
+- [x] 新增 `listPracticeSessions` 服务方法。
+- [x] `listPracticeSessions` 支持会话状态筛选。
+- [x] `listPracticeSessions` 支持目标知识点筛选。
+- [x] `listPracticeSessions` 返回练习进度和目标名称。
+- [x] `/practice` 展示练习会话总量。
+- [x] `/practice` 新增历史练习区域。
+- [x] `/practice` 历史练习支持按状态筛选。
+- [x] `/practice` 历史练习支持按知识点筛选。
+- [x] `/practice` 历史练习支持进入练习会话。
+- [x] Playwright E2E 覆盖创建练习后筛选历史练习。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器管理练习会话：
+首页 -> 针对性练习 -> 查看历史练习 -> 按状态或知识点筛选 -> 进入已有练习会话继续答题。
+```
+
+验证记录：
+
+```text
+2026-06-09 16:05:09 新增 Web 练习会话历史与筛选：完成 `listPracticeSessions`、`/practice` 历史练习列表、状态/知识点筛选和 E2E 覆盖。
+2026-06-09 16:05:09 cmd /c npx tsc --noEmit：通过。
+2026-06-09 16:05:09 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 16:05:09 cmd /c npm run test:e2e：第一次失败，原因是筛选练习知识点控件没有稳定 aria-label；已新增 `aria-label="筛选练习知识点"`。
+2026-06-09 16:05:09 cmd /c npm run test:e2e：第二次失败，原因是创建练习选择器 `练习知识点` 同时匹配筛选控件；已改为 exact 匹配。
+2026-06-09 16:05:09 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、题库筛选、练习历史筛选和 MVP 浏览器学习闭环。
+2026-06-09 16:05:09 cmd /c npm run build：通过，练习会话历史与筛选进入 Next.js 生产构建。
+2026-06-09 16:05:09 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 16:05:09 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 16:05:09 已提示用户查看新功能：首页可进入“针对性练习”，也可直接访问 `/practice` 查看历史练习筛选。
+```

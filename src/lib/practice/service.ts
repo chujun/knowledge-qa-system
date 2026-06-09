@@ -97,6 +97,47 @@ export async function getPracticeSession(practiceSessionId: string) {
   return session ? enrichPracticeSessionWithAttempts(serializePracticeSession(session)) : null;
 }
 
+export async function listPracticeSessions(params: {
+  status?: string | null;
+  targetId?: string | null;
+  page?: number;
+  pageSize?: number;
+}) {
+  const user = await getDefaultUser();
+  const page = Math.max(1, params.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+  const where: Prisma.PracticeSessionWhereInput = {
+    userId: user.id,
+    ...(params.status ? { status: params.status } : {}),
+    ...(params.targetId ? { targetId: params.targetId } : {})
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.practiceSession.findMany({
+      where,
+      include: practiceSessionInclude,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.practiceSession.count({ where })
+  ]);
+  const targetNames = await resolvePracticeSessionTargetNames(user.id, items);
+
+  return {
+    items: items.map((item) => {
+      const serialized = serializePracticeSession(item);
+      return {
+        ...serialized,
+        target_name: targetNames.get(item.targetId) ?? null
+      };
+    }),
+    page,
+    pageSize,
+    total
+  };
+}
+
 export async function submitPracticeSessionItemAnswer(
   practiceSessionId: string,
   practiceSessionItemId: string,
@@ -948,6 +989,41 @@ function serializePracticeSession(
     created_at: session.createdAt.toISOString(),
     updated_at: session.updatedAt.toISOString()
   };
+}
+
+async function resolvePracticeSessionTargetNames(
+  userId: string,
+  sessions: Array<Prisma.PracticeSessionGetPayload<{ include: typeof practiceSessionInclude }>>
+) {
+  const knowledgePointIds = Array.from(
+    new Set(
+      sessions
+        .filter((session) => session.targetType === "knowledge_point")
+        .map((session) => session.targetId)
+    )
+  );
+  const names = new Map<string, string>();
+
+  if (knowledgePointIds.length === 0) {
+    return names;
+  }
+
+  const points = await prisma.knowledgePoint.findMany({
+    where: {
+      userId,
+      id: { in: knowledgePointIds }
+    },
+    select: {
+      id: true,
+      name: true
+    }
+  });
+
+  for (const point of points) {
+    names.set(point.id, point.name);
+  }
+
+  return names;
 }
 
 async function enrichPracticeSessionWithAttempts(

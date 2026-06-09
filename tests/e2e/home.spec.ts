@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(90000);
+test.setTimeout(120000);
 
 test("shows the local knowledge QA workspace", async ({ page }) => {
   await page.goto("/");
@@ -202,9 +202,9 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
 
   await page.goto("/practice");
   await expect(page.getByRole("heading", { name: "针对性练习" })).toBeVisible();
-  await page.getByLabel("练习知识点").selectOption({ label: editedPointName });
+  await page.getByLabel("练习知识点", { exact: true }).selectOption({ label: editedPointName });
   await page.getByLabel("练习题目数量").fill("1");
-  const practiceTargetId = await page.getByLabel("练习知识点").inputValue();
+  const practiceTargetId = await page.getByLabel("练习知识点", { exact: true }).inputValue();
   const practiceResponse = await request.post("/api/v1/practice-sessions", {
     data: {
       session_type: "knowledge_point",
@@ -222,6 +222,21 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   });
   const practiceBody = await practiceResponse.json();
   expect(practiceResponse.ok()).toBe(true);
+
+  await page.goto("/practice");
+  await expect(page.getByRole("heading", { name: "历史练习" })).toBeVisible();
+  await page.getByLabel("筛选练习知识点").selectOption({ label: editedPointName });
+  await page.getByRole("button", { name: "筛选练习" }).click();
+  await expect(page).toHaveURL(/knowledge_point_id=/);
+  await expect(page.getByText("当前筛选结果")).toBeVisible();
+  const practiceSessionCard = page
+    .locator("article")
+    .filter({ hasText: editedPointName })
+    .filter({ hasText: "created" })
+    .first();
+  await expect(practiceSessionCard).toBeVisible();
+  await expect(practiceSessionCard.getByRole("link", { name: "进入练习" })).toBeVisible();
+
   await page.goto(`/practice/${practiceBody.data.id}`);
 
   await expect(page.getByRole("heading", { name: "练习会话" })).toBeVisible();
