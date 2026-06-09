@@ -60,6 +60,12 @@ export default async function RecordsPage({
           <p className="mt-4 max-w-3xl text-sm leading-7 text-ink/65">
             集中查看外部 Agent 会话来源、模型生成调用和质量校验记录，用于追踪来源、模型、Agent、耗时和质检结果。
           </p>
+          <Link
+            className="mt-5 inline-block border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+            href="/integrations"
+          >
+            查看 Agent 接入方式
+          </Link>
         </header>
 
         <section className="mt-6 grid gap-4 md:grid-cols-3">

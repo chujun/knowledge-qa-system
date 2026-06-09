@@ -1532,3 +1532,62 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 16:26:03 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 16:26:03 已提示用户查看新功能：首页可进入“调用记录”，也可直接访问 `/records` 使用记录筛选。
 ```
+
+## 39. Web Agent/MCP 接入说明页
+
+本章用于让系统检验标准中的 AI Agent MCP/Agent 调用能力变成用户可见、可操作的入口。用户可以在浏览器中查看 HTTP API、Agent Tool CLI 和 MCP stdio 的本地接入方式，并从首页或调用记录页进入。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/integrations/page.tsx、src/app/page.tsx、src/app/records/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：新增 `/integrations` 接入说明页；首页新增“Agent 接入”功能入口；调用记录页新增接入方式入口；页面展示环境变量、HTTP API、Agent Tool CLI、MCP stdio 和工具清单。
+- 数据/接口变化：不新增数据库表；复用已有 HTTP API、Agent Tool CLI 和 MCP Tool schema；页面只展示 API Key 占位符，不展示真实密钥。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退接入说明页、首页入口、调用记录页入口、E2E 调整和文档记录即可恢复到第 38 章状态。
+```
+
+- [x] 新增 `/integrations` Agent/MCP 接入说明页。
+- [x] 页面展示本地环境变量配置。
+- [x] 页面展示 API Key 占位符，不展示真实 API Key。
+- [x] 页面展示 HTTP API 外部会话沉淀命令。
+- [x] 页面展示 Agent Tool CLI 帮助命令。
+- [x] 页面展示 Agent Tool CLI 外部会话沉淀命令。
+- [x] 页面展示 MCP stdio 启动命令。
+- [x] 页面展示 MCP 自检命令。
+- [x] 页面从 `mcpToolDefinitions` 展示 MCP/Agent Tool 清单。
+- [x] 首页新增“Agent 接入”入口。
+- [x] 调用记录页新增“查看 Agent 接入方式”入口。
+- [x] Playwright E2E 覆盖首页入口和接入页核心命令展示。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看 Agent/MCP 接入方式：
+首页 -> Agent 接入 -> 查看 HTTP API、Agent Tool CLI、MCP stdio 命令和 Tool 清单。
+调用记录 -> 查看 Agent 接入方式 -> 进入 `/integrations`。
+```
+
+验证记录：
+
+```text
+2026-06-09 16:52:47 新增 Web Agent/MCP 接入说明页：完成 `/integrations` 页面、首页入口、调用记录页入口和 E2E 覆盖。
+2026-06-09 16:52:47 cmd /c npx tsc --noEmit：通过。
+2026-06-09 16:52:47 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 16:52:47 cmd /c npm run test:e2e：第一次失败，原因是首页仍有 dev server 资源加载时点击入口未稳定触发跳转。
+2026-06-09 16:52:47 修正 Playwright：验证首页 Agent 接入链接 href 后，直接进入 `/integrations` 检查接入页核心内容。
+2026-06-09 16:52:47 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、Agent/MCP 接入页和 MVP 浏览器学习闭环。
+2026-06-09 16:52:47 cmd /c npm run build：通过，新增 `/integrations` 动态页面进入 Next.js 生产构建。
+2026-06-09 16:54:54 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 16:59:38 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 16:59:38 `/integrations` 冒烟检查：通过，页面包含 Agent/MCP 接入、qa_create_from_conversation、npm run mcp:stdio 和 API Key 占位符。
+2026-06-09 16:59:38 已提示用户查看新功能：首页可进入“Agent 接入”，也可直接访问 `/integrations`。
+```

@@ -16,8 +16,17 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Open\s+答题记录/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "错误集管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "调用记录" })).toBeVisible();
+  const agentIntegrationLink = page.getByRole("link", { name: /Agent 接入/ });
+  await expect(agentIntegrationLink).toBeVisible();
+  await expect(agentIntegrationLink).toHaveAttribute("href", "/integrations");
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
+
+  await page.goto("/integrations");
+  await expect(page.getByRole("heading", { name: "Agent/MCP 接入" })).toBeVisible();
+  await expect(page.getByText("qa_create_from_conversation").first()).toBeVisible();
+  await expect(page.getByText("npm run mcp:stdio").first()).toBeVisible();
+  await expect(page.getByText("<your-api-key>").first()).toBeVisible();
 });
 
 test("edits a pending review item before confirmation", async ({ page, request }) => {

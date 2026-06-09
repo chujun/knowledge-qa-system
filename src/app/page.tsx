@@ -149,6 +149,11 @@ export default async function Home() {
               href="/records"
               label="调用记录"
             />
+            <WorkbenchLink
+              description="查看 HTTP API、Agent Tool CLI 和 MCP stdio 的本地接入方式。"
+              href="/integrations"
+              label="Agent 接入"
+            />
           </section>
 
           <section id="领域">
