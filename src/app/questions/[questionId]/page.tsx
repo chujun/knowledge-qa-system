@@ -10,7 +10,9 @@ import {
 import {
   archiveQuestion,
   confirmQuestion,
+  getCoreExplanationForKnowledgePoint,
   getQuestion,
+  updateCoreExplanationContent,
   updateQuestionContent
 } from "@/lib/questions/service";
 
@@ -37,6 +39,9 @@ export default async function QuestionDetailPage({
   }
 
   const attempts = await listAnswerAttempts({ questionId, pageSize: 5 });
+  const coreExplanation = await getCoreExplanationForKnowledgePoint(
+    question.knowledge_point_id
+  );
   const activeAnswerVersion = question.answer_versions[0];
   const rubricJson = JSON.stringify(
     question.scoring_rubric_version?.rubric ?? {},
@@ -98,6 +103,60 @@ export default async function QuestionDetailPage({
                 {activeAnswerVersion.explanation_text}
               </p>
             ) : null}
+          </Panel>
+
+          <Panel title="核心讲解" eyebrow="Core Explanation">
+            {coreExplanation ? (
+              <div className="space-y-5">
+                <article className="border border-ink/10 bg-white/45 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="text-xl font-semibold">
+                      {coreExplanation.version.title}
+                    </h3>
+                    <StatusBadge label={coreExplanation.version.status} />
+                  </div>
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-ink/70">
+                    {coreExplanation.version.explanation_text}
+                  </p>
+                </article>
+
+                <form action={updateCoreExplanationAction} className="space-y-3">
+                  <input
+                    name="core_explanation_id"
+                    type="hidden"
+                    value={coreExplanation.id}
+                  />
+                  <input name="question_id" type="hidden" value={question.id} />
+                  <label className="grid gap-2 text-sm">
+                    <span className="text-ink/60">讲解标题</span>
+                    <input
+                      aria-label="编辑核心讲解标题"
+                      className="w-full border border-ink/15 bg-white/60 p-3 text-sm outline-none focus:border-clay"
+                      defaultValue={coreExplanation.version.title}
+                      name="core_title"
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm">
+                    <span className="text-ink/60">讲解正文</span>
+                    <textarea
+                      aria-label="编辑核心讲解正文"
+                      className="min-h-40 w-full border border-ink/15 bg-white/60 p-3 text-sm leading-6 outline-none focus:border-clay"
+                      defaultValue={coreExplanation.version.explanation_text}
+                      name="core_explanation_text"
+                      required
+                    />
+                  </label>
+                  <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    保存核心讲解
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <p className="text-sm leading-7 text-ink/65">
+                当前知识点暂无核心讲解。围绕知识点生成题目后会自动创建核心讲解。
+              </p>
+            )}
           </Panel>
 
           <Panel title="编辑题目内容" eyebrow="Manual Edit">
@@ -297,6 +356,22 @@ async function updateQuestionContentAction(formData: FormData) {
     explanation_text: getOptionalFormValue(formData, "explanation_text"),
     rubric: parseRubricJson(getRequiredFormValue(formData, "rubric_json"))
   });
+  revalidatePath("/");
+  revalidatePath("/questions");
+  revalidatePath(`/questions/${questionId}`);
+}
+
+async function updateCoreExplanationAction(formData: FormData) {
+  "use server";
+
+  const questionId = getRequiredFormValue(formData, "question_id");
+  await updateCoreExplanationContent(
+    getRequiredFormValue(formData, "core_explanation_id"),
+    {
+      title: getRequiredFormValue(formData, "core_title"),
+      explanation_text: getRequiredFormValue(formData, "core_explanation_text")
+    }
+  );
   revalidatePath("/");
   revalidatePath("/questions");
   revalidatePath(`/questions/${questionId}`);

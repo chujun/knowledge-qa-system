@@ -58,6 +58,12 @@ test("runs the MVP browser learning loop", async ({ page }) => {
   await expect(page.getByText("Question Detail")).toBeVisible();
   await page.getByRole("button", { name: "确认入库" }).click();
   await expect(page.getByText("confirmed").first()).toBeVisible();
+  const editedCoreTitle = `E2E 编辑后的核心讲解 ${unique}`;
+  await page.getByLabel("编辑核心讲解标题").fill(editedCoreTitle);
+  await page.getByLabel("编辑核心讲解正文").fill("E2E 编辑后的核心讲解正文，覆盖定义、边界和应用场景。");
+  await page.getByRole("button", { name: "保存核心讲解" }).click();
+  await expect(page.getByRole("heading", { name: editedCoreTitle })).toBeVisible();
+
   const editedStem = `E2E 编辑后的题干 ${unique}`;
   await page.getByLabel("编辑题干").fill(editedStem);
   await page.getByLabel("编辑标准答案").fill("E2E 编辑后的标准答案，包含 workflow 触发条件、jobs 和 steps。");

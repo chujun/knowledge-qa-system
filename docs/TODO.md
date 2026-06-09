@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进题目详细编辑能力。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口和题目内容编辑入口。
+下一步：继续推进核心讲解编辑能力。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口和核心讲解编辑入口。
 ```
 
 ## 0. 阶段门禁
@@ -985,4 +985,54 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-08 22:17:21 cmd /c npm run docs:check-timestamps：通过。
 2026-06-08 22:17:21 cmd /c npm run build：通过，题目详细编辑入口进入 Next.js 生产构建。
 2026-06-08 22:17:21 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖题目确认入库后编辑题干、答案和讲解并展示新题干。
+```
+
+## 29. Web 核心讲解编辑能力
+
+本章用于补齐核心知识点讲解的人工维护能力。核心讲解属于知识点维度，题目详情页通过题目的知识点关联读取并编辑核心讲解版本。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/questions/service.ts、src/app/questions/[questionId]/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：题目详情页展示核心讲解；支持编辑核心讲解标题和正文；保存后创建新的 CoreExplanationVersion。
+- 数据/接口变化：不新增数据库表；新增 `getCoreExplanationForKnowledgePoint` 和 `updateCoreExplanationContent` 服务函数；人工编辑版本 source_type 为 `user_edited`。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退核心讲解服务、题目详情页核心讲解编辑表单、E2E 调整和文档记录即可恢复到第 28 章状态。
+```
+
+- [x] 服务层新增 `updateCoreExplanationContentSchema`。
+- [x] 服务层新增 `getCoreExplanationForKnowledgePoint`。
+- [x] 服务层新增 `updateCoreExplanationContent`。
+- [x] 题目详情页展示当前核心讲解。
+- [x] 题目详情页支持编辑核心讲解标题和正文。
+- [x] 核心讲解人工编辑保存为新的 CoreExplanationVersion。
+- [x] Playwright E2E 覆盖核心讲解编辑并展示新标题。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器维护核心讲解：
+进入题目详情 -> 编辑核心讲解标题和正文 -> 保存新版本 -> 页面展示新核心讲解标题。
+```
+
+验证记录：
+
+```text
+2026-06-09 08:56:49 新增 Web 核心讲解编辑能力：题目详情页可编辑核心讲解标题和正文，并扩展 E2E 覆盖。
+2026-06-09 09:02:35 cmd /c npx tsc --noEmit：通过。
+2026-06-09 09:02:35 cmd /c npm run test：通过，17 个测试文件，45 条测试用例。
+2026-06-09 09:02:35 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 09:02:35 cmd /c npm run build：通过，核心讲解编辑入口进入 Next.js 生产构建。
+2026-06-09 09:02:35 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖核心讲解编辑并展示新标题。
+2026-06-09 09:02:35 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 09:02:35 已提示用户查看新功能：题目详情页核心讲解区域可编辑讲解标题和正文。
 ```

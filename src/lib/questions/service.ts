@@ -22,6 +22,11 @@ export const updateQuestionContentSchema = z.object({
   rubric: z.record(z.string(), z.unknown())
 });
 
+export const updateCoreExplanationContentSchema = z.object({
+  title: z.string().trim().min(1).max(240),
+  explanation_text: z.string().trim().min(1).max(12000)
+});
+
 export async function generateForKnowledgePoint(
   input: z.infer<typeof generateForKnowledgePointSchema>
 ) {
@@ -480,6 +485,75 @@ export async function updateQuestionContent(
   return serializeQuestionWithVersions(question);
 }
 
+export async function getCoreExplanationForKnowledgePoint(knowledgePointId: string) {
+  const user = await getDefaultUser();
+  const core = await prisma.coreExplanation.findFirst({
+    where: {
+      knowledgePointId,
+      userId: user.id
+    },
+    include: {
+      versions: { orderBy: { versionNo: "desc" } }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  return core && core.versions[0]
+    ? serializeCoreExplanation(core, core.versions[0])
+    : null;
+}
+
+export async function updateCoreExplanationContent(
+  coreExplanationId: string,
+  input: z.infer<typeof updateCoreExplanationContentSchema>
+) {
+  const user = await getDefaultUser();
+  const core = await prisma.$transaction(async (tx) => {
+    const existing = await tx.coreExplanation.findFirstOrThrow({
+      where: {
+        id: coreExplanationId,
+        userId: user.id
+      },
+      include: {
+        versions: { orderBy: { versionNo: "desc" }, take: 1 }
+      }
+    });
+
+    const versionStatus = existing.status === "confirmed" ? "active" : "draft";
+
+    if (existing.status === "confirmed") {
+      await tx.coreExplanationVersion.updateMany({
+        where: { coreExplanationId: existing.id, status: "active" },
+        data: { status: "archived" }
+      });
+    }
+
+    await tx.coreExplanationVersion.create({
+      data: {
+        coreExplanationId: existing.id,
+        versionNo: (existing.versions[0]?.versionNo ?? 0) + 1,
+        title: input.title,
+        explanationText: input.explanation_text,
+        templateCode: "manual-edit",
+        sourceType: "user_edited",
+        modelName: null,
+        aiAgent: "User",
+        promptVersion: "manual-edit-v1",
+        status: versionStatus
+      }
+    });
+
+    return tx.coreExplanation.findFirstOrThrow({
+      where: { id: existing.id },
+      include: {
+        versions: { orderBy: { versionNo: "desc" } }
+      }
+    });
+  });
+
+  return serializeCoreExplanation(core, core.versions[0]);
+}
+
 const questionDetailInclude = {
   versions: { orderBy: { versionNo: "desc" } },
   answerVersions: { orderBy: { versionNo: "desc" } },
@@ -533,19 +607,27 @@ function serializeCoreExplanation(
     title: string;
     explanationText: string;
     status: string;
+    sourceType?: string;
+    modelName?: string | null;
+    aiAgent?: string | null;
+    promptVersion?: string | null;
   }
 ) {
   return {
     id: core.id,
     knowledge_point_id: core.knowledgePointId,
     status: core.status,
-    version: {
-      id: version.id,
-      version_no: version.versionNo,
-      title: version.title,
-      explanation_text: version.explanationText,
-      status: version.status
-    },
+  version: {
+    id: version.id,
+    version_no: version.versionNo,
+    title: version.title,
+    explanation_text: version.explanationText,
+    status: version.status,
+    source_type: version.sourceType,
+    model_name: version.modelName,
+    ai_agent: version.aiAgent,
+    prompt_version: version.promptVersion
+  },
     created_at: core.createdAt.toISOString(),
     updated_at: core.updatedAt.toISOString()
   };
