@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.setTimeout(60000);
+
 test("shows the local knowledge QA workspace", async ({ page }) => {
   await page.goto("/");
 
@@ -12,6 +14,53 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "针对性练习" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
+});
+
+test("edits a pending review item before confirmation", async ({ page, request }) => {
+  const unique = Date.now();
+  const response = await request.post("/api/v1/ingestions/external-conversation", {
+    data: {
+      source_system: "Codex",
+      conversation_id: `e2e-review-${unique}`,
+      context_type: "summary",
+      conversation_summary:
+        "用户正在学习 GitHub Actions，希望把会话沉淀为待确认知识问答。",
+      instruction: `围绕 GitHub Actions 生成待确认编辑测试 ${unique}`,
+      target_domain_hint: "计算机"
+    },
+    headers: {
+      "x-api-key": "local-dev-key"
+    }
+  });
+  const body = await response.json();
+  const reviewItemId = body.data.review_item_id as string;
+  const editedTopic = `E2E 待确认主题 ${unique}`;
+
+  expect(response.ok()).toBe(true);
+
+  await page.goto(`/review/${reviewItemId}`);
+  await expect(page.getByRole("heading", { name: "待确认内容编辑" })).toBeVisible();
+  await page.getByLabel("建议领域").fill("计算机工程");
+  await page.getByLabel("建议主题").fill(editedTopic);
+  await page.getByLabel("知识点预览").fill("workflow 文件结构\n触发条件\njobs 与 steps");
+  await page.getByLabel("题目预览 JSON").fill(
+    JSON.stringify(
+      [
+        {
+          stem: `如何分析 ${editedTopic} 的触发条件？`,
+          cognitive_dimension: "analyze",
+          difficulty_level: 4
+        }
+      ],
+      null,
+      2
+    )
+  );
+  await page.getByRole("button", { name: "保存预览" }).click();
+
+  await expect(page.getByRole("heading", { name: editedTopic })).toBeVisible();
+  await expect(page.getByText("jobs 与 steps", { exact: true })).toBeVisible();
+  await expect(page.getByText("分析", { exact: true })).toBeVisible();
 });
 
 test("runs the MVP browser learning loop", async ({ page }) => {

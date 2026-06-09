@@ -213,6 +213,54 @@ describe("ingestion and review API routes", () => {
     expect(rejectBody.data.status).toBe("rejected");
   });
 
+  it("updates a pending review item preview before confirmation", async () => {
+    const seed = await externalConversationRoute.POST(
+      jsonRequest("http://localhost/api/v1/ingestions/external-conversation", {
+        source_system: "Codex",
+        context_type: "summary",
+        conversation_summary: "GitHub Actions 待确认内容编辑测试",
+        instruction: "生成 GitHub Actions 编辑预览题目"
+      })
+    );
+    const seedBody = await seed.json();
+
+    const updateResponse = await reviewItemRoute.PATCH(
+      jsonRequest(
+        `http://localhost/api/v1/review-items/${seedBody.data.review_item_id}`,
+        {
+          domain_name: "计算机工程",
+          topic_name: "GitHub Actions 待确认编辑",
+          knowledge_points_preview: ["workflow 结构", "触发条件"],
+          questions_preview: [
+            {
+              stem: "如何判断 workflow 触发条件是否正确？",
+              cognitive_dimension: "analyze",
+              difficulty_level: 4
+            }
+          ]
+        }
+      ),
+      {
+        params: Promise.resolve({
+          reviewItemId: seedBody.data.review_item_id
+        })
+      }
+    );
+    const updateBody = await updateResponse.json();
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateBody.data.preview.topic_suggestion.domain_name).toBe(
+      "计算机工程"
+    );
+    expect(updateBody.data.preview.topic_suggestion.topic_name).toBe(
+      "GitHub Actions 待确认编辑"
+    );
+    expect(updateBody.data.preview.edited_by_user).toBe(true);
+    expect(updateBody.data.preview.questions_preview[0].cognitive_dimension).toBe(
+      "analyze"
+    );
+  });
+
   async function applyMigration(migrationName: string) {
     const migrationSql = readFileSync(
       path.join(process.cwd(), "prisma", "migrations", migrationName, "migration.sql"),

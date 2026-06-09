@@ -16,8 +16,8 @@ docs/knowledge-qa-design-dev-flow-check.md
 
 ```text
 已完成：需求讨论、业务建模初稿、设计开发流程检查文档、领域模型文档、ER 图、API 草案、MCP Tool 设计。
-下一步：继续推进核心讲解编辑能力。
-当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口和核心讲解编辑入口。
+下一步：继续推进练习会话连续答题体验。
+当前实现：已完成本地 Next.js/TypeScript/SQLite/Prisma 项目骨架、核心 API、Agent/MCP 调用入口、真实数据 Web 工作台、基础管理入口、知识结构维护入口、题目内容编辑入口、核心讲解编辑入口和待确认内容编辑入口。
 ```
 
 ## 0. 阶段门禁
@@ -1035,4 +1035,61 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 09:02:35 cmd /c npm run test:e2e：通过，2 条 Playwright E2E 测试；覆盖核心讲解编辑并展示新标题。
 2026-06-09 09:02:35 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 09:02:35 已提示用户查看新功能：题目详情页核心讲解区域可编辑讲解标题和正文。
+```
+
+## 30. Web 待确认内容编辑能力
+
+本章用于补齐外部会话沉淀后的人工预处理能力。用户可以在正式确认入库前编辑 AI 生成的建议领域、建议主题、知识点预览和题目预览，减少“生成内容基本可用但细节需要调整”时只能拒绝重来的情况。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/ingestion/service.ts、src/app/api/v1/review-items/[reviewItemId]/route.ts、src/app/review/[reviewItemId]/page.tsx、src/app/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页待确认卡片新增编辑详情入口；新增待确认内容编辑页；保存后更新 ReviewItem.previewJson；确认/拒绝仍复用既有状态流。
+- 数据/接口变化：不新增数据库表；新增 `updateReviewItemPreviewSchema` 和 `updateReviewItemPreview`；`PATCH /api/v1/review-items/{reviewItemId}` 支持 Agent/API 客户端更新待确认预览。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退 review 预览更新服务、PATCH 路由、/review 编辑页、首页链接、E2E 调整和文档记录即可恢复到第 29 章状态。
+```
+
+- [x] 服务层新增 `updateReviewItemPreviewSchema`。
+- [x] 服务层新增 `updateReviewItemPreview`。
+- [x] `ReviewItem` 仅允许 pending 状态编辑预览。
+- [x] API 新增 `PATCH /api/v1/review-items/{reviewItemId}`。
+- [x] 首页待确认队列新增“编辑详情”入口。
+- [x] 新增 `/review/[reviewItemId]` 待确认内容编辑页。
+- [x] 编辑页支持修改建议领域和建议主题。
+- [x] 编辑页支持修改知识点预览。
+- [x] 编辑页支持修改题目预览 JSON。
+- [x] 编辑页保留确认入库和拒绝操作。
+- [x] API 集成测试覆盖待确认预览更新。
+- [x] Playwright E2E 覆盖外部会话沉淀后编辑待确认预览。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器维护待确认内容：
+外部会话沉淀 -> 进入待确认编辑详情 -> 编辑建议领域/主题/知识点/题目预览 -> 保存预览 -> 页面展示编辑后的待确认内容。
+```
+
+验证记录：
+
+```text
+2026-06-09 09:28:20 新增 Web 待确认内容编辑能力：完成待确认预览编辑服务、PATCH API、/review 编辑页、首页编辑入口和 E2E 覆盖。
+2026-06-09 09:28:20 cmd /c npx tsc --noEmit：通过。
+2026-06-09 09:28:20 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 09:28:20 cmd /c npm run build：通过，新增 `/review/[reviewItemId]` 动态页面进入 Next.js 生产构建。
+2026-06-09 09:28:20 cmd /c npm run test:e2e：第一次失败，原因是待确认编辑测试文本选择器匹配到 textarea 和预览内容，且原长闭环超过 30 秒默认超时。
+2026-06-09 09:28:20 修正 Playwright：测试超时调整为 60 秒，并收窄待确认编辑页断言选择器。
+2026-06-09 09:28:20 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑和 MVP 浏览器学习闭环。
+2026-06-09 09:30:13 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 09:32:59 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 09:32:59 已提示用户查看新功能：首页待确认队列可进入“编辑详情”，在 `/review/<reviewItemId>` 编辑待确认内容。
 ```
