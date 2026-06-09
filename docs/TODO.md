@@ -1591,3 +1591,57 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 16:59:38 `/integrations` 冒烟检查：通过，页面包含 Agent/MCP 接入、qa_create_from_conversation、npm run mcp:stdio 和 API Key 占位符。
 2026-06-09 16:59:38 已提示用户查看新功能：首页可进入“Agent 接入”，也可直接访问 `/integrations`。
 ```
+
+## 40. Web 待确认队列筛选
+
+本章用于提升外部 Agent 沉淀后的审核效率。用户可以在首页待确认队列中按状态和来源系统筛选待确认项，并在卡片上直接看到来源系统。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/ingestion/service.ts、src/app/api/v1/review-items/route.ts、src/app/page.tsx、src/app/api/v1/ingestion-routes.integration.test.ts、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页待确认队列新增状态筛选和来源系统筛选；筛选条件通过 URL query 保留；待确认卡片展示来源系统；API 支持 `source_system` query。
+- 数据/接口变化：不新增数据库表；`listReviewItems` 扩展 `sourceSystem` 查询条件，并返回 `ingestion_task.source_reference` 轻量来源信息。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退待确认筛选 UI、`listReviewItems` 来源查询、API query 扩展、测试和文档记录即可恢复到第 39 章状态。
+```
+
+- [x] `listReviewItems` 支持 `sourceSystem` 筛选。
+- [x] `listReviewItems` 返回来源系统轻量信息。
+- [x] `GET /api/v1/review-items` 支持 `source_system` query。
+- [x] 首页待确认队列支持按状态筛选。
+- [x] 首页待确认队列支持按来源系统筛选。
+- [x] 首页待确认卡片展示来源系统。
+- [x] 首页待确认筛选条件通过 URL query 保留。
+- [x] 首页待确认筛选支持一键清除。
+- [x] API 集成测试覆盖 `source_system` 筛选。
+- [x] Playwright E2E 覆盖首页待确认来源筛选。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器筛选待确认队列：
+首页 -> 待确认入库 -> 输入来源系统或选择状态 -> 筛选待确认 -> 查看命中记录和来源系统 -> 清除筛选返回默认待确认列表。
+```
+
+验证记录：
+
+```text
+2026-06-09 17:17:56 新增 Web 待确认队列筛选：完成首页待确认状态/来源系统筛选、API source_system query、来源展示和测试覆盖。
+2026-06-09 17:17:56 cmd /c npx tsc --noEmit：通过。
+2026-06-09 17:17:56 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 17:17:56 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、待确认来源筛选和 MVP 浏览器学习闭环。
+2026-06-09 17:17:56 cmd /c npm run build：通过，待确认队列筛选进入 Next.js 生产构建。
+2026-06-09 17:19:46 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 17:23:41 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 17:23:41 首页待确认筛选冒烟检查：通过，页面包含待确认入库、待确认来源系统、筛选待确认和 Codex。
+2026-06-09 17:23:41 已提示用户查看新功能：首页“待确认入库”区域可以按状态和来源系统筛选。
+```

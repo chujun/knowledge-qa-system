@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const result = await listReviewItems({
     status: url.searchParams.get("status"),
+    sourceSystem: url.searchParams.get("source_system"),
     ...getPagination(url.searchParams)
   });
 

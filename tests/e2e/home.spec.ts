@@ -75,6 +75,15 @@ test("edits a pending review item before confirmation", async ({ page, request }
   await expect(page.getByText("jobs 与 steps", { exact: true })).toBeVisible();
   await expect(page.getByText("分析", { exact: true })).toBeVisible();
 
+  await page.goto("/");
+  await page.getByLabel("待确认来源系统").fill("Codex");
+  await page.getByLabel("待确认状态").selectOption("pending");
+  await page.getByRole("button", { name: "筛选待确认" }).click();
+  await expect(page).toHaveURL(/review_source_system=Codex/);
+  await expect(page.getByRole("heading", { name: editedTopic })).toBeVisible();
+  await expect(page.getByText(/ingestion_task · Codex/).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "清除" }).first()).toBeVisible();
+
   await page.goto("/records");
   await expect(page.getByRole("heading", { name: "Agent/MCP 调用记录" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "来源筛选" })).toBeVisible();

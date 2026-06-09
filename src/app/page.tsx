@@ -35,8 +35,16 @@ const dimensionLabels: Record<string, string> = {
   evaluate: "评价"
 };
 
-export default async function Home() {
-  const data = await loadWorkbenchData();
+export default async function Home({
+  searchParams
+}: {
+  searchParams: Promise<{
+    review_status?: string;
+    review_source_system?: string;
+  }>;
+}) {
+  const reviewFilters = normalizeReviewFilters(await searchParams);
+  const data = await loadWorkbenchData(reviewFilters);
   const firstQuestion = data.questions.items[0];
   const firstProfile = data.mastery.items[0];
   const firstPoint = data.knowledgePoints.items[0];
@@ -281,10 +289,54 @@ export default async function Home() {
           <section className="grid gap-6 lg:grid-cols-[1fr_1fr]" id="待确认">
             <Panel
               eyebrow="Review Queue"
-              title="待确认入库"
+              title={`待确认入库（${data.reviewItems.total}）`}
               empty={data.reviewItems.items.length === 0}
               emptyText="暂无待确认内容。可以先通过 Agent CLI 或 MCP stdio 提交一次外部会话沉淀。"
             >
+              <form
+                className="mb-4 grid gap-3 border border-ink/15 bg-white/35 p-4 md:grid-cols-[1fr_1fr_auto]"
+                method="get"
+              >
+                <label className="space-y-2 text-sm">
+                  <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                    状态
+                  </span>
+                  <select
+                    aria-label="待确认状态"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                    defaultValue={reviewFilters.status ?? "pending"}
+                    name="review_status"
+                  >
+                    <option value="">全部状态</option>
+                    <option value="pending">待确认</option>
+                    <option value="confirmed">已确认</option>
+                    <option value="rejected">已拒绝</option>
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                    来源系统
+                  </span>
+                  <input
+                    aria-label="待确认来源系统"
+                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                    defaultValue={reviewFilters.sourceSystem ?? ""}
+                    name="review_source_system"
+                    placeholder="例如 Codex"
+                  />
+                </label>
+                <div className="flex items-end gap-2">
+                  <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    筛选待确认
+                  </button>
+                  <Link
+                    className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+                    href="/#待确认"
+                  >
+                    清除
+                  </Link>
+                </div>
+              </form>
               <div className="space-y-3">
                 {data.reviewItems.items.map((item) => (
                   <article className="border border-ink/15 bg-white/45 p-4" key={item.review_item_id}>
@@ -295,7 +347,7 @@ export default async function Home() {
                       <StatusBadge label={item.status} />
                     </div>
                     <p className="mt-3 text-sm text-ink/65">
-                      {item.target_type} · {formatDate(item.created_at)}
+                      {item.target_type} · {getReviewSourceLabel(item)} · {formatDate(item.created_at)}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Link
@@ -450,7 +502,10 @@ export default async function Home() {
   );
 }
 
-async function loadWorkbenchData() {
+async function loadWorkbenchData(reviewFilters: {
+  status?: string | null;
+  sourceSystem?: string | null;
+}) {
   const [
     reviewItems,
     domains,
@@ -462,7 +517,11 @@ async function loadWorkbenchData() {
     mastery,
     errorSets
   ] = await Promise.all([
-    listReviewItems({ status: "pending", pageSize: 5 }),
+    listReviewItems({
+      status: reviewFilters.status ?? "pending",
+      sourceSystem: reviewFilters.sourceSystem,
+      pageSize: 20
+    }),
     listDomains({ pageSize: 20 }),
     listTopics({ pageSize: 20 }),
     listKnowledgeTypes(),
@@ -484,6 +543,21 @@ async function loadWorkbenchData() {
     mastery,
     errorSets
   };
+}
+
+function normalizeReviewFilters(searchParams: {
+  review_status?: string;
+  review_source_system?: string;
+}) {
+  return {
+    status: normalizeFilterValue(searchParams.review_status),
+    sourceSystem: normalizeFilterValue(searchParams.review_source_system)
+  };
+}
+
+function normalizeFilterValue(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
 }
 
 async function createDomainAction(formData: FormData) {
@@ -642,6 +716,18 @@ function getReviewTitle(preview: unknown) {
   }
 
   return "待确认内容";
+}
+
+function getReviewSourceLabel(item: {
+  ingestion_task?: {
+    source_reference?: {
+      source_system?: string | null;
+      source_type?: string | null;
+    } | null;
+  };
+}) {
+  const source = item.ingestion_task?.source_reference;
+  return source?.source_system || source?.source_type || "未知来源";
 }
 
 function formatDate(value: string) {

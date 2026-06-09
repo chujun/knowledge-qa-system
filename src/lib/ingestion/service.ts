@@ -160,6 +160,7 @@ export async function getIngestionTask(ingestionTaskId: string) {
 
 export async function listReviewItems(params: {
   status?: string | null;
+  sourceSystem?: string | null;
   page?: number;
   pageSize?: number;
 }) {
@@ -168,14 +169,27 @@ export async function listReviewItems(params: {
   const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
   const where: Prisma.ReviewItemWhereInput = {
     userId: user.id,
-    ...(params.status ? { status: params.status } : {})
+    ...(params.status ? { status: params.status } : {}),
+    ...(params.sourceSystem
+      ? {
+          ingestionTask: {
+            sourceReference: {
+              sourceSystem: params.sourceSystem
+            }
+          }
+        }
+      : {})
   };
 
   const [items, total] = await Promise.all([
     prisma.reviewItem.findMany({
       where,
       include: {
-        ingestionTask: true
+        ingestionTask: {
+          include: {
+            sourceReference: true
+          }
+        }
       },
       orderBy: {
         createdAt: "desc"
@@ -425,7 +439,16 @@ function serializeReviewItem(item: {
   rejectedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  ingestionTask?: { id: string; status: string } | null;
+  ingestionTask?: {
+    id: string;
+    status: string;
+    sourceReference?: {
+      id: string;
+      sourceType: string;
+      sourceSystem: string | null;
+      conversationId: string | null;
+    } | null;
+  } | null;
 }) {
   return {
     review_item_id: item.id,
@@ -437,7 +460,15 @@ function serializeReviewItem(item: {
     ingestion_task: item.ingestionTask
       ? {
           id: item.ingestionTask.id,
-          status: item.ingestionTask.status
+          status: item.ingestionTask.status,
+          source_reference: item.ingestionTask.sourceReference
+            ? {
+                id: item.ingestionTask.sourceReference.id,
+                source_type: item.ingestionTask.sourceReference.sourceType,
+                source_system: item.ingestionTask.sourceReference.sourceSystem,
+                conversation_id: item.ingestionTask.sourceReference.conversationId
+              }
+            : null
         }
       : undefined,
     confirmed_at: item.confirmedAt?.toISOString() ?? null,

@@ -102,6 +102,29 @@ describe("ingestion and review API routes", () => {
     expect(reviewListResponse.status).toBe(200);
     expect(reviewListBody.data).toHaveLength(1);
     expect(reviewListBody.data[0].review_item_id).toBe(body.data.review_item_id);
+    expect(
+      reviewListBody.data[0].ingestion_task.source_reference.source_system
+    ).toBe("Codex");
+
+    const codexReviewListResponse = await reviewItemsRoute.GET(
+      authedRequest(
+        "http://localhost/api/v1/review-items?status=pending&source_system=Codex"
+      )
+    );
+    const codexReviewListBody = await codexReviewListResponse.json();
+
+    expect(codexReviewListResponse.status).toBe(200);
+    expect(codexReviewListBody.data).toHaveLength(1);
+
+    const emptyReviewListResponse = await reviewItemsRoute.GET(
+      authedRequest(
+        "http://localhost/api/v1/review-items?status=pending&source_system=Claude"
+      )
+    );
+    const emptyReviewListBody = await emptyReviewListResponse.json();
+
+    expect(emptyReviewListResponse.status).toBe(200);
+    expect(emptyReviewListBody.data).toHaveLength(0);
 
     const reviewItemResponse = await reviewItemRoute.GET(
       authedRequest(
