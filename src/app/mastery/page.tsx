@@ -129,6 +129,7 @@ function TopNav({ current }: { current: string }) {
     ["/questions", "题库"],
     ["/practice", "练习"],
     ["/mastery", "画像"],
+    ["/attempts", "答题记录"],
     ["/error-sets", "错误集"],
     ["/records", "记录"]
   ];

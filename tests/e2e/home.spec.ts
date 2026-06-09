@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(60000);
+test.setTimeout(90000);
 
 test("shows the local knowledge QA workspace", async ({ page }) => {
   await page.goto("/");
@@ -13,6 +13,7 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("link", { name: "题库管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "针对性练习" })).toBeVisible();
   await expect(page.getByRole("link", { name: "掌握画像" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open\s+答题记录/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "错误集管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "调用记录" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
@@ -147,6 +148,13 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   await page.getByRole("button", { name: "确认评分" }).click();
 
   await expect(page.getByText("user_confirmed")).toBeVisible();
+
+  await page.goto("/attempts");
+  await expect(page.getByRole("heading", { name: "答题记录" })).toBeVisible();
+  await expect(page.getByText(editedStem).first()).toBeVisible();
+  await expect(page.getByText("用户已确认").first()).toBeVisible();
+  await expect(page.getByText("E2E 确认评分").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "查看题目" }).first()).toBeVisible();
 
   await page.goto("/mastery");
   await expect(page.getByRole("heading", { name: "掌握画像" })).toBeVisible();

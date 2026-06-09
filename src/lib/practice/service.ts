@@ -264,6 +264,7 @@ export async function confirmScore(
 
 export async function listAnswerAttempts(params: {
   questionId?: string | null;
+  status?: string | null;
   page?: number;
   pageSize?: number;
 }) {
@@ -272,7 +273,8 @@ export async function listAnswerAttempts(params: {
   const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
   const where: Prisma.AnswerAttemptWhereInput = {
     userId: user.id,
-    ...(params.questionId ? { questionId: params.questionId } : {})
+    ...(params.questionId ? { questionId: params.questionId } : {}),
+    ...(params.status ? { status: params.status } : {})
   };
 
   const [items, total] = await Promise.all([
@@ -773,6 +775,13 @@ function serializeAttempt(
       id: attempt.question.id,
       cognitive_dimension: attempt.question.cognitiveDimension,
       difficulty_level: attempt.question.difficultyLevel
+    },
+    question_version: {
+      stem: attempt.questionVersion.stem
+    },
+    answer_version: {
+      answer: attempt.answerVersion.answerText,
+      explanation: attempt.answerVersion.explanationText
     },
     created_at: attempt.createdAt.toISOString(),
     updated_at: attempt.updatedAt.toISOString()

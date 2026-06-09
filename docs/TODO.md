@@ -1308,3 +1308,63 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 14:27:59 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 14:27:59 已提示用户查看新功能：首页可进入“掌握画像”，也可直接访问 `/mastery`。
 ```
+
+## 35. Web 答题记录管理页
+
+本章用于补齐用户学习过程回看能力。用户可以在浏览器中集中查看每次答题绑定的题目版本、用户答案、AI 评分、用户确认评分、修正原因、错误标签和是否计入长期掌握画像。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/practice/service.ts、src/app/attempts/page.tsx、src/app/page.tsx、src/app/domains/page.tsx、src/app/questions/page.tsx、src/app/practice/page.tsx、src/app/practice/[practiceSessionId]/page.tsx、src/app/mastery/page.tsx、src/app/error-sets/page.tsx、src/app/records/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：首页新增“答题记录”统计和功能入口；新增 `/attempts` 页面；各管理页顶部导航统一补充画像、答题记录、错误集和调用记录入口。
+- 数据/接口变化：不新增数据库表；`listAnswerAttempts` 支持按 status 过滤，并返回题目版本题干、答案版本快照，用于答题历史展示。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run build；cmd /c npm run test:e2e；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退答题记录页面、服务层答题记录序列化扩展、首页入口、导航统一、E2E 调整和文档记录即可恢复到第 34 章状态。
+```
+
+- [x] 服务层 `listAnswerAttempts` 支持按答题状态过滤。
+- [x] 服务层答题记录返回题目版本题干和答案版本快照。
+- [x] 新增 `/attempts` 答题记录管理页。
+- [x] `/attempts` 展示全部、AI 已评分、用户已确认统计。
+- [x] `/attempts` 展示用户答案、AI 反馈、用户确认分数、修正原因、错误标签和计入画像状态。
+- [x] `/attempts` 支持从答题记录进入题目详情。
+- [x] 首页新增“答题记录”统计和功能入口。
+- [x] 统一管理页顶部导航，补齐画像、答题记录、错误集和调用记录入口。
+- [x] Playwright E2E 覆盖答题评分后查看答题记录页。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看答题记录：
+首页 -> 答题记录 -> 查看题干快照、用户答案、AI 评分、用户确认评分、修正原因和错误标签 -> 返回题目详情。
+```
+
+验证记录：
+
+```text
+2026-06-09 15:08:00 新增 Web 答题记录管理页：完成 `/attempts` 页面、答题记录状态过滤、题干版本快照展示、首页入口、顶部导航统一和 E2E 覆盖。
+2026-06-09 15:08:00 cmd /c npx tsc --noEmit：第一次失败，原因是答案版本模型真实字段为 answerText/explanationText，不是 answer/explanation。
+2026-06-09 15:08:00 修正 `serializeAttempt`：答案版本快照改用 answerText/explanationText。
+2026-06-09 15:08:00 cmd /c npx tsc --noEmit：通过。
+2026-06-09 15:08:00 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 15:08:00 cmd /c npm run build：第一次失败，原因是与 Playwright E2E 并行执行时竞争 `.next` 构建产物，出现 /_document 页面模块缺失。
+2026-06-09 15:08:00 cmd /c npm run test:e2e：第一次失败，原因是“答题记录”同时匹配侧边统计锚点和功能入口；已收窄为功能入口链接。
+2026-06-09 15:08:00 cmd /c npm run build：顺序执行通过，新增 `/attempts` 动态页面进入 Next.js 生产构建。
+2026-06-09 15:08:00 cmd /c npm run test:e2e：第二次失败，原因是完整浏览器闭环已超过 60 秒测试预算；调整 E2E 超时为 90 秒。
+2026-06-09 15:08:00 cmd /c npm run test:e2e：第三次失败，原因是生产构建后的 `.next` 影响 dev E2E，出现 review 动态页 webpack runtime 错误。
+2026-06-09 15:08:00 清理 3000 旧 dev server 和 `.next` 构建产物后重跑。
+2026-06-09 15:08:00 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、答题记录页和 MVP 浏览器学习闭环。
+2026-06-09 15:08:00 本地验证规则补充：`next build` 与 Playwright E2E 不并行执行；生产构建后如 E2E dev server 异常，先清理 `.next` 再重跑。
+2026-06-09 15:08:00 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 15:08:00 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 15:08:00 已提示用户查看新功能：首页可进入“答题记录”，也可直接访问 `/attempts`。
+```

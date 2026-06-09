@@ -15,7 +15,11 @@ import {
   listKnowledgeTypes,
   listTopics
 } from "@/lib/knowledge/service";
-import { listErrorSets, listMasteryProfiles } from "@/lib/practice/service";
+import {
+  listAnswerAttempts,
+  listErrorSets,
+  listMasteryProfiles
+} from "@/lib/practice/service";
 import {
   generateForKnowledgePoint,
   listQuestions
@@ -57,6 +61,7 @@ export default async function Home() {
                 ["主题", data.topics.total],
                 ["知识点", data.knowledgePoints.total],
                 ["题库", data.questions.total],
+                ["答题记录", data.attempts.total],
                 ["画像", data.mastery.total],
                 ["错误集", data.errorSets.total]
               ].map(([item, total]) => (
@@ -97,12 +102,13 @@ export default async function Home() {
             </div>
           </section>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7" aria-label="系统统计">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="系统统计">
             <Metric label="待确认" value={data.reviewItems.total} />
             <Metric label="领域" value={data.domains.total} />
             <Metric label="主题" value={data.topics.total} />
             <Metric label="知识点" value={data.knowledgePoints.total} />
             <Metric label="题目" value={data.questions.total} />
+            <Metric label="答题记录" value={data.attempts.total} />
             <Metric label="画像" value={data.mastery.total} />
             <Metric label="错误集" value={data.errorSets.total} />
           </section>
@@ -127,6 +133,11 @@ export default async function Home() {
               description="查看知识点、主题和领域维度的五维掌握分。"
               href="/mastery"
               label="掌握画像"
+            />
+            <WorkbenchLink
+              description="回看用户答案、AI 评分、确认评分和错误标签。"
+              href="/attempts"
+              label="答题记录"
             />
             <WorkbenchLink
               description="按知识点复盘错误标签，并将已复盘的错误集标记解决。"
@@ -442,6 +453,7 @@ async function loadWorkbenchData() {
     knowledgeTypes,
     knowledgePoints,
     questions,
+    attempts,
     mastery,
     errorSets
   ] = await Promise.all([
@@ -451,6 +463,7 @@ async function loadWorkbenchData() {
     listKnowledgeTypes(),
     listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
     listQuestions({ pageSize: 5 }),
+    listAnswerAttempts({ pageSize: 5 }),
     listMasteryProfiles({ pageSize: 5 }),
     listErrorSets({ status: "active", pageSize: 5 })
   ]);
@@ -462,6 +475,7 @@ async function loadWorkbenchData() {
     knowledgeTypes,
     knowledgePoints,
     questions,
+    attempts,
     mastery,
     errorSets
   };

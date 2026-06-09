@@ -135,7 +135,11 @@ function TopNav({ current }: { current: string }) {
     ["/", "工作台"],
     ["/domains", "知识结构"],
     ["/questions", "题库"],
-    ["/practice", "练习"]
+    ["/practice", "练习"],
+    ["/mastery", "画像"],
+    ["/attempts", "答题记录"],
+    ["/error-sets", "错误集"],
+    ["/records", "记录"]
   ];
 
   return (
