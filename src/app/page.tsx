@@ -649,6 +649,34 @@ async function rejectReviewItemAction(formData: FormData) {
   revalidatePath("/");
 }
 
+async function batchReviewItemsAction(formData: FormData) {
+  "use server";
+
+  const reviewItemIds = getFormValues(formData, "review_item_id");
+  const batchAction = getRequiredFormValue(formData, "batch_action");
+
+  if (reviewItemIds.length === 0) {
+    revalidatePath("/");
+    return;
+  }
+
+  if (batchAction === "confirm") {
+    await Promise.all(
+      reviewItemIds.map((reviewItemId) =>
+        confirmReviewItem(reviewItemId, {
+          include_existing_attempts_in_mastery: false
+        })
+      )
+    );
+  } else if (batchAction === "reject") {
+    await Promise.all(reviewItemIds.map((reviewItemId) => rejectReviewItem(reviewItemId)));
+  } else {
+    throw new Error("unsupported_batch_action");
+  }
+
+  revalidatePath("/");
+}
+
 async function generateQuestionsAction(formData: FormData) {
   "use server";
 
@@ -788,4 +816,11 @@ function getOptionalFormValue(formData: FormData, name: string) {
   }
 
   return value;
+}
+
+function getFormValues(formData: FormData, name: string) {
+  return formData
+    .getAll(name)
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
 }
