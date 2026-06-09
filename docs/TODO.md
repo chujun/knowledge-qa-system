@@ -1479,3 +1479,56 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 16:05:09 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 16:05:09 已提示用户查看新功能：首页可进入“针对性练习”，也可直接访问 `/practice` 查看历史练习筛选。
 ```
+
+## 38. Web Agent/MCP 调用记录筛选
+
+本章用于提升记录追踪与审计能力。用户可以在调用记录页按来源系统、来源类型、AI Agent、模型、调用类型、质检状态和质检类型筛选记录。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/records/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：`/records` 新增来源筛选、生成筛选和质检筛选；筛选条件通过 URL query 保留；记录分区标题展示当前筛选结果数量。
+- 数据/接口变化：不新增数据库表；复用已有 `listSourceReferences`、`listGenerationRecords`、`listQualityChecks` 服务筛选参数和 API query 能力。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退记录页筛选 UI、E2E 调整和文档记录即可恢复到第 37 章状态。
+```
+
+- [x] `/records` 新增来源系统筛选。
+- [x] `/records` 新增来源类型筛选。
+- [x] `/records` 新增生成 AI Agent 筛选。
+- [x] `/records` 新增生成模型筛选。
+- [x] `/records` 新增调用类型筛选。
+- [x] `/records` 新增质检状态筛选。
+- [x] `/records` 新增质检类型筛选。
+- [x] `/records` 三个记录分区展示当前筛选结果数量。
+- [x] `/records` 支持清除筛选条件。
+- [x] Playwright E2E 覆盖来源系统筛选。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器筛选调用记录：
+首页 -> 调用记录 -> 输入来源系统/模型/Agent/质检状态等条件 -> 筛选对应记录 -> 查看命中记录数量和明细 -> 清除筛选返回全量记录。
+```
+
+验证记录：
+
+```text
+2026-06-09 16:26:03 新增 Web Agent/MCP 调用记录筛选：完成 `/records` 来源、生成、质检三类筛选 UI 和 E2E 覆盖。
+2026-06-09 16:26:03 cmd /c npx tsc --noEmit：通过。
+2026-06-09 16:26:03 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 16:26:03 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、记录来源筛选和 MVP 浏览器学习闭环。
+2026-06-09 16:26:03 cmd /c npm run build：通过，记录筛选进入 Next.js 生产构建。
+2026-06-09 16:26:03 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 16:26:03 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 16:26:03 已提示用户查看新功能：首页可进入“调用记录”，也可直接访问 `/records` 使用记录筛选。
+```

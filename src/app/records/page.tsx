@@ -8,12 +8,42 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function RecordsPage() {
-  const [sources, generations, qualityChecks] = await Promise.all([
-    listSourceReferences({ pageSize: 20 }),
-    listGenerationRecords({ pageSize: 20 }),
-    listQualityChecks({ pageSize: 20 })
-  ]);
+export default async function RecordsPage({
+  searchParams
+}: {
+  searchParams: Promise<{
+    source_type?: string;
+    source_system?: string;
+    call_type?: string;
+    model_name?: string;
+    ai_agent?: string;
+    quality_status?: string;
+    checker_type?: string;
+  }>;
+}) {
+  const filters = normalizeRecordFilters(await searchParams);
+  const [sources, generations, qualityChecks, allSources, allGenerations, allQualityChecks] =
+    await Promise.all([
+      listSourceReferences({
+        sourceType: filters.sourceType,
+        sourceSystem: filters.sourceSystem,
+        pageSize: 20
+      }),
+      listGenerationRecords({
+        callType: filters.callType,
+        modelName: filters.modelName,
+        aiAgent: filters.aiAgent,
+        pageSize: 20
+      }),
+      listQualityChecks({
+        status: filters.qualityStatus,
+        checkerType: filters.checkerType,
+        pageSize: 20
+      }),
+      listSourceReferences({ pageSize: 1 }),
+      listGenerationRecords({ pageSize: 1 }),
+      listQualityChecks({ pageSize: 1 })
+    ]);
 
   return (
     <main className="min-h-screen bg-paper text-ink">
@@ -33,9 +63,111 @@ export default async function RecordsPage() {
         </header>
 
         <section className="mt-6 grid gap-4 md:grid-cols-3">
-          <Metric label="来源记录" value={sources.total} />
-          <Metric label="生成调用" value={generations.total} />
-          <Metric label="质量校验" value={qualityChecks.total} />
+          <Metric label="来源记录" value={allSources.total} />
+          <Metric label="生成调用" value={allGenerations.total} />
+          <Metric label="质量校验" value={allQualityChecks.total} />
+        </section>
+
+        <section className="mt-6 grid gap-4 xl:grid-cols-3">
+          <RecordFilterPanel title="来源筛选">
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                来源系统
+              </span>
+              <input
+                aria-label="来源系统"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.sourceSystem ?? ""}
+                name="source_system"
+                placeholder="例如 Codex"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                来源类型
+              </span>
+              <input
+                aria-label="来源类型"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.sourceType ?? ""}
+                name="source_type"
+                placeholder="例如 external_conversation"
+              />
+            </label>
+            <FilterActions submitLabel="筛选来源" />
+          </RecordFilterPanel>
+
+          <RecordFilterPanel title="生成筛选">
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                AI Agent
+              </span>
+              <input
+                aria-label="生成 AI Agent"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.aiAgent ?? ""}
+                name="ai_agent"
+                placeholder="例如 Codex"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                模型
+              </span>
+              <input
+                aria-label="生成模型"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.modelName ?? ""}
+                name="model_name"
+                placeholder="例如 chatgpt-5.5"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                调用类型
+              </span>
+              <input
+                aria-label="调用类型"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.callType ?? ""}
+                name="call_type"
+                placeholder="例如 question_generation"
+              />
+            </label>
+            <FilterActions submitLabel="筛选生成" />
+          </RecordFilterPanel>
+
+          <RecordFilterPanel title="质检筛选">
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                质检状态
+              </span>
+              <select
+                aria-label="质检状态"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.qualityStatus ?? ""}
+                name="quality_status"
+              >
+                <option value="">全部状态</option>
+                <option value="passed">已通过</option>
+                <option value="failed">未通过</option>
+                <option value="pending">待处理</option>
+              </select>
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+                质检类型
+              </span>
+              <input
+                aria-label="质检类型"
+                className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+                defaultValue={filters.checkerType ?? ""}
+                name="checker_type"
+                placeholder="例如 question_quality"
+              />
+            </label>
+            <FilterActions submitLabel="筛选质检" />
+          </RecordFilterPanel>
         </section>
 
         <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_1fr]">
@@ -43,7 +175,7 @@ export default async function RecordsPage() {
             empty={sources.items.length === 0}
             emptyText="暂无来源记录。通过 Agent Tool、MCP 或外部会话沉淀 API 提交内容后会出现在这里。"
             eyebrow="Source References"
-            title="Agent 会话来源"
+            title={`Agent 会话来源 · ${sources.total}`}
           >
             <div className="space-y-3">
               {sources.items.map((item) => (
@@ -75,7 +207,7 @@ export default async function RecordsPage() {
             empty={generations.items.length === 0}
             emptyText="暂无生成调用记录。生成题目、答案、评分规则或核心讲解后会出现在这里。"
             eyebrow="Generation Records"
-            title="模型生成调用"
+            title={`模型生成调用 · ${generations.total}`}
           >
             <div className="space-y-3">
               {generations.items.map((item) => (
@@ -114,7 +246,7 @@ export default async function RecordsPage() {
             empty={qualityChecks.items.length === 0}
             emptyText="暂无质量校验记录。题目生成质检后会出现在这里。"
             eyebrow="Quality Checks"
-            title="质量校验记录"
+            title={`质量校验记录 · ${qualityChecks.total}`}
           >
             <div className="grid gap-3 lg:grid-cols-2">
               {qualityChecks.items.map((item) => (
@@ -187,6 +319,37 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
+function RecordFilterPanel({
+  children,
+  title
+}: {
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <form className="space-y-3 border border-ink/15 bg-white/35 p-4 shadow-line" method="get">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {children}
+    </form>
+  );
+}
+
+function FilterActions({ submitLabel }: { submitLabel: string }) {
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+        {submitLabel}
+      </button>
+      <Link
+        className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+        href="/records"
+      >
+        清除
+      </Link>
+    </div>
+  );
+}
+
 function Panel({
   children,
   empty,
@@ -233,4 +396,28 @@ function formatDate(value: string) {
     dateStyle: "short",
     timeStyle: "short"
   }).format(new Date(value));
+}
+
+function normalizeRecordFilters(params: {
+  source_type?: string;
+  source_system?: string;
+  call_type?: string;
+  model_name?: string;
+  ai_agent?: string;
+  quality_status?: string;
+  checker_type?: string;
+}) {
+  return {
+    sourceType: normalizeFilterValue(params.source_type),
+    sourceSystem: normalizeFilterValue(params.source_system),
+    callType: normalizeFilterValue(params.call_type),
+    modelName: normalizeFilterValue(params.model_name),
+    aiAgent: normalizeFilterValue(params.ai_agent),
+    qualityStatus: normalizeFilterValue(params.quality_status),
+    checkerType: normalizeFilterValue(params.checker_type)
+  };
+}
+
+function normalizeFilterValue(value: string | undefined) {
+  return value && value.trim().length > 0 ? value : null;
 }

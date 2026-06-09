@@ -68,8 +68,13 @@ test("edits a pending review item before confirmation", async ({ page, request }
 
   await page.goto("/records");
   await expect(page.getByRole("heading", { name: "Agent/MCP 调用记录" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "来源筛选" })).toBeVisible();
+  await page.getByLabel("来源系统").fill("Codex");
+  await page.getByRole("button", { name: "筛选来源" }).click();
+  await expect(page).toHaveURL(/source_system=Codex/);
   await expect(page.getByRole("heading", { name: "Agent 会话来源" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Codex" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "清除" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "模型生成调用" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "质量校验记录" })).toBeVisible();
 });
