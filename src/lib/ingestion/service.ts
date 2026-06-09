@@ -36,6 +36,31 @@ export const confirmReviewItemSchema = z.object({
   include_existing_attempts_in_mastery: z.boolean().default(false)
 });
 
+export const updateReviewItemPreviewSchema = z.object({
+  domain_name: z.string().trim().min(1).max(160).optional(),
+  topic_name: z.string().trim().min(1).max(200).optional(),
+  knowledge_points_preview: z
+    .array(z.string().trim().min(1).max(240))
+    .max(20)
+    .optional(),
+  questions_preview: z
+    .array(
+      z.object({
+        stem: z.string().trim().min(1).max(4000),
+        cognitive_dimension: z.enum([
+          "understand",
+          "distinguish",
+          "apply",
+          "analyze",
+          "evaluate"
+        ]),
+        difficulty_level: z.number().int().min(1).max(5)
+      })
+    )
+    .max(20)
+    .optional()
+});
+
 export type CreateExternalConversationIngestionInput = z.infer<
   typeof createExternalConversationIngestionSchema
 >;
@@ -182,6 +207,64 @@ export async function getReviewItem(reviewItemId: string) {
   });
 
   return item ? serializeReviewItem(item) : null;
+}
+
+export async function updateReviewItemPreview(
+  reviewItemId: string,
+  input: z.infer<typeof updateReviewItemPreviewSchema>
+) {
+  const user = await getDefaultUser();
+
+  const existing = await prisma.reviewItem.findFirstOrThrow({
+    where: {
+      id: reviewItemId,
+      userId: user.id
+    }
+  });
+
+  if (existing.status !== "pending") {
+    throw new Error("review_item_not_pending");
+  }
+
+  const preview = parseJsonObject(existing.previewJson);
+  const existingTopicSuggestion = preview.topic_suggestion;
+  const topicSuggestion =
+    existingTopicSuggestion && typeof existingTopicSuggestion === "object"
+      ? (existingTopicSuggestion as Record<string, unknown>)
+      : {};
+
+  const nextPreview = {
+    ...preview,
+    topic_suggestion: {
+      ...topicSuggestion,
+      ...(input.domain_name !== undefined
+        ? { domain_name: input.domain_name }
+        : {}),
+      ...(input.topic_name !== undefined ? { topic_name: input.topic_name } : {})
+    },
+    ...(input.knowledge_points_preview !== undefined
+      ? { knowledge_points_preview: input.knowledge_points_preview }
+      : {}),
+    ...(input.questions_preview !== undefined
+      ? { questions_preview: input.questions_preview }
+      : {}),
+    edited_by_user: true
+  };
+
+  const updated = await prisma.reviewItem.update({
+    where: {
+      id: reviewItemId,
+      userId: user.id
+    },
+    data: {
+      previewJson: JSON.stringify(nextPreview)
+    },
+    include: {
+      ingestionTask: true
+    }
+  });
+
+  return serializeReviewItem(updated);
 }
 
 export async function confirmReviewItem(

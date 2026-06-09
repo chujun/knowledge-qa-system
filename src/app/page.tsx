@@ -267,6 +267,12 @@ export default async function Home() {
                       {item.target_type} · {formatDate(item.created_at)}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
+                      <Link
+                        className="border border-clay bg-white/60 px-3 py-2 text-sm text-clay transition hover:bg-clay hover:text-paper"
+                        href={`/review/${item.review_item_id}`}
+                      >
+                        编辑详情
+                      </Link>
                       <form action={confirmReviewItemAction}>
                         <input
                           name="review_item_id"
