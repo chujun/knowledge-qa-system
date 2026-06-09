@@ -337,13 +337,48 @@ export default async function Home({
                   </Link>
                 </div>
               </form>
+              <form
+                action={batchReviewItemsAction}
+                className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-ink/15 bg-white/35 p-4"
+                id="review-batch-form"
+              >
+                <p className="text-sm leading-6 text-ink/65">
+                  勾选待确认项后，可以批量确认入库或批量拒绝。
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink"
+                    name="batch_action"
+                    value="confirm"
+                  >
+                    批量确认入库
+                  </button>
+                  <button
+                    className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+                    name="batch_action"
+                    value="reject"
+                  >
+                    批量拒绝
+                  </button>
+                </div>
+              </form>
               <div className="space-y-3">
                 {data.reviewItems.items.map((item) => (
                   <article className="border border-ink/15 bg-white/45 p-4" key={item.review_item_id}>
                     <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-lg font-semibold leading-snug">
-                        {getReviewTitle(item.preview)}
-                      </h3>
+                      <label className="flex min-w-0 items-start gap-3">
+                        <input
+                          aria-label={`选择待确认项 ${getReviewTitle(item.preview)}`}
+                          className="mt-1"
+                          form="review-batch-form"
+                          name="review_item_id"
+                          type="checkbox"
+                          value={item.review_item_id}
+                        />
+                        <span className="text-lg font-semibold leading-snug">
+                          {getReviewTitle(item.preview)}
+                        </span>
+                      </label>
                       <StatusBadge label={item.status} />
                     </div>
                     <p className="mt-3 text-sm text-ink/65">
