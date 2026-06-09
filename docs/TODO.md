@@ -1368,3 +1368,59 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 15:08:00 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
 2026-06-09 15:08:00 已提示用户查看新功能：首页可进入“答题记录”，也可直接访问 `/attempts`。
 ```
+
+## 36. Web 题库筛选增强
+
+本章用于提升题库管理页的检索效率。用户可以在浏览器中按题目状态、认知维度、难度和知识点筛选题库，并通过 URL query 保留筛选条件。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/questions/service.ts、src/app/api/v1/questions/route.ts、src/app/questions/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：`/questions` 新增筛选栏；用户可以按状态、认知维度、难度和知识点筛选题库；筛选结果展示当前命中数量；清除按钮返回全量题库。
+- 数据/接口变化：不新增数据库表；`listQuestions` 新增 cognitiveDimension 和 difficultyLevel 筛选参数；`GET /api/v1/questions` 支持 cognitive_dimension 和 difficulty_level query。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退题库筛选表单、服务/API 筛选参数、E2E 调整和文档记录即可恢复到第 35 章状态。
+```
+
+- [x] `listQuestions` 支持认知维度筛选。
+- [x] `listQuestions` 支持难度筛选。
+- [x] `GET /api/v1/questions` 支持 `cognitive_dimension` query。
+- [x] `GET /api/v1/questions` 支持 `difficulty_level` query。
+- [x] `/questions` 新增状态筛选。
+- [x] `/questions` 新增认知维度筛选。
+- [x] `/questions` 新增难度筛选。
+- [x] `/questions` 新增知识点筛选。
+- [x] `/questions` 展示当前筛选结果数量。
+- [x] `/questions` 支持清除筛选条件。
+- [x] Playwright E2E 覆盖题库按正式题和知识点筛选。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器筛选题库：
+首页 -> 题库管理 -> 选择状态/认知维度/难度/知识点 -> 筛选题库 -> 查看命中题目 -> 清除筛选返回全量题库。
+```
+
+验证记录：
+
+```text
+2026-06-09 15:23:47 新增 Web 题库筛选增强：完成题库状态、认知维度、难度和知识点筛选，补充 API query 支持和 E2E 覆盖。
+2026-06-09 15:23:47 cmd /c npx tsc --noEmit：第一次失败，原因是题库页改为 filteredQuestions 后漏保留 allQuestions 统计变量。
+2026-06-09 15:23:47 修正 `/questions`：新增全量题目统计查询，列表继续使用筛选结果。
+2026-06-09 15:23:47 cmd /c npx tsc --noEmit：通过。
+2026-06-09 15:23:47 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-09 15:23:47 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、待确认内容编辑、题库筛选和 MVP 浏览器学习闭环。
+2026-06-09 15:23:47 cmd /c npm run build：通过，题库筛选增强进入 Next.js 生产构建。
+2026-06-09 15:23:47 cmd /c npm run docs:check-timestamps：通过。
+2026-06-09 15:23:47 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-09 15:23:47 已提示用户查看新功能：首页可进入“题库管理”，也可直接访问 `/questions` 使用筛选栏。
+```

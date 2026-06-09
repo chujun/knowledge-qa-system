@@ -191,7 +191,14 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
 
   await page.goto("/questions");
   await expect(page.getByRole("heading", { name: "题库管理" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: new RegExp(pointName) }).first()).toBeVisible();
+  await expect(page.getByLabel("状态")).toBeVisible();
+  await page.getByLabel("状态").selectOption("confirmed");
+  await page.getByLabel("知识点").selectOption({ label: editedPointName });
+  await page.getByRole("button", { name: "筛选题库" }).click();
+  await expect(page).toHaveURL(/status=confirmed/);
+  await expect(page).toHaveURL(/knowledge_point_id=/);
+  await expect(page.getByText("当前筛选结果")).toBeVisible();
+  await expect(page.getByRole("heading", { name: editedStem }).first()).toBeVisible();
 
   await page.goto("/practice");
   await expect(page.getByRole("heading", { name: "针对性练习" })).toBeVisible();

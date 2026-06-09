@@ -11,6 +11,8 @@ export async function GET(request: Request) {
   const result = await listQuestions({
     knowledgePointId: url.searchParams.get("knowledge_point_id"),
     status: url.searchParams.get("status"),
+    cognitiveDimension: url.searchParams.get("cognitive_dimension"),
+    difficultyLevel: parseOptionalNumber(url.searchParams.get("difficulty_level")),
     ...getPagination(url.searchParams)
   });
 
@@ -19,4 +21,13 @@ export async function GET(request: Request) {
     pageSize: result.pageSize,
     total: result.total
   });
+}
+
+function parseOptionalNumber(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }

@@ -256,6 +256,8 @@ export async function generateForKnowledgePoint(
 export async function listQuestions(params: {
   knowledgePointId?: string | null;
   status?: string | null;
+  cognitiveDimension?: string | null;
+  difficultyLevel?: number | null;
   page?: number;
   pageSize?: number;
 }) {
@@ -267,7 +269,11 @@ export async function listQuestions(params: {
     ...(params.knowledgePointId
       ? { knowledgePointId: params.knowledgePointId }
       : {}),
-    ...(params.status ? { status: params.status } : {})
+    ...(params.status ? { status: params.status } : {}),
+    ...(params.cognitiveDimension
+      ? { cognitiveDimension: params.cognitiveDimension }
+      : {}),
+    ...(params.difficultyLevel ? { difficultyLevel: params.difficultyLevel } : {})
   };
 
   const [items, total] = await Promise.all([

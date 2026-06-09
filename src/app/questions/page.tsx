@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
+import { listKnowledgePoints } from "@/lib/knowledge/service";
 import {
   archiveQuestion,
   confirmQuestion,
@@ -17,11 +18,35 @@ const dimensionLabels: Record<string, string> = {
   evaluate: "评价"
 };
 
-export default async function QuestionsPage() {
-  const [allQuestions, pendingQuestions, confirmedQuestions] = await Promise.all([
-    listQuestions({ pageSize: 50 }),
-    listQuestions({ status: "pending_confirmation", pageSize: 1 }),
-    listQuestions({ status: "confirmed", pageSize: 1 })
+export default async function QuestionsPage({
+  searchParams
+}: {
+  searchParams: Promise<{
+    knowledge_point_id?: string;
+    status?: string;
+    cognitive_dimension?: string;
+    difficulty_level?: string;
+  }>;
+}) {
+  const filters = normalizeQuestionFilters(await searchParams);
+  const [
+    filteredQuestions,
+    allQuestions,
+    pendingQuestions,
+    confirmedQuestions,
+    knowledgePoints
+  ] = await Promise.all([
+      listQuestions({
+        knowledgePointId: filters.knowledgePointId,
+        status: filters.status,
+        cognitiveDimension: filters.cognitiveDimension,
+        difficultyLevel: filters.difficultyLevel,
+        pageSize: 50
+      }),
+      listQuestions({ pageSize: 1 }),
+      listQuestions({ status: "pending_confirmation", pageSize: 1 }),
+      listQuestions({ status: "confirmed", pageSize: 1 }),
+      listKnowledgePoints({ pageSize: 100 })
   ]);
 
   return (
@@ -45,12 +70,98 @@ export default async function QuestionsPage() {
           <Metric label="正式题" value={confirmedQuestions.total} />
         </section>
 
+        <form
+          className="mt-6 grid gap-3 border border-ink/15 bg-white/35 p-4 shadow-line md:grid-cols-5"
+          method="get"
+        >
+          <label className="space-y-2 text-sm">
+            <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+              状态
+            </span>
+            <select
+              className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+              defaultValue={filters.status ?? ""}
+              name="status"
+            >
+              <option value="">全部状态</option>
+              <option value="pending_confirmation">待确认</option>
+              <option value="confirmed">正式题</option>
+              <option value="archived">已归档</option>
+            </select>
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+              认知维度
+            </span>
+            <select
+              className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+              defaultValue={filters.cognitiveDimension ?? ""}
+              name="cognitive_dimension"
+            >
+              <option value="">全部维度</option>
+              {Object.entries(dimensionLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+              难度
+            </span>
+            <select
+              className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+              defaultValue={filters.difficultyLevel?.toString() ?? ""}
+              name="difficulty_level"
+            >
+              <option value="">全部难度</option>
+              {[1, 2, 3, 4, 5].map((level) => (
+                <option key={level} value={level}>
+                  难度 {level}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="block text-xs uppercase tracking-[0.18em] text-ink/55">
+              知识点
+            </span>
+            <select
+              className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
+              defaultValue={filters.knowledgePointId ?? ""}
+              name="knowledge_point_id"
+            >
+              <option value="">全部知识点</option>
+              {knowledgePoints.items.map((point) => (
+                <option key={point.id} value={point.id}>
+                  {point.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-end gap-2">
+            <button className="border border-moss bg-moss px-3 py-2 text-sm text-paper transition hover:bg-ink">
+              筛选题库
+            </button>
+            <Link
+              className="border border-ink/20 bg-white/60 px-3 py-2 text-sm text-ink transition hover:border-clay hover:text-clay"
+              href="/questions"
+            >
+              清除
+            </Link>
+          </div>
+        </form>
+
         <section className="mt-8">
-          {allQuestions.items.length === 0 ? (
-            <EmptyState text="暂无题目。请先到知识结构页或首页围绕知识点生成题目。" />
+          <p className="mb-3 text-sm text-ink/55">
+            当前筛选结果 {filteredQuestions.total} 条
+          </p>
+          {filteredQuestions.items.length === 0 ? (
+            <EmptyState text="暂无匹配题目。可以调整筛选条件，或先到知识结构页围绕知识点生成题目。" />
           ) : (
             <div className="space-y-3">
-              {allQuestions.items.map((question) => (
+              {filteredQuestions.items.map((question) => (
                 <article
                   className="border border-ink/20 bg-white/30 p-5 shadow-line"
                   key={question.id}
@@ -200,4 +311,31 @@ function getRequiredFormValue(formData: FormData, name: string) {
   }
 
   return value;
+}
+
+function normalizeQuestionFilters(params: {
+  knowledge_point_id?: string;
+  status?: string;
+  cognitive_dimension?: string;
+  difficulty_level?: string;
+}) {
+  return {
+    knowledgePointId: normalizeFilterValue(params.knowledge_point_id),
+    status: normalizeFilterValue(params.status),
+    cognitiveDimension: normalizeFilterValue(params.cognitive_dimension),
+    difficultyLevel: normalizeDifficulty(params.difficulty_level)
+  };
+}
+
+function normalizeFilterValue(value: string | undefined) {
+  return value && value.trim().length > 0 ? value : null;
+}
+
+function normalizeDifficulty(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 5 ? parsed : null;
 }
