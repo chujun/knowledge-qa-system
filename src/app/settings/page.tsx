@@ -15,6 +15,49 @@ const commands = {
   mcpCheck: "npm run mcp:check"
 };
 
+const envVariables = [
+  {
+    name: "DATABASE_URL",
+    required: true,
+    status: process.env.DATABASE_URL ? "已配置" : "未配置",
+    description: "SQLite 数据库连接地址。本地默认可使用 file:./dev.db。"
+  },
+  {
+    name: "KNOWLEDGE_QA_API_KEY",
+    required: true,
+    status: appConfig.apiKeyConfigured ? "已配置" : "未配置",
+    description: "HTTP API、Agent Tool CLI 和 MCP stdio 调用认证密钥。"
+  },
+  {
+    name: "KNOWLEDGE_QA_API_BASE_URL",
+    required: false,
+    status: process.env.KNOWLEDGE_QA_API_BASE_URL ? "已配置" : "使用默认值",
+    description: "Agent Tool CLI 和 MCP stdio 的 API 地址，默认 http://localhost:3000/api/v1。"
+  },
+  {
+    name: "DEFAULT_AI_AGENT",
+    required: false,
+    status: process.env.DEFAULT_AI_AGENT ? "已配置" : "使用默认值",
+    description: "默认 AI Agent 来源，未配置时使用 Codex。"
+  },
+  {
+    name: "DEFAULT_MODEL_NAME",
+    required: false,
+    status: process.env.DEFAULT_MODEL_NAME ? "已配置" : "使用默认值",
+    description: "默认模型名称，未配置时使用 chatgpt-5.5。"
+  }
+];
+
+const envExample = `DATABASE_URL="file:./dev.db"
+KNOWLEDGE_QA_API_KEY="<local-api-key>"
+KNOWLEDGE_QA_API_BASE_URL="http://localhost:3000/api/v1"
+DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_NAME="chatgpt-5.5"`;
+
+const powershellEnv = `$env:DATABASE_URL = "file:./dev.db"
+$env:KNOWLEDGE_QA_API_KEY = "<local-api-key>"
+$env:KNOWLEDGE_QA_API_BASE_URL = "http://localhost:3000/api/v1"`;
+
 export default async function SettingsPage() {
   const database = await checkDatabase();
   const settings = [
@@ -122,6 +165,47 @@ export default async function SettingsPage() {
               <RecordKV label="Agent Tool CLI" value="已提供 npm run agent:tool" />
               <RecordKV label="MCP stdio" value="已提供 npm run mcp:stdio" />
             </dl>
+          </Panel>
+        </section>
+
+        <section className="mt-6">
+          <Panel eyebrow="Environment" title="环境配置说明">
+            <div className="grid gap-3 lg:grid-cols-2">
+              {envVariables.map((item) => (
+                <article className="border border-ink/15 bg-white/45 p-4" key={item.name}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="break-all font-mono text-sm font-semibold">
+                      {item.name}
+                    </h3>
+                    <span
+                      className={`whitespace-nowrap px-2 py-1 text-xs text-white ${
+                        item.status === "未配置" && item.required ? "bg-clay" : "bg-moss"
+                      }`}
+                    >
+                      {item.required ? "必填" : "可选"} · {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-ink/65">
+                    {item.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+              <div>
+                <p className="text-sm font-semibold">.env.local 示例</p>
+                <CommandBlock value={envExample} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">PowerShell 临时配置</p>
+                <CommandBlock value={powershellEnv} />
+              </div>
+            </div>
+
+            <p className="text-sm leading-7 text-ink/65">
+              `.env.local` 仅用于本地运行，不提交 Git；页面、日志和文档只使用占位符，不展示真实 API Key。
+            </p>
           </Panel>
         </section>
 
@@ -241,5 +325,13 @@ function RecordKV({ label, value }: { label: string; value: string }) {
       <dt className="text-xs text-ink/45">{label}</dt>
       <dd className="mt-1 break-all text-ink/75">{value}</dd>
     </div>
+  );
+}
+
+function CommandBlock({ value }: { value: string }) {
+  return (
+    <pre className="mt-3 overflow-x-auto border border-ink/15 bg-ink px-4 py-3 text-xs leading-6 text-paper">
+      <code>{value}</code>
+    </pre>
   );
 }

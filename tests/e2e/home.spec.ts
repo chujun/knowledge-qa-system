@@ -38,6 +38,11 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByText("chatgpt-5.5").first()).toBeVisible();
   await expect(page.getByText("Codex").first()).toBeVisible();
   await expect(page.getByText("页面不显示真实值")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "环境配置说明" })).toBeVisible();
+  await expect(page.getByText("DATABASE_URL").first()).toBeVisible();
+  await expect(page.getByText(".env.local 示例")).toBeVisible();
+  await expect(page.getByText("PowerShell 临时配置")).toBeVisible();
+  await expect(page.getByText("<local-api-key>").first()).toBeVisible();
   await expect(page.getByText("npm run mcp:check").first()).toBeVisible();
 });
 
@@ -97,6 +102,23 @@ test("edits a pending review item before confirmation", async ({ page, request }
   await expect(page.getByRole("link", { name: "清除" }).first()).toBeVisible();
   await page.getByLabel(`选择待确认项 ${editedTopic}`).check();
   await page.getByRole("button", { name: "批量拒绝" }).click();
+  await expect
+    .poll(
+      async () => {
+        const reviewItemResponse = await request.get(
+          `/api/v1/review-items/${reviewItemId}`,
+          {
+            headers: {
+              "x-api-key": "local-dev-key"
+            }
+          }
+        );
+        const reviewItemBody = await reviewItemResponse.json();
+        return reviewItemBody.data.status as string;
+      },
+      { timeout: 15000 }
+    )
+    .toBe("rejected");
   await page.goto("/?review_status=rejected&review_source_system=Codex#待确认");
   await expect(page.getByText(editedTopic).first()).toBeVisible();
   await expect(page.getByText("rejected").first()).toBeVisible();
