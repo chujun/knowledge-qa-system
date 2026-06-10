@@ -10,6 +10,7 @@ export interface AiProviderRequest {
   messages: AiMessage[];
   responseFormat?: "text" | "json";
   temperature?: number;
+  maxTokens?: number;
   timeoutMs?: number;
 }
 

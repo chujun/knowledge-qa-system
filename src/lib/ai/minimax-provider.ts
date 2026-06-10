@@ -164,6 +164,7 @@ export function buildMinimaxRequestBody(request: AiProviderRequest) {
     model: request.model,
     messages: request.messages,
     temperature: request.temperature ?? 0.2,
+    ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
     ...(request.responseFormat === "json"
       ? {
           response_format: {

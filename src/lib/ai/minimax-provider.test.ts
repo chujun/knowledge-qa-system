@@ -12,6 +12,7 @@ describe("minimax provider", () => {
       buildMinimaxRequestBody({
         model: "minimax-m2.7-highspeed",
         responseFormat: "json",
+        maxTokens: 2000,
         messages: [
           { role: "system", content: "只返回 JSON" },
           { role: "user", content: "生成一道题" }
@@ -24,6 +25,7 @@ describe("minimax provider", () => {
         { role: "user", content: "生成一道题" }
       ],
       temperature: 0.2,
+      max_tokens: 2000,
       response_format: {
         type: "json_object"
       }

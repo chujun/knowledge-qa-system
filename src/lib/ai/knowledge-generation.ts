@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { appConfig } from "@/lib/config";
+import { parseModelJsonObject } from "@/lib/ai/model-json";
 import { createMinimaxProvider } from "@/lib/ai/minimax-provider";
 import type { AiProvider, AiProviderResult } from "@/lib/ai/provider";
 
@@ -97,6 +98,7 @@ export async function generateKnowledgeContent({
     model: appConfig.defaultModel,
     responseFormat: "json",
     temperature: 0.2,
+    maxTokens: 6000,
     timeoutMs: 120_000,
     messages: buildKnowledgeGenerationMessages(point, dimensions)
   });
@@ -219,9 +221,7 @@ export function parseProviderGeneratedContent(
 }
 
 function parseJsonObject(content: string) {
-  const trimmed = content.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return JSON.parse(fenced ? fenced[1] : trimmed) as unknown;
+  return parseModelJsonObject(content);
 }
 
 function alignQuestionsToDimensions(

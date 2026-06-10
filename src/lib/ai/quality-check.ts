@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { appConfig } from "@/lib/config";
+import { parseModelJsonObject } from "@/lib/ai/model-json";
 import { createMinimaxProvider } from "@/lib/ai/minimax-provider";
 import type { AiProvider, AiProviderResult } from "@/lib/ai/provider";
 import type { GeneratedCognitiveDimension } from "@/lib/ai/knowledge-generation";
@@ -79,6 +80,7 @@ export async function checkGeneratedQuestionQuality({
     model: appConfig.defaultModel,
     responseFormat: "json",
     temperature: 0,
+    maxTokens: 2000,
     timeoutMs: 120_000,
     messages: buildQualityCheckMessages(question, ruleResult)
   });
@@ -241,7 +243,5 @@ function deriveQualityStatus(
 }
 
 function parseJsonObject(content: string) {
-  const trimmed = content.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return JSON.parse(fenced ? fenced[1] : trimmed) as unknown;
+  return parseModelJsonObject(content);
 }
