@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { listKnowledgePoints } from "@/lib/knowledge/service";
@@ -9,6 +9,7 @@ import {
   listPracticeSessions
 } from "@/lib/practice/service";
 import { listQuestions } from "@/lib/questions/service";
+import { TopNav } from "@/components/top-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -267,36 +268,6 @@ async function createPracticeSessionAction(formData: FormData) {
   redirect(`/practice/${session.id}`);
 }
 
-function TopNav({ current }: { current: string }) {
-  const items = [
-    ["/", "工作台"],
-    ["/domains", "知识结构"],
-    ["/questions", "题库"],
-    ["/practice", "练习"],
-    ["/mastery", "画像"],
-    ["/attempts", "答题记录"],
-    ["/error-sets", "错误集"],
-    ["/records", "记录"]
-  ];
-
-  return (
-    <nav className="flex flex-wrap gap-2 text-sm">
-      {items.map(([href, label]) => (
-        <Link
-          className={`border px-3 py-2 transition ${
-            label === current
-              ? "border-ink bg-ink text-paper"
-              : "border-ink/20 bg-white/50 text-ink hover:border-clay hover:text-clay"
-          }`}
-          href={href}
-          key={href}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
@@ -375,3 +346,4 @@ function getRequiredFormValue(formData: FormData, name: string) {
 
   return value;
 }
+
