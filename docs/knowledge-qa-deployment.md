@@ -136,7 +136,10 @@ prisma/dev.db-journal
 | DATABASE_URL | file:./dev.db | SQLite 数据库地址 |
 | KNOWLEDGE_QA_API_KEY | replace-with-local-api-key | API/Agent 调用密钥 |
 | DEFAULT_AI_AGENT | Codex | 默认 AI Agent 来源 |
+| DEFAULT_MODEL_PROVIDER | minimax | 默认模型 Provider；未接真实模型时可保留 mock |
 | DEFAULT_MODEL_NAME | minimax-m2.7-highspeed | 默认模型名称 |
+| MINIMAX_API_KEY | replace-with-minimax-api-key | Minimax 模型调用密钥，不提交 Git |
+| MINIMAX_API_BASE_URL | https://api.minimaxi.com/v1 | Minimax OpenAI 兼容接口地址 |
 
 ## 4. 启动命令
 
@@ -158,7 +161,10 @@ MVP 本地建议使用：
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="local-dev-key"
 DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_PROVIDER="minimax"
 DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
+MINIMAX_API_KEY="replace-with-minimax-api-key"
+MINIMAX_API_BASE_URL="https://api.minimaxi.com/v1"
 ```
 
 生成 Prisma Client 并初始化 SQLite：

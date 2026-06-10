@@ -74,7 +74,10 @@ Copy-Item .env.example .env.local
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="local-dev-key"
 DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_PROVIDER="minimax"
 DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
+MINIMAX_API_KEY="replace-with-minimax-api-key"
+MINIMAX_API_BASE_URL="https://api.minimaxi.com/v1"
 ```
 
 初始化 Prisma Client 和 SQLite：
@@ -122,15 +125,18 @@ ready
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="replace-with-local-api-key"
 DEFAULT_AI_AGENT="Codex"
+DEFAULT_MODEL_PROVIDER="minimax"
 DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
+MINIMAX_API_KEY="replace-with-minimax-api-key"
+MINIMAX_API_BASE_URL="https://api.minimaxi.com/v1"
 ```
 
 注意：
 
 ```text
 .env.local 不提交 Git。
-KNOWLEDGE_QA_API_KEY 用于后续 API 和 Agent/MCP 调用。
-真实模型 API Key 后续接入时也只放在本地环境变量中。
+KNOWLEDGE_QA_API_KEY 用于 API 和 Agent/MCP 调用。
+MINIMAX_API_KEY 只放在本地环境变量中，页面和日志只展示配置状态。
 ```
 
 ## 5. 预期业务使用方式

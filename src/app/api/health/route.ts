@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { appConfig } from "@/lib/config";
 import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
@@ -10,7 +11,9 @@ export async function GET() {
       status: "ok",
       database: database.status,
       database_error: database.error,
-      model_provider: "mock",
+      model_provider: appConfig.defaultModelProvider,
+      model_name: appConfig.defaultModel,
+      minimax_configured: appConfig.minimaxApiKeyConfigured,
       version: "0.1.0",
       timestamp: new Date().toISOString()
     }

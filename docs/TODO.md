@@ -1924,13 +1924,25 @@ docs/knowledge-qa-mvp-plan.md
 
 本章用于实现真实国内版 Minimax 模型调用能力，替代当前 mock provider。第一步只做 Provider 层和契约测试，不直接改写全部业务生成逻辑，避免真实模型输出波动影响现有业务闭环。
 
-- [ ] 确认 Minimax API Base URL、鉴权 Header、请求体格式和响应体格式。
-- [ ] 新增本地环境变量 `MINIMAX_API_KEY`、`MINIMAX_API_BASE_URL`、`DEFAULT_MODEL_PROVIDER`、`DEFAULT_MODEL_NAME` 的读取和脱敏展示。
-- [ ] 新增 Minimax Provider 客户端，支持超时、错误分类、结构化 JSON 响应解析和原始响应摘要。
-- [ ] 新增 Provider 统一接口，保留 mock provider 作为测试 provider。
-- [ ] 新增 Minimax Provider 契约测试，真实网络调用默认跳过，使用 fixture 验证响应解析。
-- [ ] 模型调用失败时记录失败状态、错误码、耗时和模型名。
-- [ ] 设置页显示 Minimax Provider 配置状态，但不展示真实 API Key。
+- [x] 确认 Minimax API Base URL、鉴权 Header、请求体格式和响应体格式。
+- [x] 新增本地环境变量 `MINIMAX_API_KEY`、`MINIMAX_API_BASE_URL`、`DEFAULT_MODEL_PROVIDER`、`DEFAULT_MODEL_NAME` 的读取和脱敏展示。
+- [x] 新增 Minimax Provider 客户端，支持超时、错误分类、结构化 JSON 响应解析和原始响应摘要。
+- [x] 新增 Provider 统一接口，保留 mock provider 作为测试 provider。
+- [x] 新增 Minimax Provider 契约测试，真实网络调用默认跳过，使用 fixture 验证响应解析。
+- [x] 模型调用失败时记录失败状态、错误码、耗时和模型名。
+- [x] 设置页显示 Minimax Provider 配置状态，但不展示真实 API Key。
+- [ ] 执行 TypeScript 类型检查。
+- [ ] 执行单元和集成测试。
+- [ ] 执行 Playwright E2E 闭环测试。
+- [ ] 执行 Next.js 生产构建。
+- [ ] 执行验证记录时间格式检查。
+- [ ] 重启本地 3000 服务并提示用户查看新功能。
+
+验证记录：
+
+```text
+2026-06-10 10:52:00 新增真实 Minimax Provider 接入基础层：完成统一 AI Provider 契约、Minimax Chat Completions 客户端、fixture 化契约测试、健康检查配置输出、设置页 Minimax 配置状态和部署/用户文档环境变量。
+```
 
 ## 47. 真实 Minimax 题目、答案、评分规则和核心讲解生成
 

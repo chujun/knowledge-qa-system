@@ -40,10 +40,28 @@ const envVariables = [
     description: "默认 AI Agent 来源，未配置时使用 Codex。"
   },
   {
+    name: "DEFAULT_MODEL_PROVIDER",
+    required: false,
+    status: process.env.DEFAULT_MODEL_PROVIDER ? "已配置" : "使用默认值",
+    description: "默认模型 Provider，未配置时使用 mock；接入真实模型时设置为 minimax。"
+  },
+  {
     name: "DEFAULT_MODEL_NAME",
     required: false,
     status: process.env.DEFAULT_MODEL_NAME ? "已配置" : "使用默认值",
     description: "默认模型名称，未配置时使用 minimax-m2.7-highspeed。"
+  },
+  {
+    name: "MINIMAX_API_KEY",
+    required: false,
+    status: appConfig.minimaxApiKeyConfigured ? "已配置" : "未配置",
+    description: "Minimax 真实模型调用密钥。页面只展示配置状态，不展示真实值。"
+  },
+  {
+    name: "MINIMAX_API_BASE_URL",
+    required: false,
+    status: process.env.MINIMAX_API_BASE_URL ? "已配置" : "使用默认值",
+    description: "Minimax OpenAI 兼容接口地址，默认 https://api.minimaxi.com/v1。"
   }
 ];
 
@@ -51,11 +69,16 @@ const envExample = `DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="<local-api-key>"
 KNOWLEDGE_QA_API_BASE_URL="http://localhost:3000/api/v1"
 DEFAULT_AI_AGENT="Codex"
-DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"`;
+DEFAULT_MODEL_PROVIDER="minimax"
+DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
+MINIMAX_API_KEY="<minimax-api-key>"
+MINIMAX_API_BASE_URL="https://api.minimaxi.com/v1"`;
 
 const powershellEnv = `$env:DATABASE_URL = "file:./dev.db"
 $env:KNOWLEDGE_QA_API_KEY = "<local-api-key>"
-$env:KNOWLEDGE_QA_API_BASE_URL = "http://localhost:3000/api/v1"`;
+$env:KNOWLEDGE_QA_API_BASE_URL = "http://localhost:3000/api/v1"
+$env:DEFAULT_MODEL_PROVIDER = "minimax"
+$env:MINIMAX_API_KEY = "<minimax-api-key>"`;
 
 export default async function SettingsPage() {
   const database = await checkDatabase();
@@ -67,8 +90,11 @@ export default async function SettingsPage() {
     },
     {
       label: "模型 Provider",
-      value: "mock",
-      state: "ready"
+      value: appConfig.defaultModelProvider,
+      state:
+        appConfig.defaultModelProvider === "minimax" && !appConfig.minimaxApiKeyConfigured
+          ? "warning"
+          : "ready"
     },
     {
       label: "默认 AI Agent",
@@ -153,8 +179,13 @@ export default async function SettingsPage() {
           <Panel eyebrow="Agent Defaults" title="模型默认值">
             <dl className="grid gap-3 text-sm">
               <RecordKV label="DEFAULT_AI_AGENT" value={appConfig.defaultAgent} />
+              <RecordKV label="DEFAULT_MODEL_PROVIDER" value={appConfig.defaultModelProvider} />
               <RecordKV label="DEFAULT_MODEL_NAME" value={appConfig.defaultModel} />
-              <RecordKV label="当前模型实现" value="mock provider，下一阶段接入 Minimax 真实模型网关" />
+              <RecordKV
+                label="Minimax API Key"
+                value={appConfig.minimaxApiKeyConfigured ? "已配置，页面不显示真实值" : "未配置"}
+              />
+              <RecordKV label="MINIMAX_API_BASE_URL" value={appConfig.minimaxApiBaseUrl} />
             </dl>
           </Panel>
 
