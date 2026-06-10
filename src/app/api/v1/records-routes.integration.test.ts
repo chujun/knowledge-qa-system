@@ -110,7 +110,7 @@ describe("record query API routes", () => {
     expect(generationRecordsResponse.status).toBe(200);
     expect(generationRecordsBody.data).toHaveLength(2);
     expect(generationRecordsBody.data[0]).toMatchObject({
-      model_name: "mock-chatgpt-5.5",
+      model_name: "mock-minimax-m2.7-highspeed",
       ai_agent: "Codex",
       call_type: "question_generation",
       status: "success"

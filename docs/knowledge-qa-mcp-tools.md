@@ -1,4 +1,4 @@
-# 个人知识问答系统 MCP Tool 设计
+﻿# 个人知识问答系统 MCP Tool 设计
 
 日期：2026-06-06
 
@@ -733,5 +733,5 @@ Codex 会话沉淀 GitHub Actions 知识点
 2. 调用结果在聊天框中可读，但不会返回完整题库和完整会话原文。
 3. 用户可以通过 review_url 进入知识问答系统查看详细内容并调整。
 4. 第二次使用相同 idempotency_key 调用时返回同一 ingestion_task_id 或明确的幂等命中结果。
-5. 系统记录本次调用的 source_system=Codex、ai_agent=Codex、model_name=chatgpt-5.5 或 mock、call_type=agent_ingestion。
+5. 系统记录本次调用的 source_system=Codex、ai_agent=Codex、model_name=minimax-m2.7-highspeed 或 mock、call_type=agent_ingestion。
 ```

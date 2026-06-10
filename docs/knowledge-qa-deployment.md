@@ -1,4 +1,4 @@
-# 个人知识问答系统部署运行文档
+﻿# 个人知识问答系统部署运行文档
 
 日期：2026-06-07
 
@@ -34,7 +34,7 @@ MCP/Agent 第一阶段：先使用 schema + 本地模拟 Agent 调用；后续�
 
 ```text
 迁移到 Linux 后是否使用 systemd 托管服务。
-真实模型 chatgpt-5.5 接入时的模型网关和密钥来源。
+真实模型 minimax-m2.7-highspeed 接入时的模型网关和密钥来源。
 真实 MCP Server 的进程形态：STDIO、本地 HTTP，或两者都支持。
 ```
 
@@ -136,7 +136,7 @@ prisma/dev.db-journal
 | DATABASE_URL | file:./dev.db | SQLite 数据库地址 |
 | KNOWLEDGE_QA_API_KEY | replace-with-local-api-key | API/Agent 调用密钥 |
 | DEFAULT_AI_AGENT | Codex | 默认 AI Agent 来源 |
-| DEFAULT_MODEL_NAME | chatgpt-5.5 | 默认模型名称 |
+| DEFAULT_MODEL_NAME | minimax-m2.7-highspeed | 默认模型名称 |
 
 ## 4. 启动命令
 
@@ -158,7 +158,7 @@ MVP 本地建议使用：
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="local-dev-key"
 DEFAULT_AI_AGENT="Codex"
-DEFAULT_MODEL_NAME="chatgpt-5.5"
+DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
 ```
 
 生成 Prisma Client 并初始化 SQLite：

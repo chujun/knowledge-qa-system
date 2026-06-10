@@ -77,7 +77,7 @@ export function simulateCreateFromConversationAgentCall(
     callRecord: {
       sourceSystem: parsedInput.source_system,
       aiAgent: options.aiAgent ?? "Codex",
-      modelName: options.modelName ?? "chatgpt-5.5",
+      modelName: options.modelName ?? "minimax-m2.7-highspeed",
       modelVersion: options.modelVersion ?? "mock",
       promptVersion: options.promptVersion ?? "agent-ingestion-v1",
       callType: "agent_ingestion",

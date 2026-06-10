@@ -126,7 +126,7 @@ export default async function RecordsPage({
                 className="w-full border border-ink/20 bg-white/75 px-3 py-2 outline-none focus:border-clay"
                 defaultValue={filters.modelName ?? ""}
                 name="model_name"
-                placeholder="例如 chatgpt-5.5"
+                placeholder="例如 minimax-m2.7-highspeed"
               />
             </label>
             <label className="space-y-2 text-sm">

@@ -18,7 +18,7 @@ describe("simulated MCP/Agent invocation", () => {
     expect(result.callRecord).toMatchObject({
       sourceSystem: "Codex",
       aiAgent: "Codex",
-      modelName: "chatgpt-5.5",
+      modelName: "minimax-m2.7-highspeed",
       callType: "agent_ingestion",
       status: "succeeded"
     });

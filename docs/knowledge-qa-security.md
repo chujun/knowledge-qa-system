@@ -1,4 +1,4 @@
-# 个人知识问答系统安全设计
+﻿# 个人知识问答系统安全设计
 
 日期：2026-06-07
 
@@ -28,7 +28,7 @@ Web 页面采用本地单用户模式。
 API/Agent 调用使用 API Key。
 MCP Tool 通过环境变量读取 API Key 调用后端。
 MVP 本地服务部署，不使用 Docker。
-默认大模型为 chatgpt-5.5，默认 AI Agent 为 Codex。
+默认大模型为 minimax-m2.7-highspeed，默认 AI Agent 为 Codex。
 ```
 
 待确认事项：

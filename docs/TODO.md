@@ -37,7 +37,7 @@ docs/knowledge-qa-design-dev-flow-check.md
 - [x] 确认 MVP 第一阶段是否需要可视化页面。已确认：需要基础 Web 页面承载待确认、编辑、练习等交互。
 - [x] 确认 MVP 第一阶段是否要实际实现 MCP Tool，还是先设计 MCP schema。已确认：第一阶段先设计 MCP schema 并预留接入；系统验收标准必须包含 AI Agent MCP/Agent 调用能力，后续需要提供可验证的 Agent 调用闭环。
 - [x] 确认部署环境：本地 Windows、Docker、本地服务器、云服务器。已确认：MVP 先本地服务部署，不使用 Docker；后续预留迁移到 Linux 系统。
-- [x] 确认模型调用来源：OpenAI、Claude、Minimax、本地模型、统一模型网关，或多模型。已确认：架构支持多模型适配；MVP 默认大模型为 chatgpt-5.5，默认 AI Agent 为 Codex。
+- [x] 确认模型调用来源：OpenAI、Claude、Minimax、本地模型、统一模型网关，或多模型。已确认：架构支持多模型适配；MVP 默认大模型调整为国内版 Minimax `minimax-m2.7-highspeed`，默认 AI Agent 为 Codex。
 - [x] 确认是否需要从第一版开始记录 token、耗时和模型调用成本。已确认：第一版开始记录 input_tokens、output_tokens、latency_ms、cost、model_name、model_version、ai_agent、prompt_version、call_type、status。
 
 ## 2. 需求分析
@@ -533,7 +533,7 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 16. 编码实现准备
 
-- [x] 确认技术栈。已确认：Next.js + TypeScript + SQLite + Prisma + React/Tailwind；API 使用 Next.js Route Handlers；测试使用 Vitest + Playwright；AI 先做 mock provider，再接 chatgpt-5.5；MCP/Agent 先做 schema 和本地模拟调用脚本。
+- [x] 确认技术栈。已确认：Next.js + TypeScript + SQLite + Prisma + React/Tailwind；API 使用 Next.js Route Handlers；测试使用 Vitest + Playwright；AI 先做 mock provider，再接国内版 Minimax `minimax-m2.7-highspeed`；MCP/Agent 先做 schema 和本地模拟调用脚本。
 - [x] 初始化项目结构。
 - [x] 配置代码风格。
 - [x] 配置测试框架。
@@ -666,7 +666,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] MVP 第一版是否直接实现 MCP Tool，还是只实现 API 并设计 MCP schema？已确认：第一阶段先实现 MCP schema 和本地模拟 Agent 调用，后续实现真实 MCP Server。
 - [x] 技术栈选择是什么？已确认：Next.js + TypeScript + SQLite + Prisma + React/Tailwind；API 使用 Next.js Route Handlers；测试使用 Vitest + Playwright。
 - [x] 数据库使用 SQLite、PostgreSQL 还是其他？已确认：MVP 第一版使用 SQLite。
-- [x] AI 生成第一版是否使用真实模型，还是先用 mock 生成器？已确认：先使用 mock AI provider，后续接 chatgpt-5.5。
+- [x] AI 生成第一版是否使用真实模型，还是先用 mock 生成器？已确认：先使用 mock AI provider，后续接国内版 Minimax `minimax-m2.7-highspeed`。
 - [x] 是否新增 IngestionTask 作为沉淀任务对象？
 - [x] 是否新增 ReviewItem/ReviewQueue 作为待确认队列对象？
 - [x] 是否新增 PracticeSession 作为练习会话对象？
@@ -1866,4 +1866,103 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 下一步
 
-继续推进 Web 页面体验与数据管理能力；下一轮进入下一项可运行 MVP 功能增强。
+继续推进真实大模型与 AI Agent 调用主链路；下一轮优先从第 46 章“真实 Minimax Provider 接入”开始。
+
+## 45. 默认模型切换为国内版 Minimax
+
+本章用于把后续真实模型接入目标从 `chatgpt-5.5` 调整为国内版 Minimax `minimax-m2.7-highspeed`。当前阶段先完成默认配置、页面展示、mock 元数据和 TODO 主线切换；真实 API 调用在第 46 章开始实现。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/lib/config.ts、src/app/settings/page.tsx、src/app/records/page.tsx、src/lib/ai/mock-provider.ts、src/lib/questions/service.ts、src/lib/mcp/simulated-agent.ts、相关测试、docs/TODO.md、.agent-flow.md。
+- 行为变化：系统默认模型名从 chatgpt-5.5 切换为 minimax-m2.7-highspeed；mock 生成记录改为 mock-minimax-m2.7-highspeed；设置页和筛选页示例展示 Minimax 模型名。
+- 数据/接口变化：不新增数据库表，不新增 API；历史数据中已有旧模型名不迁移；新生成 mock 记录使用 Minimax 目标模型名。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退默认模型名、页面文案、mock 元数据和测试断言即可恢复到第 44 章状态。
+```
+
+- [x] 将默认模型配置改为 `minimax-m2.7-highspeed`。
+- [x] 将设置页默认模型说明和 `.env.local` 示例改为 `minimax-m2.7-highspeed`。
+- [x] 将调用记录页模型筛选示例改为 `minimax-m2.7-highspeed`。
+- [x] 将 mock provider 生成元数据改为 `mock-minimax-m2.7-highspeed`。
+- [x] 将题目、答案、评分规则、核心讲解和质检记录中的 mock 模型名改为 `mock-minimax-m2.7-highspeed`。
+- [x] 将模拟 Agent 默认模型名改为 `minimax-m2.7-highspeed`。
+- [x] 补充真实 Minimax Provider 后续 TODO。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看新的默认模型：
+首页 -> 系统设置 -> 默认模型显示 minimax-m2.7-highspeed；环境配置示例显示 DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"。
+新生成的 mock 题目记录使用 mock-minimax-m2.7-highspeed，后续真实接入从 Minimax Provider 开始。
+```
+
+验证记录：
+
+```text
+2026-06-10 10:21:19 新增默认模型切换为国内版 Minimax：完成默认配置、设置页示例、调用记录筛选示例、mock 生成元数据、模拟 Agent 默认模型和 TODO 主线调整。
+2026-06-10 10:31:45 cmd /c npx tsc --noEmit：通过。
+2026-06-10 10:31:45 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-10 10:31:45 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、Agent/MCP 接入页、系统设置页 Minimax 默认模型、待确认内容编辑和 MVP 浏览器学习闭环。
+2026-06-10 10:31:45 cmd /c npm run build：通过，默认模型切换进入 Next.js 生产构建。
+2026-06-10 10:34:51 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 10:36:41 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-10 10:36:41 Minimax 默认模型冒烟检查：通过，`/settings` 包含 minimax-m2.7-highspeed、DEFAULT_MODEL_NAME 和 Minimax 真实模型网关提示；`/records` 包含 minimax-m2.7-highspeed 和生成模型筛选。
+2026-06-10 10:36:41 已提示用户查看新功能：可直接访问 `/settings` 查看默认模型已切换为 minimax-m2.7-highspeed。
+```
+
+## 46. 真实 Minimax Provider 接入
+
+本章用于实现真实国内版 Minimax 模型调用能力，替代当前 mock provider。第一步只做 Provider 层和契约测试，不直接改写全部业务生成逻辑，避免真实模型输出波动影响现有业务闭环。
+
+- [ ] 确认 Minimax API Base URL、鉴权 Header、请求体格式和响应体格式。
+- [ ] 新增本地环境变量 `MINIMAX_API_KEY`、`MINIMAX_API_BASE_URL`、`DEFAULT_MODEL_PROVIDER`、`DEFAULT_MODEL_NAME` 的读取和脱敏展示。
+- [ ] 新增 Minimax Provider 客户端，支持超时、错误分类、结构化 JSON 响应解析和原始响应摘要。
+- [ ] 新增 Provider 统一接口，保留 mock provider 作为测试 provider。
+- [ ] 新增 Minimax Provider 契约测试，真实网络调用默认跳过，使用 fixture 验证响应解析。
+- [ ] 模型调用失败时记录失败状态、错误码、耗时和模型名。
+- [ ] 设置页显示 Minimax Provider 配置状态，但不展示真实 API Key。
+
+## 47. 真实 Minimax 题目、答案、评分规则和核心讲解生成
+
+- [ ] 将 `generateForKnowledgePoint` 从模板生成改为调用统一模型 Provider。
+- [ ] 为理解、区分、应用、分析、评价五个维度设计 Minimax 结构化输出 Prompt。
+- [ ] 使用 Zod schema 校验 Minimax 输出的题目、答案、评分规则和核心讲解。
+- [ ] 输出不合格时进入失败或待修正状态，不直接正式入库。
+- [ ] 保留 `GenerationRecord` 中的模型、Agent、prompt_version、token、耗时和状态。
+- [ ] Playwright 覆盖 Web 触发生成后进入待确认/草稿流程。
+
+## 48. 真实 Minimax 质量校验
+
+- [ ] 将当前 `rule_and_mock_ai` 扩展为规则校验 + Minimax 质检。
+- [ ] 质检 Prompt 覆盖相关性、维度匹配、难度匹配、清晰度、可评分性、答案充分性、重复度、实用性和来源支撑。
+- [ ] 质检不通过时记录问题原因、修改建议和自动修正次数。
+- [ ] 质检模型和生成模型可分别记录，支持后续不同模型复核。
+- [ ] `/records` 可以筛选并查看真实 Minimax 质检记录。
+
+## 49. 真实 Minimax 答题评分
+
+- [ ] 将答题评分从 mock 逻辑切换到 Minimax 评分 Provider。
+- [ ] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
+- [ ] 用户修正评分后继续更新掌握画像和错误集。
+- [ ] 记录 AI 评分是否被用户修正，用于后续分析模型评分质量。
+- [ ] E2E 覆盖一次真实/fixture 化评分闭环。
+
+## 50. AI Agent 真实接入验收
+
+- [ ] 输出 Codex 可用的 Agent Tool 调用配置说明。
+- [ ] 输出 Claude Code 可用的 MCP stdio 配置说明。
+- [ ] 使用 Agent Tool CLI 完成一次真实外部会话沉淀到待确认队列。
+- [ ] 使用 MCP stdio 完成 `tools/list` 和至少一次 `tools/call`。
+- [ ] Agent 返回内容包含轻量摘要、题目预览和 Web 确认链接。
+- [ ] 用户能从 Agent 返回链接进入 Web 页面编辑并确认入库。
+- [ ] 调用记录页能看到真实 Agent 来源、模型名、耗时和状态。

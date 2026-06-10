@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+﻿import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db/prisma";
@@ -66,7 +66,7 @@ export async function generateForKnowledgePoint(
         title: `${point.name} 核心讲解`,
         explanationText: buildCoreExplanation(point.name, point.knowledgeType.name),
         templateCode: point.knowledgeType.code,
-        modelName: "mock-chatgpt-5.5",
+        modelName: "mock-minimax-m2.7-highspeed",
         aiAgent: "Codex",
         promptVersion: "mvp-mock-v1",
         status: versionStatus
@@ -79,7 +79,7 @@ export async function generateForKnowledgePoint(
         targetType: "core_explanation_version",
         targetId: coreVersion.id,
         callType: "core_explanation_generation",
-        modelName: "mock-chatgpt-5.5",
+        modelName: "mock-minimax-m2.7-highspeed",
         modelVersion: "mock",
         aiAgent: "Codex",
         promptVersion: "mvp-mock-v1",
@@ -115,7 +115,7 @@ export async function generateForKnowledgePoint(
             knowledge_point_name: point.name,
             dimension
           }),
-          modelName: "mock-chatgpt-5.5",
+          modelName: "mock-minimax-m2.7-highspeed",
           aiAgent: "Codex",
           promptVersion: "mvp-mock-v1",
           status: versionStatus
@@ -128,7 +128,7 @@ export async function generateForKnowledgePoint(
           versionNo: 1,
           answerText: buildAnswer(point.name, dimension),
           explanationText: `回答应覆盖 ${point.name} 的定义、边界和实际使用场景。`,
-          modelName: "mock-chatgpt-5.5",
+          modelName: "mock-minimax-m2.7-highspeed",
           aiAgent: "Codex",
           promptVersion: "mvp-mock-v1",
           status: versionStatus
@@ -140,7 +140,7 @@ export async function generateForKnowledgePoint(
           questionId: question.id,
           versionNo: 1,
           rubricJson: JSON.stringify(buildRubric(dimension)),
-          modelName: "mock-chatgpt-5.5",
+          modelName: "mock-minimax-m2.7-highspeed",
           aiAgent: "Codex",
           promptVersion: "mvp-mock-v1",
           status: versionStatus
@@ -154,7 +154,7 @@ export async function generateForKnowledgePoint(
             targetType: "question_version",
             targetId: questionVersion.id,
             callType: "question_generation",
-            modelName: "mock-chatgpt-5.5",
+            modelName: "mock-minimax-m2.7-highspeed",
             modelVersion: "mock",
             aiAgent: "Codex",
             promptVersion: "mvp-mock-v1",
@@ -168,7 +168,7 @@ export async function generateForKnowledgePoint(
             targetType: "answer_version",
             targetId: answerVersion.id,
             callType: "answer_generation",
-            modelName: "mock-chatgpt-5.5",
+            modelName: "mock-minimax-m2.7-highspeed",
             modelVersion: "mock",
             aiAgent: "Codex",
             promptVersion: "mvp-mock-v1",
@@ -182,7 +182,7 @@ export async function generateForKnowledgePoint(
             targetType: "scoring_rubric_version",
             targetId: rubricVersion.id,
             callType: "rubric_generation",
-            modelName: "mock-chatgpt-5.5",
+            modelName: "mock-minimax-m2.7-highspeed",
             modelVersion: "mock",
             aiAgent: "Codex",
             promptVersion: "mvp-mock-v1",
@@ -201,7 +201,7 @@ export async function generateForKnowledgePoint(
           targetType: "question",
           targetId: question.id,
           checkerType: "rule_and_mock_ai",
-          modelName: "mock-chatgpt-5.5",
+          modelName: "mock-minimax-m2.7-highspeed",
           aiAgent: "Codex",
           ruleResultJson: JSON.stringify({
             has_stem: stem.length > 0,

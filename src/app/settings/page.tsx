@@ -43,7 +43,7 @@ const envVariables = [
     name: "DEFAULT_MODEL_NAME",
     required: false,
     status: process.env.DEFAULT_MODEL_NAME ? "已配置" : "使用默认值",
-    description: "默认模型名称，未配置时使用 chatgpt-5.5。"
+    description: "默认模型名称，未配置时使用 minimax-m2.7-highspeed。"
   }
 ];
 
@@ -51,7 +51,7 @@ const envExample = `DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="<local-api-key>"
 KNOWLEDGE_QA_API_BASE_URL="http://localhost:3000/api/v1"
 DEFAULT_AI_AGENT="Codex"
-DEFAULT_MODEL_NAME="chatgpt-5.5"`;
+DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"`;
 
 const powershellEnv = `$env:DATABASE_URL = "file:./dev.db"
 $env:KNOWLEDGE_QA_API_KEY = "<local-api-key>"
@@ -154,7 +154,7 @@ export default async function SettingsPage() {
             <dl className="grid gap-3 text-sm">
               <RecordKV label="DEFAULT_AI_AGENT" value={appConfig.defaultAgent} />
               <RecordKV label="DEFAULT_MODEL_NAME" value={appConfig.defaultModel} />
-              <RecordKV label="当前模型实现" value="mock provider，后续可切换真实模型网关" />
+              <RecordKV label="当前模型实现" value="mock provider，下一阶段接入 Minimax 真实模型网关" />
             </dl>
           </Panel>
 

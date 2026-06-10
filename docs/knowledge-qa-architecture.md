@@ -1,4 +1,4 @@
-# 个人知识问答系统架构设计
+﻿# 个人知识问答系统架构设计
 
 日期：2026-06-07
 
@@ -36,7 +36,7 @@ AI 生成和质量校验：业务按任务状态建模，技术上第一版同�
 向量库：MVP 不引入，后续文档导入和语义检索再扩展。
 认证：Web 本地单用户，API/Agent 调用使用 API Key。
 部署：本地服务部署，不使用 Docker，后续迁移到 Linux 系统服务。
-默认模型：chatgpt-5.5。
+默认模型：minimax-m2.7-highspeed。
 默认 AI Agent：Codex。
 ```
 
@@ -160,7 +160,7 @@ flowchart LR
 | 掌握画像模块 | 知识点/主题/领域画像计算和查询 |
 | 来源溯源模块 | SourceReference、GenerationRecord、ModelCallRecord |
 | 审计日志模块 | 记录生成、确认、编辑、评分、修正、归档等事件 |
-| 模型调用适配模块 | 默认 chatgpt-5.5，记录 token、耗时、成本和模型元数据 |
+| 模型调用适配模块 | 默认 minimax-m2.7-highspeed，记录 token、耗时、成本和模型元数据 |
 
 ## 4. 核心数据流图
 

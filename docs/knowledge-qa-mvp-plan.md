@@ -1,4 +1,4 @@
-# 个人知识问答系统 MVP 实施计划
+﻿# 个人知识问答系统 MVP 实施计划
 
 日期：2026-06-07
 
@@ -37,7 +37,7 @@ MVP 交付物：Web + API。
 部署：本地服务，不使用 Docker，后续迁移 Linux。
 存储：SQLite。
 认证：Web 本地单用户，API/Agent 使用 API Key。
-模型：默认 chatgpt-5.5，默认 AI Agent 为 Codex。
+模型：默认 minimax-m2.7-highspeed，默认 AI Agent 为 Codex。
 第一版记录 token、耗时和模型调用成本。
 ```
 
@@ -45,7 +45,7 @@ MVP 交付物：Web + API。
 
 ```text
 具体技术栈。
-是否第一阶段直接接入真实 chatgpt-5.5，还是先使用 mock AI 生成器。
+是否第一阶段直接接入真实 minimax-m2.7-highspeed，还是先使用 mock AI 生成器。
 本地服务端口。
 API Key 生成和保存方式。
 ```
@@ -486,7 +486,7 @@ AI 评分结果
 
 ## 14. 真实 AI 接入切换条件
 
-满足以下条件后接入真实 chatgpt-5.5：
+满足以下条件后接入真实 minimax-m2.7-highspeed：
 
 ```text
 核心数据模型稳定。
@@ -519,7 +519,7 @@ AI 评分结果
 8. 实现掌握画像和错误集。
 9. 实现外部会话沉淀 API。
 10. 实现或模拟 Agent/MCP 调用验收。
-11. 接入真实 chatgpt-5.5。
+11. 接入真实 minimax-m2.7-highspeed。
 12. 补齐测试、部署和使用文档。
 ```
 

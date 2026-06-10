@@ -1,4 +1,4 @@
-# 个人知识问答系统用户使用说明
+﻿# 个人知识问答系统用户使用说明
 
 日期：2026-06-07
 
@@ -74,7 +74,7 @@ Copy-Item .env.example .env.local
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="local-dev-key"
 DEFAULT_AI_AGENT="Codex"
-DEFAULT_MODEL_NAME="chatgpt-5.5"
+DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
 ```
 
 初始化 Prisma Client 和 SQLite：
@@ -122,7 +122,7 @@ ready
 DATABASE_URL="file:./dev.db"
 KNOWLEDGE_QA_API_KEY="replace-with-local-api-key"
 DEFAULT_AI_AGENT="Codex"
-DEFAULT_MODEL_NAME="chatgpt-5.5"
+DEFAULT_MODEL_NAME="minimax-m2.7-highspeed"
 ```
 
 注意：
