@@ -1,6 +1,10 @@
 ﻿import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import {
+  generateKnowledgeContent,
+  type GeneratedCognitiveDimension
+} from "@/lib/ai/knowledge-generation";
 import { prisma } from "@/lib/db/prisma";
 import { getDefaultUser } from "@/lib/knowledge/service";
 
@@ -48,7 +52,23 @@ export async function generateForKnowledgePoint(
 
   const status = input.direct_confirm ? "confirmed" : "pending_confirmation";
   const versionStatus = input.direct_confirm ? "active" : "draft";
-  const dimensions = input.cognitive_dimensions.slice(0, input.question_count);
+  const dimensions = input.cognitive_dimensions.slice(
+    0,
+    input.question_count
+  ) as GeneratedCognitiveDimension[];
+  const generatedContent = await generateContentOrRecordFailure({
+    userId: user.id,
+    point: {
+      id: point.id,
+      name: point.name,
+      description: point.description,
+      suggestedDifficulty: point.suggestedDifficulty,
+      topicName: point.topic.name,
+      knowledgeTypeName: point.knowledgeType.name,
+      knowledgeTypeCode: point.knowledgeType.code
+    },
+    dimensions
+  });
 
   const result = await prisma.$transaction(async (tx) => {
     const coreExplanation = await tx.coreExplanation.create({
@@ -63,12 +83,12 @@ export async function generateForKnowledgePoint(
       data: {
         coreExplanationId: coreExplanation.id,
         versionNo: 1,
-        title: `${point.name} 核心讲解`,
-        explanationText: buildCoreExplanation(point.name, point.knowledgeType.name),
+        title: generatedContent.coreExplanation.title,
+        explanationText: generatedContent.coreExplanation.explanationText,
         templateCode: point.knowledgeType.code,
-        modelName: "mock-minimax-m2.7-highspeed",
-        aiAgent: "Codex",
-        promptVersion: "mvp-mock-v1",
+        modelName: generatedContent.metadata.modelName,
+        aiAgent: generatedContent.metadata.aiAgent,
+        promptVersion: generatedContent.metadata.promptVersion,
         status: versionStatus
       }
     });
@@ -79,32 +99,32 @@ export async function generateForKnowledgePoint(
         targetType: "core_explanation_version",
         targetId: coreVersion.id,
         callType: "core_explanation_generation",
-        modelName: "mock-minimax-m2.7-highspeed",
-        modelVersion: "mock",
-        aiAgent: "Codex",
-        promptVersion: "mvp-mock-v1",
-        inputTokens: 120,
-        outputTokens: 240,
-        latencyMs: 10,
+        modelName: generatedContent.metadata.modelName,
+        modelVersion: generatedContent.metadata.modelVersion,
+        aiAgent: generatedContent.metadata.aiAgent,
+        promptVersion: generatedContent.metadata.promptVersion,
+        inputTokens: generatedContent.metadata.inputTokens,
+        outputTokens: generatedContent.metadata.outputTokens,
+        latencyMs: generatedContent.metadata.latencyMs,
         status: "success"
       }
     });
 
     const questions = [];
 
-    for (const [index, dimension] of dimensions.entries()) {
+    for (const [index, generatedQuestion] of generatedContent.questions.entries()) {
       const question = await tx.question.create({
         data: {
           userId: user.id,
           knowledgePointId: point.id,
-          questionType: dimension === "distinguish" ? "single_choice" : "subjective",
-          cognitiveDimension: dimension,
+          questionType: generatedQuestion.questionType,
+          cognitiveDimension: generatedQuestion.cognitiveDimension,
           difficultyLevel: point.suggestedDifficulty,
           status
         }
       });
 
-      const stem = buildQuestionStem(point.name, dimension);
+      const stem = generatedQuestion.stem;
       const questionVersion = await tx.questionVersion.create({
         data: {
           questionId: question.id,
@@ -113,11 +133,11 @@ export async function generateForKnowledgePoint(
           contentJson: JSON.stringify({
             topic_name: point.topic.name,
             knowledge_point_name: point.name,
-            dimension
+            dimension: generatedQuestion.cognitiveDimension
           }),
-          modelName: "mock-minimax-m2.7-highspeed",
-          aiAgent: "Codex",
-          promptVersion: "mvp-mock-v1",
+          modelName: generatedContent.metadata.modelName,
+          aiAgent: generatedContent.metadata.aiAgent,
+          promptVersion: generatedContent.metadata.promptVersion,
           status: versionStatus
         }
       });
@@ -126,11 +146,11 @@ export async function generateForKnowledgePoint(
         data: {
           questionId: question.id,
           versionNo: 1,
-          answerText: buildAnswer(point.name, dimension),
-          explanationText: `回答应覆盖 ${point.name} 的定义、边界和实际使用场景。`,
-          modelName: "mock-minimax-m2.7-highspeed",
-          aiAgent: "Codex",
-          promptVersion: "mvp-mock-v1",
+          answerText: generatedQuestion.answerText,
+          explanationText: generatedQuestion.explanationText,
+          modelName: generatedContent.metadata.modelName,
+          aiAgent: generatedContent.metadata.aiAgent,
+          promptVersion: generatedContent.metadata.promptVersion,
           status: versionStatus
         }
       });
@@ -139,10 +159,10 @@ export async function generateForKnowledgePoint(
         data: {
           questionId: question.id,
           versionNo: 1,
-          rubricJson: JSON.stringify(buildRubric(dimension)),
-          modelName: "mock-minimax-m2.7-highspeed",
-          aiAgent: "Codex",
-          promptVersion: "mvp-mock-v1",
+          rubricJson: JSON.stringify(generatedQuestion.rubric),
+          modelName: generatedContent.metadata.modelName,
+          aiAgent: generatedContent.metadata.aiAgent,
+          promptVersion: generatedContent.metadata.promptVersion,
           status: versionStatus
         }
       });
@@ -154,13 +174,13 @@ export async function generateForKnowledgePoint(
             targetType: "question_version",
             targetId: questionVersion.id,
             callType: "question_generation",
-            modelName: "mock-minimax-m2.7-highspeed",
-            modelVersion: "mock",
-            aiAgent: "Codex",
-            promptVersion: "mvp-mock-v1",
-            inputTokens: 80 + index,
-            outputTokens: 120 + index,
-            latencyMs: 8,
+            modelName: generatedContent.metadata.modelName,
+            modelVersion: generatedContent.metadata.modelVersion,
+            aiAgent: generatedContent.metadata.aiAgent,
+            promptVersion: generatedContent.metadata.promptVersion,
+            inputTokens: distributeTokenCount(generatedContent.metadata.inputTokens, generatedContent.questions.length),
+            outputTokens: distributeTokenCount(generatedContent.metadata.outputTokens, generatedContent.questions.length),
+            latencyMs: generatedContent.metadata.latencyMs,
             status: "success"
           },
           {
@@ -168,13 +188,13 @@ export async function generateForKnowledgePoint(
             targetType: "answer_version",
             targetId: answerVersion.id,
             callType: "answer_generation",
-            modelName: "mock-minimax-m2.7-highspeed",
-            modelVersion: "mock",
-            aiAgent: "Codex",
-            promptVersion: "mvp-mock-v1",
-            inputTokens: 70 + index,
-            outputTokens: 110 + index,
-            latencyMs: 7,
+            modelName: generatedContent.metadata.modelName,
+            modelVersion: generatedContent.metadata.modelVersion,
+            aiAgent: generatedContent.metadata.aiAgent,
+            promptVersion: generatedContent.metadata.promptVersion,
+            inputTokens: distributeTokenCount(generatedContent.metadata.inputTokens, generatedContent.questions.length),
+            outputTokens: distributeTokenCount(generatedContent.metadata.outputTokens, generatedContent.questions.length),
+            latencyMs: generatedContent.metadata.latencyMs,
             status: "success"
           },
           {
@@ -182,13 +202,13 @@ export async function generateForKnowledgePoint(
             targetType: "scoring_rubric_version",
             targetId: rubricVersion.id,
             callType: "rubric_generation",
-            modelName: "mock-minimax-m2.7-highspeed",
-            modelVersion: "mock",
-            aiAgent: "Codex",
-            promptVersion: "mvp-mock-v1",
-            inputTokens: 60 + index,
-            outputTokens: 90 + index,
-            latencyMs: 6,
+            modelName: generatedContent.metadata.modelName,
+            modelVersion: generatedContent.metadata.modelVersion,
+            aiAgent: generatedContent.metadata.aiAgent,
+            promptVersion: generatedContent.metadata.promptVersion,
+            inputTokens: distributeTokenCount(generatedContent.metadata.inputTokens, generatedContent.questions.length),
+            outputTokens: distributeTokenCount(generatedContent.metadata.outputTokens, generatedContent.questions.length),
+            latencyMs: generatedContent.metadata.latencyMs,
             status: "success"
           }
         ]
@@ -201,8 +221,8 @@ export async function generateForKnowledgePoint(
           targetType: "question",
           targetId: question.id,
           checkerType: "rule_and_mock_ai",
-          modelName: "mock-minimax-m2.7-highspeed",
-          aiAgent: "Codex",
+          modelName: generatedContent.metadata.modelName,
+          aiAgent: generatedContent.metadata.aiAgent,
           ruleResultJson: JSON.stringify({
             has_stem: stem.length > 0,
             has_answer: true,
@@ -567,36 +587,56 @@ const questionDetailInclude = {
   qualityChecks: { orderBy: { createdAt: "desc" } }
 } satisfies Prisma.QuestionInclude;
 
-function buildCoreExplanation(pointName: string, knowledgeTypeName: string) {
-  return `${pointName} 是一个${knowledgeTypeName}类知识点。学习时先理解它解决什么问题，再掌握关键组成部分，最后通过实际场景验证是否能独立应用。`;
-}
-
-function buildQuestionStem(pointName: string, dimension: string) {
-  const templates: Record<string, string> = {
-    understand: `请解释 ${pointName} 的核心概念，并说明它通常解决什么问题。`,
-    distinguish: `请区分 ${pointName} 与相近概念的差异，并给出判断依据。`,
-    apply: `如果你要在一个真实项目中使用 ${pointName}，你会如何设计步骤？`,
-    analyze: `分析 ${pointName} 在复杂场景中可能失败的原因和排查路径。`,
-    evaluate: `评价一个 ${pointName} 方案是否合理时，你会采用哪些标准？`
+async function generateContentOrRecordFailure({
+  userId,
+  point,
+  dimensions
+}: {
+  userId: string;
+  point: {
+    id: string;
+    name: string;
+    description: string | null;
+    suggestedDifficulty: number;
+    topicName: string;
+    knowledgeTypeName: string;
+    knowledgeTypeCode: string;
   };
-
-  return templates[dimension] ?? templates.understand;
+  dimensions: GeneratedCognitiveDimension[];
+}) {
+  try {
+    return await generateKnowledgeContent({
+      point: {
+        pointName: point.name,
+        pointDescription: point.description,
+        suggestedDifficulty: point.suggestedDifficulty,
+        topicName: point.topicName,
+        knowledgeTypeName: point.knowledgeTypeName,
+        knowledgeTypeCode: point.knowledgeTypeCode
+      },
+      dimensions
+    });
+  } catch (error) {
+    await prisma.generationRecord.create({
+      data: {
+        userId,
+        targetType: "knowledge_point",
+        targetId: point.id,
+        callType: "knowledge_point_generation",
+        modelName: process.env.DEFAULT_MODEL_NAME ?? "minimax-m2.7-highspeed",
+        modelVersion: process.env.DEFAULT_MODEL_PROVIDER ?? "minimax",
+        aiAgent: process.env.DEFAULT_AI_AGENT ?? "Codex",
+        promptVersion: "minimax-knowledge-generation-v1",
+        latencyMs: error instanceof Error && "latencyMs" in error ? Number(error.latencyMs) : null,
+        status: "failed"
+      }
+    });
+    throw new Error("model_generation_failed");
+  }
 }
 
-function buildAnswer(pointName: string, dimension: string) {
-  return `答案需要围绕 ${pointName} 展开，覆盖 ${dimension} 维度要求，并给出可验证的例子。`;
-}
-
-function buildRubric(dimension: string) {
-  return {
-    dimension,
-    total_score: 100,
-    criteria: [
-      { name: "核心概念准确", score: 40 },
-      { name: "关键边界清晰", score: 30 },
-      { name: "示例或推理可验证", score: 30 }
-    ]
-  };
+function distributeTokenCount(value: number | null, total: number) {
+  return value === null ? null : Math.max(0, Math.floor(value / total));
 }
 
 function serializeCoreExplanation(

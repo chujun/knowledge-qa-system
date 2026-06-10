@@ -29,6 +29,10 @@ export async function POST(request: Request) {
       return errorResponse(404, "NOT_FOUND", "知识点不存在");
     }
 
+    if (error instanceof Error && error.message === "model_generation_failed") {
+      return errorResponse(502, "MODEL_PROVIDER_ERROR", "模型生成失败");
+    }
+
     return errorResponse(500, "INTERNAL_ERROR", "生成题目和讲解失败");
   }
 }

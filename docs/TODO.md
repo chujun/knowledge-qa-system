@@ -1954,12 +1954,34 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 47. 真实 Minimax 题目、答案、评分规则和核心讲解生成
 
-- [ ] 将 `generateForKnowledgePoint` 从模板生成改为调用统一模型 Provider。
-- [ ] 为理解、区分、应用、分析、评价五个维度设计 Minimax 结构化输出 Prompt。
-- [ ] 使用 Zod schema 校验 Minimax 输出的题目、答案、评分规则和核心讲解。
-- [ ] 输出不合格时进入失败或待修正状态，不直接正式入库。
-- [ ] 保留 `GenerationRecord` 中的模型、Agent、prompt_version、token、耗时和状态。
-- [ ] Playwright 覆盖 Web 触发生成后进入待确认/草稿流程。
+- [x] 将 `generateForKnowledgePoint` 从模板生成改为调用统一模型 Provider。
+- [x] 为理解、区分、应用、分析、评价五个维度设计 Minimax 结构化输出 Prompt。
+- [x] 使用 Zod schema 校验 Minimax 输出的题目、答案、评分规则和核心讲解。
+- [x] 输出不合格时进入失败或待修正状态，不直接正式入库。
+- [x] 保留 `GenerationRecord` 中的模型、Agent、prompt_version、token、耗时和状态。
+- [x] Playwright 覆盖 Web 触发生成后进入待确认/草稿流程。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验证记录：
+
+```text
+2026-06-10 13:56:16 新增真实 Minimax 结构化生成链路：完成知识生成模块、Minimax Prompt、Zod 输出校验、generateForKnowledgePoint Provider 接入、失败生成记录和 API 502 错误映射。
+2026-06-10 13:56:16 cmd /c npx tsc --noEmit：通过。
+2026-06-10 13:56:16 cmd /c npm run test：通过，19 个测试文件，53 条测试用例；新增知识生成 Prompt、Provider JSON 解析和维度缺失失败测试。
+2026-06-10 13:56:16 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖 Web 触发生成后进入待确认/草稿流程和 MVP 浏览器学习闭环。
+2026-06-10 13:56:16 cmd /c npm run build：通过，真实 Minimax 结构化生成链路进入 Next.js 生产构建。
+2026-06-10 13:59:04 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 14:00:42 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-10 14:01:08 真实 Minimax 结构化生成链路冒烟检查：通过，`/settings` 包含 DEFAULT_MODEL_PROVIDER、MINIMAX_API_KEY 和 minimax-m2.7-highspeed；`/domains` 包含知识结构和生成题目入口。
+2026-06-10 14:01:08 已提示用户查看新功能：可通过 `/domains` 或首页知识点卡片触发生成；配置 DEFAULT_MODEL_PROVIDER=minimax 且提供 MINIMAX_API_KEY 后会走 Minimax Provider。
+2026-06-10 14:05:45 token 分摊逻辑微调后复验：cmd /c npx tsc --noEmit、cmd /c npm run test 和 cmd /c npm run build 均通过。
+2026-06-10 14:09:13 最终重启本地 3000 服务：通过，/api/health 返回 200，database: ready；`/domains` 生成题目入口冒烟检查通过。
+```
 
 ## 48. 真实 Minimax 质量校验
 
