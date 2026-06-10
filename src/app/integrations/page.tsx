@@ -103,7 +103,8 @@ function TopNav({ current }: { current: string }) {
     ["/attempts", "答题记录"],
     ["/error-sets", "错误集"],
     ["/records", "记录"],
-    ["/integrations", "接入"]
+    ["/integrations", "接入"],
+    ["/settings", "设置"]
   ];
 
   return (

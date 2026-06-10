@@ -1697,3 +1697,61 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-09 17:43:21 首页待确认批量操作冒烟检查：通过，页面包含批量确认入库、批量拒绝、review-batch-form 和待确认入库。
 2026-06-09 17:43:21 已提示用户查看新功能：首页“待确认入库”区域可以勾选多项后批量确认或批量拒绝。
 ```
+
+## 42. Web 系统设置页
+
+本章用于补齐本地运行、默认模型、Agent/API 和 MCP 配置的只读可见性。用户可以在浏览器中查看系统当前运行状态和关键配置是否就绪，但页面不展示真实密钥。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/app/settings/page.tsx、src/app/page.tsx、src/app/integrations/page.tsx、tests/e2e/home.spec.ts、docs/TODO.md、.agent-flow.md。
+- 行为变化：新增 `/settings` 系统设置页；首页新增“系统设置”入口；接入页顶部导航新增“设置”；设置页展示应用版本、数据库状态、模型 Provider、默认 Agent、默认模型、API Key 配置状态、MCP/Agent Tool 状态和本地自检命令。
+- 数据/接口变化：不新增数据库表；设置页复用 `appConfig`、`mcpToolDefinitions` 和 Prisma `SELECT 1` 数据库探测；只展示配置状态，不展示真实 API Key 或 DATABASE_URL。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退设置页、首页入口、接入页导航、E2E 调整和文档记录即可恢复到第 41 章状态。
+```
+
+- [x] 新增 `/settings` 系统设置页。
+- [x] 设置页展示应用版本。
+- [x] 设置页展示数据库 ready/unavailable 状态。
+- [x] 设置页展示模型 Provider。
+- [x] 设置页展示默认 AI Agent。
+- [x] 设置页展示默认模型。
+- [x] 设置页展示 API Key 是否配置，但不展示真实密钥。
+- [x] 设置页展示 Agent Tool CLI 和 MCP stdio 状态。
+- [x] 设置页展示本地自检命令。
+- [x] 首页新增“系统设置”入口。
+- [x] 接入页顶部导航新增“设置”入口。
+- [x] Playwright E2E 覆盖首页设置入口和设置页核心内容。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以通过浏览器查看系统设置：
+首页 -> 系统设置 -> 查看应用版本、数据库状态、默认模型、默认 Agent、API Key 配置状态、MCP/Agent 命令和本地自检命令。
+接入页 -> 设置 -> 进入 `/settings`。
+```
+
+验证记录：
+
+```text
+2026-06-10 09:00:15 新增 Web 系统设置页：完成 `/settings` 页面、首页入口、接入页导航入口和 E2E 覆盖。
+2026-06-10 09:00:15 cmd /c npx tsc --noEmit：通过。
+2026-06-10 09:00:15 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-10 09:00:15 cmd /c npm run test:e2e：第一次超过 180 秒外层命令超时，未产生失败上下文；检查 3100 无监听残留后，以 300 秒超时重跑。
+2026-06-10 09:00:15 cmd /c npm run test:e2e：重跑通过，3 条 Playwright E2E 测试；覆盖首页、Agent/MCP 接入页、系统设置页、待确认内容编辑和 MVP 浏览器学习闭环。
+2026-06-10 09:00:15 cmd /c npm run build：通过，新增 `/settings` 动态页面进入 Next.js 生产构建。
+2026-06-10 09:02:16 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 09:05:56 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-10 09:05:56 `/settings` 冒烟检查：通过，页面包含系统设置、chatgpt-5.5、Codex、页面不显示真实值和 npm run mcp:check。
+2026-06-10 09:05:56 已提示用户查看新功能：首页可进入“系统设置”，也可直接访问 `/settings`。
+```

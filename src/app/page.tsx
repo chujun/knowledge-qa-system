@@ -162,6 +162,11 @@ export default async function Home({
               href="/integrations"
               label="Agent 接入"
             />
+            <WorkbenchLink
+              description="查看本地运行、默认模型、API Key 状态和 Agent/MCP 配置。"
+              href="/settings"
+              label="系统设置"
+            />
           </section>
 
           <section id="领域">
