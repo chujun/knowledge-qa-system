@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
+import { KnowledgePointCreateForm } from "@/components/knowledge-point-create-form";
 import {
   confirmReviewItem,
   listReviewItems,
@@ -230,63 +231,12 @@ export default async function Home({
                   </button>
                 </form>
 
-                <form action={createKnowledgePointAction} className="space-y-3 border border-ink/15 bg-white/45 p-4">
-                  <h3 className="text-lg font-semibold">知识点</h3>
-                  <select
-                    aria-label="知识点所属领域"
-                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
-                    name="domain_id"
-                    required
-                  >
-                    <option value="">选择领域</option>
-                    {data.domains.items.map((domain) => (
-                      <option key={domain.id} value={domain.id}>
-                        {domain.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="知识点所属主题"
-                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
-                    name="topic_id"
-                    required
-                  >
-                    <option value="">选择主题</option>
-                    {data.topics.items.map((topic) => (
-                      <option key={topic.id} value={topic.id}>
-                        {topic.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="知识点类型"
-                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
-                    name="knowledge_type_id"
-                    required
-                  >
-                    {data.knowledgeTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    aria-label="知识点名称"
-                    className="w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
-                    name="point_name"
-                    placeholder="例如：workflow 触发条件"
-                    required
-                  />
-                  <textarea
-                    aria-label="知识点说明"
-                    className="min-h-24 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm outline-none focus:border-clay"
-                    name="point_description"
-                    placeholder="知识点说明，可选"
-                  />
-                  <button className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
-                    创建知识点
-                  </button>
-                </form>
+                <KnowledgePointCreateForm
+                  action={createKnowledgePointAction}
+                  domains={data.domains.items}
+                  knowledgeTypes={data.knowledgeTypes}
+                  topics={data.topics.items}
+                />
               </div>
             </Panel>
           </section>
@@ -562,8 +512,8 @@ async function loadWorkbenchData(reviewFilters: {
       sourceSystem: reviewFilters.sourceSystem,
       pageSize: 20
     }),
-    listDomains({ pageSize: 20 }),
-    listTopics({ pageSize: 20 }),
+    listDomains({ pageSize: 200 }),
+    listTopics({ pageSize: 500 }),
     listKnowledgeTypes(),
     listKnowledgePoints({ status: "confirmed", pageSize: 5 }),
     listQuestions({ pageSize: 5 }),

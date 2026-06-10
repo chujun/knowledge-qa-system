@@ -2028,6 +2028,7 @@ docs/knowledge-qa-mvp-plan.md
 ## 49. 真实 Minimax 答题评分
 
 - [x] 修复 Web 创建知识结构时同名领域、主题或知识点重复提交导致 Prisma 唯一约束错误并触发 Runtime 崩溃的问题。
+- [x] 修复 Web 创建知识点时领域和主题不是级联下拉的问题；选择“历史”时只显示历史领域下的主题，例如“府兵制”。
 - [ ] 将答题评分从 mock 逻辑切换到 Minimax 评分 Provider。
 - [ ] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
 - [ ] 用户修正评分后继续更新掌握画像和错误集。
@@ -2043,6 +2044,15 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-10 16:27:18 cmd /c npm run test：通过，21 个测试文件，62 条测试用例。
 2026-06-10 16:27:18 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理仍遇到 Windows 文件锁，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
 2026-06-10 16:27:18 已提示用户查看新功能：可在首页重复提交同名领域、主题或知识点，不会再出现唯一约束 Runtime 崩溃。
+2026-06-10 16:50:37 修复创建知识点领域/主题级联：新增 KnowledgePointCreateForm 客户端组件，知识点主题下拉会根据已选领域过滤；该领域无主题时提示先创建主题；首页加载领域数量提升到 200、主题数量提升到 500，避免“历史”等旧领域不出现在下拉中。
+2026-06-10 16:50:37 cmd /c npx tsc --noEmit：通过。
+2026-06-10 16:50:37 cmd /c npx vitest run src/components/knowledge-point-create-form.test.tsx：通过，覆盖“历史 -> 府兵制”级联过滤，不显示其他领域主题。
+2026-06-10 16:50:37 cmd /c npm run test：通过，22 个测试文件，63 条测试用例。
+2026-06-10 16:50:37 cmd /c npm run build：通过，首页客户端级联表单进入 Next.js 生产构建。
+2026-06-10 16:54:50 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 16:54:50 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理仍遇到 Windows 文件锁，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
+2026-06-10 16:54:50 首页知识点创建表单冒烟检查：通过，页面包含知识点所属领域、知识点所属主题、先选择领域后再选择主题和创建知识点。
+2026-06-10 16:54:50 已提示用户查看新功能：刷新首页后，创建知识点时先选择领域，再选择该领域下的主题。
 ```
 
 ## 50. AI Agent 真实接入验收
