@@ -85,7 +85,10 @@ export async function generateKnowledgeContent({
   dimensions: GeneratedCognitiveDimension[];
   provider?: AiProvider;
 }): Promise<GeneratedKnowledgeContent> {
-  if (appConfig.defaultModelProvider !== "minimax") {
+  if (
+    appConfig.defaultModelProvider !== "minimax" ||
+    !appConfig.minimaxApiKeyConfigured
+  ) {
     return buildMockGeneratedKnowledgeContent(point, dimensions);
   }
 
