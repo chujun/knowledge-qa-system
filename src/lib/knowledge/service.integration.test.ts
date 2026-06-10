@@ -111,6 +111,62 @@ describe("knowledge service database integration", () => {
       suggested_difficulty: 3
     });
   });
+
+  it("reuses existing structure records when names are submitted twice", async () => {
+    const types = await service.listKnowledgeTypes();
+    const conceptType = types.find((type) => type.code === "concept");
+    const unique = Date.now().toString();
+
+    const domain = await service.createDomain({
+      name: `重复领域 ${unique}`,
+      description: "第一次创建"
+    });
+    const sameDomain = await service.createDomain({
+      name: `重复领域 ${unique}`,
+      description: "第二次提交"
+    });
+
+    const topic = await service.createTopic({
+      domain_id: domain.id,
+      name: `重复主题 ${unique}`,
+      description: "第一次创建"
+    });
+    const sameTopic = await service.createTopic({
+      domain_id: domain.id,
+      name: `重复主题 ${unique}`,
+      description: "第二次提交"
+    });
+
+    const point = await service.createKnowledgePoint({
+      domain_id: domain.id,
+      topic_id: topic.id,
+      knowledge_type_id: conceptType!.id,
+      name: `重复知识点 ${unique}`,
+      description: "第一次创建",
+      complexity_level: "medium",
+      suggested_difficulty: 3
+    });
+    const samePoint = await service.createKnowledgePoint({
+      domain_id: domain.id,
+      topic_id: topic.id,
+      knowledge_type_id: conceptType!.id,
+      name: `重复知识点 ${unique}`,
+      description: "第二次提交",
+      complexity_level: "complex",
+      suggested_difficulty: 4
+    });
+
+    expect(sameDomain.id).toBe(domain.id);
+    expect(sameDomain.description).toBe("第二次提交");
+    expect(sameTopic.id).toBe(topic.id);
+    expect(sameTopic.description).toBe("第二次提交");
+    expect(samePoint.id).toBe(point.id);
+    expect(samePoint).toMatchObject({
+      description: "第二次提交",
+      complexity_level: "complex",
+      suggested_difficulty: 4
+    });
+  });
 });
 
 function splitSqlStatements(sql: string) {

@@ -117,8 +117,22 @@ export async function listDomains(params: {
 
 export async function createDomain(input: DomainInput) {
   const user = await getDefaultUser();
-  const domain = await prisma.knowledgeDomain.create({
-    data: {
+  const domain = await prisma.knowledgeDomain.upsert({
+    where: {
+      userId_name: {
+        userId: user.id,
+        name: input.name
+      }
+    },
+    update: {
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.trust_policy !== undefined
+        ? { trustPolicyJson: JSON.stringify(input.trust_policy) }
+        : {}),
+      ...(input.sort_order !== undefined ? { sortOrder: input.sort_order } : {}),
+      status: "active"
+    },
+    create: {
       userId: user.id,
       name: input.name,
       description: input.description,
@@ -190,8 +204,20 @@ export async function createTopic(input: TopicInput) {
   const user = await getDefaultUser();
   await assertDomainBelongsToUser(input.domain_id, user.id);
 
-  const topic = await prisma.knowledgeTopic.create({
-    data: {
+  const topic = await prisma.knowledgeTopic.upsert({
+    where: {
+      domainId_name: {
+        domainId: input.domain_id,
+        name: input.name
+      }
+    },
+    update: {
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.outline !== undefined ? { outlineJson: JSON.stringify(input.outline) } : {}),
+      ...(input.suggested_level !== undefined ? { suggestedLevel: input.suggested_level } : {}),
+      status: input.status ?? "confirmed"
+    },
+    create: {
       userId: user.id,
       domainId: input.domain_id,
       name: input.name,
@@ -281,8 +307,21 @@ export async function createKnowledgePoint(input: KnowledgePointInput) {
   await assertTopicBelongsToDomain(input.topic_id, input.domain_id, user.id);
   await assertKnowledgeTypeExists(input.knowledge_type_id);
 
-  const point = await prisma.knowledgePoint.create({
-    data: {
+  const point = await prisma.knowledgePoint.upsert({
+    where: {
+      topicId_name: {
+        topicId: input.topic_id,
+        name: input.name
+      }
+    },
+    update: {
+      knowledgeTypeId: input.knowledge_type_id,
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      complexityLevel: input.complexity_level,
+      suggestedDifficulty: input.suggested_difficulty,
+      status: input.status ?? "confirmed"
+    },
+    create: {
       userId: user.id,
       domainId: input.domain_id,
       topicId: input.topic_id,

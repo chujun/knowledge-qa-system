@@ -2027,11 +2027,23 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 49. 真实 Minimax 答题评分
 
+- [x] 修复 Web 创建知识结构时同名领域、主题或知识点重复提交导致 Prisma 唯一约束错误并触发 Runtime 崩溃的问题。
 - [ ] 将答题评分从 mock 逻辑切换到 Minimax 评分 Provider。
 - [ ] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
 - [ ] 用户修正评分后继续更新掌握画像和错误集。
 - [ ] 记录 AI 评分是否被用户修正，用于后续分析模型评分质量。
 - [ ] E2E 覆盖一次真实/fixture 化评分闭环。
+
+验证记录：
+
+```text
+2026-06-10 16:27:18 修复知识结构重复创建崩溃：领域按 user_id + name 幂等 upsert，主题按 domain_id + name 幂等 upsert，知识点按 topic_id + name 幂等 upsert；重复提交会复用并更新已有记录，不再抛出 Prisma 唯一约束 Runtime 错误。
+2026-06-10 16:27:18 cmd /c npx tsc --noEmit：通过。
+2026-06-10 16:27:18 cmd /c npx vitest run src/lib/knowledge/service.integration.test.ts：通过，2 条知识结构集成测试；新增重复创建复用已有记录断言。
+2026-06-10 16:27:18 cmd /c npm run test：通过，21 个测试文件，62 条测试用例。
+2026-06-10 16:27:18 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理仍遇到 Windows 文件锁，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
+2026-06-10 16:27:18 已提示用户查看新功能：可在首页重复提交同名领域、主题或知识点，不会再出现唯一约束 Runtime 崩溃。
+```
 
 ## 50. AI Agent 真实接入验收
 
