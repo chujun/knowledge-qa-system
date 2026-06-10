@@ -97,6 +97,7 @@ export async function generateKnowledgeContent({
     model: appConfig.defaultModel,
     responseFormat: "json",
     temperature: 0.2,
+    timeoutMs: 120_000,
     messages: buildKnowledgeGenerationMessages(point, dimensions)
   });
 

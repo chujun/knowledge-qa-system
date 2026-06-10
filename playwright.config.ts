@@ -20,12 +20,11 @@ export default defineConfig({
     env: {
       DATABASE_URL: "file:./dev.db",
       KNOWLEDGE_QA_API_KEY: "local-dev-key",
-      DEFAULT_MODEL_PROVIDER: "mock",
-      DEFAULT_MODEL_NAME: "minimax-m2.7-highspeed",
-      MINIMAX_API_KEY: ""
+      DEFAULT_MODEL_PROVIDER: "minimax",
+      DEFAULT_MODEL_NAME: "MiniMax-M3"
     },
     url: "http://127.0.0.1:3100",
     reuseExistingServer: true,
-    timeout: 120000
+    timeout: 180000
   }
 });

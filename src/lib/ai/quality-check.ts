@@ -79,6 +79,7 @@ export async function checkGeneratedQuestionQuality({
     model: appConfig.defaultModel,
     responseFormat: "json",
     temperature: 0,
+    timeoutMs: 120_000,
     messages: buildQualityCheckMessages(question, ruleResult)
   });
 

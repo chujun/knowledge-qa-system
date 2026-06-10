@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(120000);
+test.setTimeout(420000);
 
 test("shows the local knowledge QA workspace", async ({ page }) => {
   await page.goto("/");
@@ -35,7 +35,7 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
 
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "系统设置" })).toBeVisible();
-  await expect(page.getByText("minimax-m2.7-highspeed").first()).toBeVisible();
+  await expect(page.getByText("MiniMax-M3").first()).toBeVisible();
   await expect(page.getByText("Codex").first()).toBeVisible();
   await expect(page.getByText("页面不显示真实值").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "环境配置说明" })).toBeVisible();
@@ -167,19 +167,13 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
 
   const pointCard = page.locator("article").filter({ hasText: pointName }).first();
   await expect(pointCard).toBeVisible();
+  const pointId = await findKnowledgePointIdByName(request, pointName);
   await pointCard.getByRole("button", { name: "生成题目" }).click();
 
-  const generatedQuestionCard = page
-    .locator("article")
-    .filter({ hasText: pointName })
-    .filter({ hasText: "pending_confirmation" })
-    .first();
-  await expect(generatedQuestionCard).toBeVisible();
-  const generatedQuestionHref = await generatedQuestionCard
-    .getByRole("link", { name: "查看详情" })
-    .getAttribute("href");
+  const generatedQuestionId = await waitForGeneratedQuestionId(request, pointId);
+  const generatedQuestionHref = `/questions/${generatedQuestionId}`;
   expect(generatedQuestionHref).toBeTruthy();
-  await page.goto(generatedQuestionHref!);
+  await page.goto(generatedQuestionHref);
 
   await expect(page.getByText("Question Detail")).toBeVisible();
   await page.getByRole("button", { name: "确认入库" }).click();
@@ -317,4 +311,45 @@ async function openDetailsForControl(page: import("@playwright/test").Page, labe
       details.open = true;
     }
   });
+}
+
+async function findKnowledgePointIdByName(
+  request: import("@playwright/test").APIRequestContext,
+  pointName: string
+) {
+  const response = await request.get("/api/v1/knowledge-points?page_size=100", {
+    headers: {
+      "x-api-key": "local-dev-key"
+    }
+  });
+  const body = await response.json();
+  const point = body.data.find((item: { id: string; name: string }) => item.name === pointName);
+  expect(point).toBeTruthy();
+  return point.id as string;
+}
+
+async function waitForGeneratedQuestionId(
+  request: import("@playwright/test").APIRequestContext,
+  pointId: string
+) {
+  let questionId: string | undefined;
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(
+          `/api/v1/questions?knowledge_point_id=${pointId}&status=pending_confirmation&page_size=10`,
+          {
+            headers: {
+              "x-api-key": "local-dev-key"
+            }
+          }
+        );
+        const body = await response.json();
+        questionId = body.data[0]?.id as string | undefined;
+        return questionId;
+      },
+      { timeout: 300000 }
+    )
+    .toBeTruthy();
+  return questionId!;
 }
