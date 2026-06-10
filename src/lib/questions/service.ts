@@ -5,6 +5,7 @@ import {
   generateKnowledgeContent,
   type GeneratedCognitiveDimension
 } from "@/lib/ai/knowledge-generation";
+import { checkGeneratedQuestionQuality } from "@/lib/ai/quality-check";
 import { prisma } from "@/lib/db/prisma";
 import { getDefaultUser } from "@/lib/knowledge/service";
 
@@ -50,8 +51,6 @@ export async function generateForKnowledgePoint(
     throw new Error("knowledge_point_not_found");
   }
 
-  const status = input.direct_confirm ? "confirmed" : "pending_confirmation";
-  const versionStatus = input.direct_confirm ? "active" : "draft";
   const dimensions = input.cognitive_dimensions.slice(
     0,
     input.question_count
@@ -69,6 +68,29 @@ export async function generateForKnowledgePoint(
     },
     dimensions
   });
+  const qualityResults = await Promise.all(
+    generatedContent.questions.map((generatedQuestion) =>
+      checkGeneratedQuestionQuality({
+        question: {
+          knowledgePointName: point.name,
+          cognitiveDimension: generatedQuestion.cognitiveDimension,
+          difficultyLevel: point.suggestedDifficulty,
+          questionType: generatedQuestion.questionType,
+          stem: generatedQuestion.stem,
+          answerText: generatedQuestion.answerText,
+          explanationText: generatedQuestion.explanationText,
+          rubric: generatedQuestion.rubric
+        }
+      })
+    )
+  );
+  const allQualityPassed = qualityResults.every(
+    (qualityResult) => qualityResult.status === "passed"
+  );
+  const status =
+    input.direct_confirm && allQualityPassed ? "confirmed" : "pending_confirmation";
+  const versionStatus =
+    input.direct_confirm && allQualityPassed ? "active" : "draft";
 
   const result = await prisma.$transaction(async (tx) => {
     const coreExplanation = await tx.coreExplanation.create({
@@ -214,27 +236,21 @@ export async function generateForKnowledgePoint(
         ]
       });
 
+      const qualityResult = qualityResults[index];
       const qualityCheck = await tx.qualityCheckRecord.create({
         data: {
           userId: user.id,
           questionId: question.id,
           targetType: "question",
           targetId: question.id,
-          checkerType: "rule_and_mock_ai",
-          modelName: generatedContent.metadata.modelName,
-          aiAgent: generatedContent.metadata.aiAgent,
-          ruleResultJson: JSON.stringify({
-            has_stem: stem.length > 0,
-            has_answer: true,
-            has_rubric: true,
-            cognitive_dimension_valid: true
-          }),
-          aiResultJson: JSON.stringify({
-            passed: true,
-            issues: []
-          }),
-          status: "passed",
-          passedAt: new Date()
+          checkerType: qualityResult.checkerType,
+          modelName: qualityResult.modelName,
+          aiAgent: qualityResult.aiAgent,
+          ruleResultJson: JSON.stringify(qualityResult.ruleResult),
+          aiResultJson: JSON.stringify(qualityResult.aiResult),
+          autoFixCount: qualityResult.autoFixCount,
+          status: qualityResult.status,
+          passedAt: qualityResult.passedAt
         }
       });
 

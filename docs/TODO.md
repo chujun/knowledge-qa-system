@@ -1985,11 +1985,32 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 48. 真实 Minimax 质量校验
 
-- [ ] 将当前 `rule_and_mock_ai` 扩展为规则校验 + Minimax 质检。
-- [ ] 质检 Prompt 覆盖相关性、维度匹配、难度匹配、清晰度、可评分性、答案充分性、重复度、实用性和来源支撑。
-- [ ] 质检不通过时记录问题原因、修改建议和自动修正次数。
-- [ ] 质检模型和生成模型可分别记录，支持后续不同模型复核。
-- [ ] `/records` 可以筛选并查看真实 Minimax 质检记录。
+- [x] 将当前 `rule_and_mock_ai` 扩展为规则校验 + Minimax 质检。
+- [x] 质检 Prompt 覆盖相关性、维度匹配、难度匹配、清晰度、可评分性、答案充分性、重复度、实用性和来源支撑。
+- [x] 质检不通过时记录问题原因、修改建议和自动修正次数。
+- [x] 质检模型和生成模型可分别记录，支持后续不同模型复核。
+- [x] `/records` 可以筛选并查看真实 Minimax 质检记录。
+- [x] 生成流程在数据库事务外执行质量校验，避免真实模型调用长时间占用事务。
+- [x] `direct_confirm=true` 时仅当所有质检记录为 `passed` 才直接正式入库；否则保持 `pending_confirmation` 和草稿版本。
+- [x] Playwright E2E 固定使用 mock Provider，避免误用用户本地真实 `MINIMAX_API_KEY`。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行 Next.js 生产构建。
+
+验证记录：
+
+```text
+2026-06-10 14:38:25 新增真实 Minimax 质量校验：完成规则校验 + Minimax 质检 Prompt、结构化质检输出校验、质检模型/Agent 独立记录、问题原因/修改建议/自动修正次数记录和 direct_confirm 质检保护。
+2026-06-10 14:38:25 cmd /c npx tsc --noEmit：通过。
+2026-06-10 14:38:25 cmd /c npm run test：通过，20 个测试文件，57 条测试用例；新增质量校验 Prompt、规则结果和 MiniMax-M3 解析测试。
+2026-06-10 14:38:25 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；E2E 固定使用 mock Provider，避免误用真实 Minimax token。
+2026-06-10 14:38:25 cmd /c npm run build：通过，真实 Minimax 质量校验链路进入 Next.js 生产构建。
+2026-06-10 14:43:20 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 14:43:20 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理遇到 Windows 文件锁 Access is denied，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
+2026-06-10 14:43:20 真实 Minimax 质量校验冒烟检查：通过，`/settings` 包含 DEFAULT_MODEL_PROVIDER、MiniMax-M3、MINIMAX_API_KEY 和已配置状态；`/records` 包含 Agent/MCP 调用记录、质量校验记录、checker_type 和 model_name。
+2026-06-10 14:43:20 已提示用户查看新功能：可直接访问 `/settings` 查看 MiniMax-M3 配置状态，访问 `/records` 查看质量校验记录。
+```
 
 ## 49. 真实 Minimax 答题评分
 

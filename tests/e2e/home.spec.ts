@@ -37,7 +37,7 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "系统设置" })).toBeVisible();
   await expect(page.getByText("minimax-m2.7-highspeed").first()).toBeVisible();
   await expect(page.getByText("Codex").first()).toBeVisible();
-  await expect(page.getByText("页面不显示真实值")).toBeVisible();
+  await expect(page.getByText("页面不显示真实值").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "环境配置说明" })).toBeVisible();
   await expect(page.getByText("DATABASE_URL").first()).toBeVisible();
   await expect(page.getByText(".env.local 示例")).toBeVisible();

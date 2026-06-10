@@ -19,7 +19,10 @@ export default defineConfig({
     command: "npm run dev -- -p 3100",
     env: {
       DATABASE_URL: "file:./dev.db",
-      KNOWLEDGE_QA_API_KEY: "local-dev-key"
+      KNOWLEDGE_QA_API_KEY: "local-dev-key",
+      DEFAULT_MODEL_PROVIDER: "mock",
+      DEFAULT_MODEL_NAME: "minimax-m2.7-highspeed",
+      MINIMAX_API_KEY: ""
     },
     url: "http://127.0.0.1:3100",
     reuseExistingServer: true,
