@@ -1812,3 +1812,58 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-10 09:33:07 `/settings` 环境配置说明冒烟检查：通过，页面包含环境配置说明、DATABASE_URL、.env.local 示例、PowerShell 临时配置和 API Key 占位符。
 2026-06-10 09:33:07 已提示用户查看新功能：可直接访问 `/settings` 查看环境配置说明。
 ```
+
+## 44. Web 统一顶部导航组件
+
+本章用于减少各页面重复维护顶部导航的成本。系统将 Web 页面共用导航入口抽取为共享组件，确保工作台、知识结构、题库、练习、画像、答题记录、错误集、记录、接入和设置等入口在各业务页面保持一致。
+
+实现范围：
+
+```text
+实现范围：
+- 文件/模块：src/components/top-nav.tsx、src/app/domains/page.tsx、src/app/questions/page.tsx、src/app/practice/page.tsx、src/app/practice/[practiceSessionId]/page.tsx、src/app/mastery/page.tsx、src/app/attempts/page.tsx、src/app/error-sets/page.tsx、src/app/records/page.tsx、src/app/integrations/page.tsx、src/app/settings/page.tsx、docs/TODO.md、.agent-flow.md。
+- 行为变化：各业务页面顶部导航改为复用共享 `TopNav` 组件；导航项集中维护；当前页面高亮和原有样式保持一致。
+- 数据/接口变化：不新增数据库表，不新增 API，不改变既有业务数据。
+- 测试/验证：cmd /c npx tsc --noEmit；cmd /c npm run test；cmd /c npm run test:e2e；cmd /c npm run build；cmd /c npm run docs:check-timestamps。
+- 运行规则：程序修改完成并验证后，重启本地 3000 端口服务，提示用户查看新功能，然后继续后续工作。
+- 回滚或恢复：回退共享导航组件和各页面导入替换即可恢复到第 43 章状态。
+```
+
+- [x] 新增 `src/components/top-nav.tsx`。
+- [x] 抽取统一 `topNavItems` 导航项。
+- [x] 抽取共享 `TopNav` 组件。
+- [x] 移除十个业务页面中的本地重复 `TopNav` 定义。
+- [x] 保留原有导航样式。
+- [x] 保留当前页面高亮行为。
+- [x] 统一导航项包含“设置”入口。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Playwright E2E 闭环测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行验证记录时间格式检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验收标准：
+
+```text
+用户可以在各业务页面看到一致的顶部导航：
+知识结构、题库、练习、画像、答题记录、错误集、记录、接入和设置页面 -> 顶部导航入口一致 -> 当前页面高亮正确 -> 点击“设置”可进入 `/settings`。
+```
+
+验证记录：
+
+```text
+2026-06-10 10:07:00 新增 Web 统一顶部导航组件：完成 src/components/top-nav.tsx、十个页面导航替换和重复 TopNav 移除。
+2026-06-10 10:07:00 cmd /c npx tsc --noEmit：通过。
+2026-06-10 10:07:00 cmd /c npm run test：通过，17 个测试文件，46 条测试用例。
+2026-06-10 10:07:00 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；覆盖首页、Agent/MCP 接入页、系统设置页环境配置说明、待确认内容编辑和 MVP 浏览器学习闭环。
+2026-06-10 10:07:00 cmd /c npm run build：通过，统一顶部导航组件进入 Next.js 生产构建。
+2026-06-10 10:10:01 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 10:12:20 重启本地 3000 服务：通过，/api/health 返回 200，database: ready。
+2026-06-10 10:12:20 统一顶部导航冒烟检查：通过，`/questions` 和 `/settings` 页面均包含工作台、知识结构、题库、练习、画像、答题记录、错误集、记录、接入和设置入口。
+2026-06-10 10:12:20 已提示用户查看新功能：可直接访问 `/questions` 或 `/settings` 查看统一顶部导航。
+```
+
+## 下一步
+
+继续推进 Web 页面体验与数据管理能力；下一轮进入下一项可运行 MVP 功能增强。
