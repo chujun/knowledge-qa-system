@@ -1992,7 +1992,9 @@ docs/knowledge-qa-mvp-plan.md
 - [x] `/records` 可以筛选并查看真实 Minimax 质检记录。
 - [x] 生成流程在数据库事务外执行质量校验，避免真实模型调用长时间占用事务。
 - [x] `direct_confirm=true` 时仅当所有质检记录为 `passed` 才直接正式入库；否则保持 `pending_confirmation` 和草稿版本。
-- [x] Playwright E2E 固定使用 mock Provider，避免误用用户本地真实 `MINIMAX_API_KEY`。
+- [x] Playwright E2E 使用真实 MiniMax-M3 Provider，验证真实模型生成、质检和浏览器学习闭环效果。
+- [x] 兼容 MiniMax-M3 返回 `<think>` 思考文本、fenced JSON 和前后解释文本的混合输出。
+- [x] Provider 支持 `max_tokens`，生成链路设置 6000，质检链路设置 2000；真实模型调用超时设置为 120 秒。
 - [x] 执行 TypeScript 类型检查。
 - [x] 执行单元和集成测试。
 - [x] 执行 Playwright E2E 闭环测试。
@@ -2010,6 +2012,17 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-10 14:43:20 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理遇到 Windows 文件锁 Access is denied，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
 2026-06-10 14:43:20 真实 Minimax 质量校验冒烟检查：通过，`/settings` 包含 DEFAULT_MODEL_PROVIDER、MiniMax-M3、MINIMAX_API_KEY 和已配置状态；`/records` 包含 Agent/MCP 调用记录、质量校验记录、checker_type 和 model_name。
 2026-06-10 14:43:20 已提示用户查看新功能：可直接访问 `/settings` 查看 MiniMax-M3 配置状态，访问 `/records` 查看质量校验记录。
+2026-06-10 15:58:37 根据用户要求将 Playwright E2E 切换为真实 MiniMax-M3：移除 mock Provider 强制覆盖，保留真实 `.env.local` 中的 MINIMAX_API_KEY；E2E 通过 API 定位真实生成题目，避免依赖模型题干文案。
+2026-06-10 15:58:37 真实 MiniMax-M3 E2E 调试记录：首次失败定位为默认 30 秒超时；第二次失败定位为模型返回 `<think>` + fenced JSON；第三次失败定位为提取到 `<think>` 中复述的输入 JSON；最终修复为 `max_tokens` + 120 秒超时 + fenced/最后完整 JSON 提取。
+2026-06-10 15:58:37 脱敏 MiniMax-M3 探针：通过，不打印 token；确认模型返回 HTTP 200、model MiniMax-M3、content 包含 `<think>` 和最终 JSON。
+2026-06-10 15:58:37 cmd /c npx tsc --noEmit：通过。
+2026-06-10 15:58:37 cmd /c npm run test：通过，21 个测试文件，61 条测试用例；新增模型混合输出 JSON 提取测试。
+2026-06-10 15:58:37 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；真实 MiniMax-M3 生成、质检和浏览器学习闭环通过，耗时约 5.1 分钟。
+2026-06-10 15:58:37 cmd /c npm run build：通过，真实 E2E 兼容修复进入 Next.js 生产构建。
+2026-06-10 16:03:48 cmd /c npm run docs:check-timestamps：通过。
+2026-06-10 16:03:48 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理仍遇到 Windows 文件锁，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
+2026-06-10 16:03:48 设置页冒烟检查：通过，`/settings` 包含系统设置、MiniMax-M3、MINIMAX_API_KEY 和已配置状态。
+2026-06-10 16:03:48 已提示用户查看新功能：可访问 `/settings` 查看 MiniMax-M3 配置，也可在首页触发真实模型生成题目。
 ```
 
 ## 49. 真实 Minimax 答题评分

@@ -20,53 +20,51 @@ function extractJsonCandidates(content: string) {
     candidates.push(match[1].trim());
   }
 
-  const balanced = extractFirstBalancedJsonObject(content);
-  if (balanced) {
-    candidates.push(balanced);
-  }
+  candidates.push(...extractBalancedJsonObjects(content).reverse());
 
   candidates.push(content);
   return candidates;
 }
 
-function extractFirstBalancedJsonObject(content: string) {
-  const start = content.indexOf("{");
-  if (start < 0) {
-    return null;
+function extractBalancedJsonObjects(content: string) {
+  const candidates: string[] = [];
+
+  for (let start = content.indexOf("{"); start >= 0; start = content.indexOf("{", start + 1)) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let index = start; index < content.length; index += 1) {
+      const char = content[index];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === "\\") {
+          escaped = true;
+        } else if (char === "\"") {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === "\"") {
+        inString = true;
+        continue;
+      }
+
+      if (char === "{") {
+        depth += 1;
+      } else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          candidates.push(content.slice(start, index + 1));
+          start = index;
+          break;
+        }
+      }
+    }
   }
 
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-
-  for (let index = start; index < content.length; index += 1) {
-    const char = content[index];
-
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (char === "\\") {
-        escaped = true;
-      } else if (char === "\"") {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (char === "\"") {
-      inString = true;
-      continue;
-    }
-
-    if (char === "{") {
-      depth += 1;
-    } else if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return content.slice(start, index + 1);
-      }
-    }
-  }
-
-  return null;
+  return candidates;
 }

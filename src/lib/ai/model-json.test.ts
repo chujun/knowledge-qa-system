@@ -20,4 +20,12 @@ describe("model JSON parser", () => {
       a: { b: "c" }
     });
   });
+
+  it("prefers the final JSON object when model thinking repeats the input schema", () => {
+    expect(
+      parseModelJsonObject(
+        '<think>用户输入是 {"task":"生成","output_schema":{}}</think>\n{"core_explanation":{"title":"最终答案"}}'
+      )
+    ).toEqual({ core_explanation: { title: "最终答案" } });
+  });
 });
