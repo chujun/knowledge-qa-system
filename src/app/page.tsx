@@ -87,7 +87,7 @@ export default async function Home({
 
             <div className="border border-ink/20 bg-white/40 p-5 shadow-line">
               <p className="text-xs uppercase tracking-[0.22em] text-moss">Local Runtime</p>
-              <p className="mt-3 text-2xl font-semibold">Codex + mock AI</p>
+              <p className="mt-3 text-2xl font-semibold">Codex + MiniMax-M3</p>
               <p className="mt-2 text-sm leading-6 text-ink/65">
                 Web 本地单用户；API/Agent 调用使用 API Key；MCP stdio 已预留。
               </p>

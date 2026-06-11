@@ -10,6 +10,7 @@ import {
   type CognitiveDimension,
   type MasteryEvidence
 } from "@/lib/domain/mastery";
+import { scoreAnswerAttempt } from "@/lib/ai/answer-scoring";
 import { prisma } from "@/lib/db/prisma";
 import { getDefaultUser } from "@/lib/knowledge/service";
 
@@ -235,10 +236,18 @@ export async function submitAnswerAttempt(
     throw new Error("active_versions_not_found");
   }
 
-  const score = scoreMockAnswer({
-    userAnswer: input.user_answer,
-    expectedAnswer: answerVersion.answerText,
-    dimension: question.cognitiveDimension
+  const score = await scoreAnswerAttempt({
+    question: {
+      knowledgePointName: question.knowledgePoint.name,
+      stem: questionVersion.stem,
+      cognitiveDimension: question.cognitiveDimension,
+      difficultyLevel: question.difficultyLevel,
+      questionType: question.questionType,
+      expectedAnswer: answerVersion.answerText,
+      explanationText: answerVersion.explanationText,
+      rubric: parseJsonObject(rubricVersion.rubricJson),
+      userAnswer: input.user_answer
+    }
   });
 
   const attempt = await prisma.answerAttempt.create({
@@ -257,6 +266,23 @@ export async function submitAnswerAttempt(
       status: "ai_scored"
     },
     include: attemptInclude
+  });
+
+  await prisma.generationRecord.create({
+    data: {
+      userId: user.id,
+      targetType: "answer_attempt",
+      targetId: attempt.id,
+      callType: "answer_scoring",
+      modelName: score.metadata.modelName,
+      modelVersion: score.metadata.modelVersion,
+      aiAgent: score.metadata.aiAgent,
+      promptVersion: score.metadata.promptVersion,
+      inputTokens: score.metadata.inputTokens,
+      outputTokens: score.metadata.outputTokens,
+      latencyMs: score.metadata.latencyMs,
+      status: "success"
+    }
   });
 
   if (attempt.affectsMastery) {
@@ -744,56 +770,6 @@ async function recomputeKnowledgePointLearningState(knowledgePointId: string) {
   });
 }
 
-function scoreMockAnswer(input: {
-  userAnswer: string;
-  expectedAnswer: string;
-  dimension: string;
-}) {
-  const answer = input.userAnswer.toLowerCase();
-  const lengthScore = Math.min(45, Math.floor(input.userAnswer.length / 3));
-  const keywordScore = ["概念", "应用", "步骤", "原因", "标准", "workflow", "触发"]
-    .filter((keyword) => answer.includes(keyword.toLowerCase())).length * 8;
-  const expectedKeywordScore = input.expectedAnswer
-    .split(/\s+|，|。|、/)
-    .filter((word) => word.length >= 2)
-    .slice(0, 5)
-    .filter((word) => answer.includes(word.toLowerCase())).length * 5;
-  const rawScore = 25 + lengthScore + keywordScore + expectedKeywordScore;
-  const score = Math.min(100, Math.max(0, rawScore));
-  const reasonTags = buildReasonTags(score, input.dimension);
-
-  return {
-    score,
-    feedback:
-      score >= 80
-        ? "回答覆盖了核心要点，可以继续挑战更高阶问题。"
-        : "回答还需要补充关键概念、边界条件和可验证示例。",
-    reasonTags
-  };
-}
-
-function buildReasonTags(score: number, dimension: string) {
-  if (score >= 80) {
-    return ["good_coverage"];
-  }
-
-  const tags = ["missing_key_point"];
-
-  if (dimension === "apply") {
-    tags.push("application_gap");
-  }
-
-  if (dimension === "analyze") {
-    tags.push("analysis_incomplete");
-  }
-
-  if (dimension === "evaluate") {
-    tags.push("evaluation_lacks_criteria");
-  }
-
-  return tags;
-}
-
 function serializeAttempt(
   attempt: Prisma.AnswerAttemptGetPayload<{ include: typeof attemptInclude }>
 ) {
@@ -1064,4 +1040,11 @@ async function enrichPracticeSessionWithAttempts(
 function parseStringArray(value: string) {
   const parsed = JSON.parse(value) as unknown;
   return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+}
+
+function parseJsonObject(value: string): Record<string, unknown> {
+  const parsed = JSON.parse(value) as unknown;
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
 }

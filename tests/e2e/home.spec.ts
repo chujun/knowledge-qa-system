@@ -157,8 +157,8 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   await page.getByRole("button", { name: "创建主题" }).click();
 
   await expect(page.getByLabel("知识点所属领域")).toContainText(domainName);
-  await expect(page.getByLabel("知识点所属主题")).toContainText(topicName);
   await page.getByLabel("知识点所属领域").selectOption({ label: domainName });
+  await expect(page.getByLabel("知识点所属主题")).toContainText(topicName);
   await page.getByLabel("知识点所属主题").selectOption({ label: topicName });
   await page.getByLabel("知识点类型").selectOption({ label: "概念类" });
   await page.getByLabel("知识点名称").fill(pointName);
@@ -192,12 +192,12 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   await expect(page.getByRole("heading", { name: editedStem })).toBeVisible();
 
   await page
-    .getByPlaceholder("输入你的答案，提交后系统会进行 mock AI 评分。")
+    .getByPlaceholder("输入你的答案，提交后系统会进行 AI 评分。")
     .fill("workflow 触发条件需要说明分支、事件、jobs 和 steps 的应用步骤。");
   await page.getByRole("button", { name: "提交答案" }).click();
 
   await expect(page.getByRole("heading", { name: "最近评分" })).toBeVisible();
-  await expect(page.getByText("回答")).toBeVisible();
+  await expect(page.getByText("ai_scored").first()).toBeVisible({ timeout: 300000 });
 
   await page.getByLabel("用户确认分数").fill("45");
   await page.getByPlaceholder("修正原因，可选").fill("E2E 确认评分");
@@ -300,6 +300,24 @@ test("runs the MVP browser learning loop", async ({ page, request }) => {
   await expect(page.getByText("待完成")).toBeVisible();
   await page.getByLabel("练习答案").fill("我会先说明 workflow 触发条件，再分析 jobs 和 steps 如何执行。");
   await page.getByRole("button", { name: "提交本题" }).click();
+  await expect
+    .poll(
+      async () => {
+        const sessionResponse = await request.get(
+          `/api/v1/practice-sessions/${practiceBody.data.id}`,
+          {
+            headers: {
+              "x-api-key": "local-dev-key"
+            }
+          }
+        );
+        const sessionBody = await sessionResponse.json();
+        return sessionBody.data.status as string;
+      },
+      { timeout: 300000 }
+    )
+    .toBe("completed");
+  await page.reload();
   await expect(page.getByText("最近得分")).toBeVisible();
   await expect(page.getByText("completed").first()).toBeVisible();
 });
@@ -348,7 +366,7 @@ async function waitForGeneratedQuestionId(
         questionId = body.data[0]?.id as string | undefined;
         return questionId;
       },
-      { timeout: 300000 }
+      { timeout: 600000 }
     )
     .toBeTruthy();
   return questionId!;

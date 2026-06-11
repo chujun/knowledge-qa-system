@@ -81,7 +81,7 @@ export async function checkGeneratedQuestionQuality({
     responseFormat: "json",
     temperature: 0,
     maxTokens: 2000,
-    timeoutMs: 120_000,
+    timeoutMs: 240_000,
     messages: buildQualityCheckMessages(question, ruleResult)
   });
 

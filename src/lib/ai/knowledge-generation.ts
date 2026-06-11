@@ -99,7 +99,7 @@ export async function generateKnowledgeContent({
     responseFormat: "json",
     temperature: 0.2,
     maxTokens: 6000,
-    timeoutMs: 120_000,
+    timeoutMs: 240_000,
     messages: buildKnowledgeGenerationMessages(point, dimensions)
   });
 

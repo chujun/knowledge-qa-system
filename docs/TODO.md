@@ -2029,10 +2029,10 @@ docs/knowledge-qa-mvp-plan.md
 
 - [x] 修复 Web 创建知识结构时同名领域、主题或知识点重复提交导致 Prisma 唯一约束错误并触发 Runtime 崩溃的问题。
 - [x] 修复 Web 创建知识点时领域和主题不是级联下拉的问题；选择“历史”时只显示历史领域下的主题，例如“府兵制”。
-- [ ] 将答题评分从 mock 逻辑切换到 Minimax 评分 Provider。
-- [ ] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
-- [ ] 用户修正评分后继续更新掌握画像和错误集。
-- [ ] 记录 AI 评分是否被用户修正，用于后续分析模型评分质量。
+- [x] 将答题评分从 mock 逻辑切换到 Minimax 评分 Provider。
+- [x] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
+- [x] 用户修正评分后继续更新掌握画像和错误集。
+- [x] 记录 AI 评分是否被用户修正，用于后续分析模型评分质量。
 - [ ] E2E 覆盖一次真实/fixture 化评分闭环。
 
 验证记录：
@@ -2053,6 +2053,11 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-10 16:54:50 重启本地 3000 服务：已停止原 3000 监听进程；`.next` 清理仍遇到 Windows 文件锁，随后直接启动 dev server；/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3，minimax_configured: true。
 2026-06-10 16:54:50 首页知识点创建表单冒烟检查：通过，页面包含知识点所属领域、知识点所属主题、先选择领域后再选择主题和创建知识点。
 2026-06-10 16:54:50 已提示用户查看新功能：刷新首页后，创建知识点时先选择领域，再选择该领域下的主题。
+2026-06-11 08:57:22 新增真实 Minimax 答题评分：完成 `answer-scoring` 模块、MiniMax-M3 评分 Prompt、结构化输出校验、mock fallback、答题提交接入和 `GenerationRecord` 评分调用记录。
+2026-06-11 08:57:22 API 错误边界调整：请求参数错误返回 400，题目缺 active 版本返回 409，AI Provider 或模型输出解析失败返回 502 ANSWER_SCORING_FAILED。
+2026-06-11 08:57:22 Web 文案同步：题目详情页、练习会话页和首页运行时卡片不再显示 mock AI，改为 AI 评分与 Codex + MiniMax-M3。
+2026-06-11 08:57:22 cmd /c npx tsc --noEmit：通过。
+2026-06-11 08:57:22 cmd /c npm run test：通过，23 个测试文件，67 条测试用例；新增答题评分 Prompt、MiniMax-M3 混合输出解析、越界分数归一化和 mock fallback 测试。
 ```
 
 ## 50. AI Agent 真实接入验收

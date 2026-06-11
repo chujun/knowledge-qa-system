@@ -102,7 +102,7 @@ export default async function PracticeSessionPage({
                   aria-label="练习答案"
                   className="min-h-36 w-full border border-ink/20 bg-white/75 px-3 py-2 text-sm leading-6 outline-none focus:border-clay"
                   name="user_answer"
-                  placeholder="输入你的答案，提交后系统会进行 mock AI 评分并进入下一题。"
+                  placeholder="输入你的答案，提交后系统会进行 AI 评分并进入下一题。"
                   required
                 />
                 <button className="border border-moss bg-moss px-4 py-2 text-sm text-paper transition hover:bg-ink">
