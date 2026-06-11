@@ -1994,7 +1994,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] `direct_confirm=true` 时仅当所有质检记录为 `passed` 才直接正式入库；否则保持 `pending_confirmation` 和草稿版本。
 - [x] Playwright E2E 使用真实 MiniMax-M3 Provider，验证真实模型生成、质检和浏览器学习闭环效果。
 - [x] 兼容 MiniMax-M3 返回 `<think>` 思考文本、fenced JSON 和前后解释文本的混合输出。
-- [x] Provider 支持 `max_tokens`，生成链路设置 6000，质检链路设置 2000；真实模型调用超时设置为 120 秒。
+- [x] Provider 支持 `max_tokens`，生成链路设置 6000，质检链路设置 2000；真实模型调用超时已从 120 秒提升到 240 秒，以适配 MiniMax-M3 偶发慢响应。
 - [x] 执行 TypeScript 类型检查。
 - [x] 执行单元和集成测试。
 - [x] 执行 Playwright E2E 闭环测试。
@@ -2033,7 +2033,7 @@ docs/knowledge-qa-mvp-plan.md
 - [x] 评分输出包含分数、维度得分、反馈、薄弱点和下一题建议。
 - [x] 用户修正评分后继续更新掌握画像和错误集。
 - [x] 记录 AI 评分是否被用户修正，用于后续分析模型评分质量。
-- [ ] E2E 覆盖一次真实/fixture 化评分闭环。
+- [x] E2E 覆盖一次真实/fixture 化评分闭环。
 
 验证记录：
 
@@ -2058,6 +2058,19 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-11 08:57:22 Web 文案同步：题目详情页、练习会话页和首页运行时卡片不再显示 mock AI，改为 AI 评分与 Codex + MiniMax-M3。
 2026-06-11 08:57:22 cmd /c npx tsc --noEmit：通过。
 2026-06-11 08:57:22 cmd /c npm run test：通过，23 个测试文件，67 条测试用例；新增答题评分 Prompt、MiniMax-M3 混合输出解析、越界分数归一化和 mock fallback 测试。
+2026-06-11 09:45:15 真实 E2E 第一轮失败：知识点创建 E2E 仍按旧流程在选择领域前断言主题下拉，已改为先选领域再等待主题选项。
+2026-06-11 09:45:15 真实 E2E 第二轮失败：MiniMax-M3 质量校验单次调用超过 120 秒；已将生成、质检和答题评分真实模型超时提升到 240 秒，并将题目生成等待提升到 600 秒。
+2026-06-11 09:45:15 真实 E2E 第三轮失败：题目详情评分断言仍按 mock 速度和旧文案查找“回答”；已改为等待 `ai_scored`，最长 300 秒。
+2026-06-11 09:45:15 真实 E2E 第四轮失败：练习会话最后一步没有等待真实评分完成；已改为轮询练习会话 API 直到 `status=completed`。
+2026-06-11 09:45:15 真实 E2E 第五轮失败：MiniMax-M3 答题评分偶发返回 `<think>` 和自然语言但没有最终 JSON；已新增答题评分 JSON 修复重试，首轮解析失败时要求模型把上一轮输出修复为严格 JSON。
+2026-06-11 09:45:15 cmd /c npx tsc --noEmit：通过。
+2026-06-11 09:45:15 cmd /c npm run test：通过，23 个测试文件，68 条测试用例；新增答题评分 JSON 修复 Prompt 测试。
+2026-06-11 09:45:15 cmd /c npm run test:e2e：通过，3 条 Playwright E2E 测试；真实 MiniMax-M3 生成、质检、答题评分、用户确认评分、掌握画像、错误集和练习状态闭环通过，耗时约 6.9 分钟。
+2026-06-11 09:45:15 cmd /c npm run build：通过，真实答题评分链路进入 Next.js 生产构建。
+2026-06-11 09:45:15 cmd /c npm run docs:check-timestamps：通过。
+2026-06-11 09:49:58 重启本地 3000 服务：3000 原先无监听；保留 codegraph 30001 进程不动；执行启动脚本后 3000 监听 PID 8756，/api/health 返回 200，database: ready，model_provider: minimax，model_name: MiniMax-M3。
+2026-06-11 09:49:58 Web 冒烟检查：`/`、`/questions`、`/practice` 均返回 HTTP 200。
+2026-06-11 09:49:58 已提示用户查看新功能：刷新 `http://localhost:3000/` 后，可在题目详情或练习会话提交答案，系统会调用 MiniMax-M3 进行真实 AI 评分。
 ```
 
 ## 50. AI Agent 真实接入验收
