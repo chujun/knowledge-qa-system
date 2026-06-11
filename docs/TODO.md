@@ -2163,3 +2163,32 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-11 11:09:47 重启本地 3000 服务：停止 3000 PID 8964，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 23088，/api/health 返回 200，`/domains` 返回 HTTP 200。
 2026-06-11 11:09:47 已提示用户查看新功能：刷新 `http://localhost:3000/` 或 `http://localhost:3000/domains` 后，点击“生成题目”会显示“后台处理中”。
 ```
+
+## 53. 生成题目失败页面错误处理
+
+- [x] 修复首页生成题目失败时 Server Action 抛出 `model_generation_failed` 导致 Runtime Error 的问题。
+- [x] 修复知识结构页生成题目失败时 Server Action 抛出 `model_generation_failed` 导致 Runtime Error 的问题。
+- [x] 生成失败后返回当前页面，并显示“生成题目失败”业务提示。
+- [x] 失败提示说明后台模型调用未成功，并引导稍后重试或查看调用记录。
+- [x] 补充 E2E 断言，覆盖首页和知识结构页的生成失败提示。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行首页 E2E 展示用例。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行文档时间戳检查。
+- [x] 重启本地 3000 服务并提示用户查看修复。
+
+验证记录：
+
+```text
+2026-06-11 11:20:20 第 53 章启动：用户点击首页知识点“生成题目”后出现 `model_generation_failed` Runtime Error；根因是 Server Action 直接抛出模型失败错误，页面未提供失败状态承接。
+2026-06-11 11:20:20 修复实现：首页和 `/domains` 的 `generateQuestionsAction` 捕获生成失败，重定向回当前页面并追加 `generation_status=failed`；页面显示“生成题目失败”业务提示。
+2026-06-11 11:20:20 E2E 更新：首页展示用例补充 `/?generation_status=failed#知识点` 和 `/domains?generation_status=failed` 断言。
+2026-06-11 11:26:10 cmd /c npx tsc --noEmit：通过。
+2026-06-11 11:26:10 cmd /c npm run test：通过，24 个测试文件，70 条测试用例。
+2026-06-11 11:26:10 cmd /c npx playwright test tests/e2e/home.spec.ts --grep "shows the local knowledge QA workspace"：通过，1 条首页展示用例，覆盖首页和知识结构页生成失败提示。
+2026-06-11 11:26:10 cmd /c npm run build：通过，生成题目失败页面错误处理进入 Next.js 生产构建。
+2026-06-11 11:29:21 cmd /c npm run docs:check-timestamps：通过。
+2026-06-11 11:29:21 重启本地 3000 服务：停止 3000 PID 23088，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 9912，/api/health 返回 200，`/?generation_status=failed` 和 `/domains?generation_status=failed` 均返回 HTTP 200。
+2026-06-11 11:29:21 已提示用户查看修复：刷新 `http://localhost:3000/` 后，再次点击“生成题目”如果后台模型失败，会显示“生成题目失败”提示，不再出现 Runtime Error。
+```

@@ -9,13 +9,21 @@ import {
   updateKnowledgePoint,
   updateTopic
 } from "@/lib/knowledge/service";
+import { redirect } from "next/navigation";
 import { generateForKnowledgePoint } from "@/lib/questions/service";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TopNav } from "@/components/top-nav";
 
 export const dynamic = "force-dynamic";
 
-export default async function DomainsPage() {
+export default async function DomainsPage({
+  searchParams
+}: {
+  searchParams: Promise<{
+    generation_status?: string;
+  }>;
+}) {
+  const currentSearchParams = await searchParams;
   const [domains, topics, points] = await Promise.all([
     listDomains({ pageSize: 50 }),
     listTopics({ pageSize: 100 }),
@@ -39,6 +47,13 @@ export default async function DomainsPage() {
             这里按领域、主题和知识点展示真实数据。知识点可以直接生成理解和应用题，生成后进入题库待确认流程。
           </p>
         </header>
+
+        {currentSearchParams.generation_status === "failed" ? (
+          <StatusNotice
+            text="后台模型调用没有成功，请稍后重试，或到调用记录查看失败记录。"
+            title="生成题目失败"
+          />
+        ) : null}
 
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           <Metric label="领域" value={domains.total} />
@@ -355,15 +370,20 @@ async function generateQuestionsAction(formData: FormData) {
   "use server";
 
   const knowledgePointId = getRequiredFormValue(formData, "knowledge_point_id");
-  await generateForKnowledgePoint({
-    knowledge_point_id: knowledgePointId,
-    cognitive_dimensions: ["understand", "apply"],
-    question_count: 2,
-    direct_confirm: false
-  });
-  revalidatePath("/");
-  revalidatePath("/domains");
-  revalidatePath("/questions");
+  try {
+    await generateForKnowledgePoint({
+      knowledge_point_id: knowledgePointId,
+      cognitive_dimensions: ["understand", "apply"],
+      question_count: 2,
+      direct_confirm: false
+    });
+    revalidatePath("/");
+    revalidatePath("/domains");
+    revalidatePath("/questions");
+  } catch {
+    revalidatePath("/domains");
+    redirect("/domains?generation_status=failed");
+  }
 }
 
 function revalidateStructurePaths() {
@@ -380,6 +400,18 @@ function Metric({ label, value }: { label: string; value: number }) {
       <p className="text-xs uppercase tracking-[0.18em] text-ink/55">{label}</p>
       <p className="mt-3 font-display text-4xl leading-none">{value}</p>
     </div>
+  );
+}
+
+function StatusNotice({ text, title }: { text: string; title: string }) {
+  return (
+    <section
+      className="mt-6 border border-red-800/30 bg-red-50 p-4 text-red-950 shadow-line"
+      role="status"
+    >
+      <p className="text-sm font-semibold">{title}</p>
+      <p className="mt-2 text-sm leading-6 opacity-75">{text}</p>
+    </section>
   );
 }
 

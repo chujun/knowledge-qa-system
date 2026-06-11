@@ -30,6 +30,15 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "待确认入库" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近生成题目" })).toBeVisible();
 
+  await page.goto("/?generation_status=failed#知识点");
+  await expect(page.getByText("生成题目失败")).toBeVisible();
+  await expect(page.getByText("后台模型调用没有成功")).toBeVisible();
+
+  await page.goto("/domains?generation_status=failed");
+  await expect(page.getByRole("heading", { name: "知识结构管理" })).toBeVisible();
+  await expect(page.getByText("生成题目失败")).toBeVisible();
+  await expect(page.getByText("后台模型调用没有成功")).toBeVisible();
+
   await page.goto("/integrations");
   await expect(page.getByRole("heading", { name: "Agent/MCP 接入" })).toBeVisible();
   await expect(page.getByText("qa_create_from_conversation").first()).toBeVisible();

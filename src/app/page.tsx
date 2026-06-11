@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { KnowledgePointCreateForm } from "@/components/knowledge-point-create-form";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -41,11 +42,14 @@ export default async function Home({
   searchParams
 }: {
   searchParams: Promise<{
+    generation_status?: string;
     review_status?: string;
     review_source_system?: string;
   }>;
 }) {
-  const reviewFilters = normalizeReviewFilters(await searchParams);
+  const currentSearchParams = await searchParams;
+  const reviewFilters = normalizeReviewFilters(currentSearchParams);
+  const generationStatus = currentSearchParams.generation_status;
   const data = await loadWorkbenchData(reviewFilters);
   const firstQuestion = data.questions.items[0];
   const firstProfile = data.mastery.items[0];
@@ -98,6 +102,14 @@ export default async function Home({
         </aside>
 
         <div className="space-y-8">
+          {generationStatus === "failed" ? (
+            <StatusNotice
+              tone="error"
+              title="生成题目失败"
+              text="后台模型调用没有成功，请稍后重试，或到调用记录查看失败记录。"
+            />
+          ) : null}
+
           <section className="grid gap-4 border-b border-ink/15 pb-8 lg:grid-cols-[1.4fr_0.8fr]">
             <div>
               <p className="text-sm uppercase tracking-[0.22em] text-clay">MVP Core Loop</p>
@@ -745,13 +757,18 @@ async function generateQuestionsAction(formData: FormData) {
   "use server";
 
   const knowledgePointId = getRequiredFormValue(formData, "knowledge_point_id");
-  await generateForKnowledgePoint({
-    knowledge_point_id: knowledgePointId,
-    cognitive_dimensions: ["understand", "apply"],
-    question_count: 2,
-    direct_confirm: false
-  });
-  revalidatePath("/");
+  try {
+    await generateForKnowledgePoint({
+      knowledge_point_id: knowledgePointId,
+      cognitive_dimensions: ["understand", "apply"],
+      question_count: 2,
+      direct_confirm: false
+    });
+    revalidatePath("/");
+  } catch {
+    revalidatePath("/");
+    redirect("/?generation_status=failed#知识点");
+  }
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
@@ -783,6 +800,28 @@ function WorkbenchLink({
       </span>
       <span className="mt-3 block text-sm leading-6 text-ink/65">{description}</span>
     </Link>
+  );
+}
+
+function StatusNotice({
+  text,
+  title,
+  tone
+}: {
+  text: string;
+  title: string;
+  tone: "error" | "success";
+}) {
+  const toneClass =
+    tone === "error"
+      ? "border-red-800/30 bg-red-50 text-red-950"
+      : "border-moss/30 bg-white/60 text-ink";
+
+  return (
+    <section className={`border p-4 shadow-line ${toneClass}`} role="status">
+      <p className="text-sm font-semibold">{title}</p>
+      <p className="mt-2 text-sm leading-6 opacity-75">{text}</p>
+    </section>
   );
 }
 
