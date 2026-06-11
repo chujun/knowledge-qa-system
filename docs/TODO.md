@@ -2133,3 +2133,33 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-11 10:47:38 重启本地 3000 服务：停止 3000 PID 25376，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 8964，/api/health 返回 200，首页返回 HTTP 200。
 2026-06-11 10:47:38 已提示用户查看新功能：刷新 `http://localhost:3000/` 查看首页“下一步建议”和最近知识点生成入口。
 ```
+
+## 52. 通用提交按钮后台处理中状态
+
+- [x] 新增通用客户端提交按钮组件，基于 `useFormStatus()` 感知表单提交状态。
+- [x] 提交中统一显示“后台处理中”，并禁用按钮防止重复提交。
+- [x] 将首页最近知识点生成题目入口接入通用提交按钮。
+- [x] 将首页知识点列表生成题目入口接入通用提交按钮。
+- [x] 将知识结构页知识点生成题目入口接入通用提交按钮。
+- [x] 补充通用提交按钮组件测试，覆盖 idle 和 pending 状态。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行文档时间戳检查。
+- [x] 重启本地 3000 服务并提示用户查看新功能。
+
+验证记录：
+
+```text
+2026-06-11 11:01:28 第 52 章启动：针对“点击生成题目后不知道卡死还是后台处理中”的共性体验问题，先实现通用提交按钮组件；pending 文案按用户确认统一为“后台处理中”。
+2026-06-11 11:01:28 代码实现：新增 `src/components/pending-submit-button.tsx`，并接入首页最近知识点生成题目、首页知识点列表生成题目和 `/domains` 知识点生成题目表单。
+2026-06-11 11:01:28 测试实现：新增 `src/components/pending-submit-button.test.tsx`，覆盖普通状态和 pending 状态。
+2026-06-11 11:06:48 首次组件测试失败：`PendingSubmitButton` 在测试运行时缺少显式 React 导入，报错 `React is not defined`；已在组件文件中补充 `import React from "react"`。
+2026-06-11 11:06:48 cmd /c npx tsc --noEmit：通过。
+2026-06-11 11:06:48 cmd /c npx vitest run src/components/pending-submit-button.test.tsx：通过，1 个测试文件，2 条测试用例。
+2026-06-11 11:06:48 cmd /c npm run test：通过，24 个测试文件，70 条测试用例。
+2026-06-11 11:06:48 cmd /c npm run build：通过，通用提交按钮进入 Next.js 生产构建。
+2026-06-11 11:09:47 cmd /c npm run docs:check-timestamps：通过。
+2026-06-11 11:09:47 重启本地 3000 服务：停止 3000 PID 8964，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 23088，/api/health 返回 200，`/domains` 返回 HTTP 200。
+2026-06-11 11:09:47 已提示用户查看新功能：刷新 `http://localhost:3000/` 或 `http://localhost:3000/domains` 后，点击“生成题目”会显示“后台处理中”。
+```

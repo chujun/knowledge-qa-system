@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
 import { KnowledgePointCreateForm } from "@/components/knowledge-point-create-form";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   confirmReviewItem,
   listReviewItems,
@@ -177,9 +178,9 @@ export default async function Home({
                     </div>
                     <span className="bg-ink/10 px-2 py-1 text-xs">知识点</span>
                   </div>
-                  <button className="mt-5 border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                  <PendingSubmitButton className="mt-5 border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
                     为最近知识点生成题目
-                  </button>
+                  </PendingSubmitButton>
                 </form>
               ) : (
                 <NextAction
@@ -499,9 +500,9 @@ export default async function Home({
                     </p>
                     <form action={generateQuestionsAction} className="mt-4">
                       <input name="knowledge_point_id" type="hidden" value={point.id} />
-                      <button className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                      <PendingSubmitButton className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
                         生成题目
-                      </button>
+                      </PendingSubmitButton>
                     </form>
                   </article>
                 ))}

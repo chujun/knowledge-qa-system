@@ -10,6 +10,7 @@ import {
   updateTopic
 } from "@/lib/knowledge/service";
 import { generateForKnowledgePoint } from "@/lib/questions/service";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TopNav } from "@/components/top-nav";
 
 export const dynamic = "force-dynamic";
@@ -262,9 +263,9 @@ export default async function DomainsPage() {
                                         type="hidden"
                                         value={point.id}
                                       />
-                                      <button className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                                      <PendingSubmitButton className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
                                         生成题目
-                                      </button>
+                                      </PendingSubmitButton>
                                     </form>
                                   </article>
                                 ))
