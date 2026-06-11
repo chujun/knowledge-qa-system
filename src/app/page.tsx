@@ -1,9 +1,11 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import {
+  GenerateQuestionsForm,
+  type GenerateQuestionsState
+} from "@/components/generate-questions-form";
 import { KnowledgePointCreateForm } from "@/components/knowledge-point-create-form";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   confirmReviewItem,
   listReviewItems,
@@ -177,11 +179,13 @@ export default async function Home({
               )}
 
               {firstPoint ? (
-                <form
+                <GenerateQuestionsForm
                   action={generateQuestionsAction}
+                  buttonClassName="mt-5 border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink"
+                  buttonLabel="为最近知识点生成题目"
                   className="border border-ink/15 bg-white/35 p-4 shadow-line"
+                  knowledgePointId={firstPoint.id}
                 >
-                  <input name="knowledge_point_id" type="hidden" value={firstPoint.id} />
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-moss">可执行</p>
@@ -190,10 +194,7 @@ export default async function Home({
                     </div>
                     <span className="bg-ink/10 px-2 py-1 text-xs">知识点</span>
                   </div>
-                  <PendingSubmitButton className="mt-5 border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
-                    为最近知识点生成题目
-                  </PendingSubmitButton>
-                </form>
+                </GenerateQuestionsForm>
               ) : (
                 <NextAction
                   actionLabel="创建结构"
@@ -510,12 +511,12 @@ export default async function Home({
                     <p className="mt-3 text-sm leading-6 text-ink/65">
                       {point.description || "尚未补充摘要"}
                     </p>
-                    <form action={generateQuestionsAction} className="mt-4">
-                      <input name="knowledge_point_id" type="hidden" value={point.id} />
-                      <PendingSubmitButton className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
-                        生成题目
-                      </PendingSubmitButton>
-                    </form>
+                    <GenerateQuestionsForm
+                      action={generateQuestionsAction}
+                      buttonClassName="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink"
+                      className="mt-4"
+                      knowledgePointId={point.id}
+                    />
                   </article>
                 ))}
               </div>
@@ -753,7 +754,10 @@ async function batchReviewItemsAction(formData: FormData) {
   revalidatePath("/");
 }
 
-async function generateQuestionsAction(formData: FormData) {
+async function generateQuestionsAction(
+  _state: GenerateQuestionsState,
+  formData: FormData
+): Promise<GenerateQuestionsState> {
   "use server";
 
   const knowledgePointId = getRequiredFormValue(formData, "knowledge_point_id");
@@ -765,9 +769,17 @@ async function generateQuestionsAction(formData: FormData) {
       direct_confirm: false
     });
     revalidatePath("/");
+    revalidatePath("/questions");
+    return {
+      status: "success",
+      message: "生成完成，题目已进入待确认流程。"
+    };
   } catch {
     revalidatePath("/");
-    redirect("/?generation_status=failed#知识点");
+    return {
+      status: "failed",
+      message: "生成题目失败：后台模型调用没有成功，请稍后重试或查看调用记录。"
+    };
   }
 }
 

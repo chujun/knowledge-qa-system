@@ -9,9 +9,11 @@ import {
   updateKnowledgePoint,
   updateTopic
 } from "@/lib/knowledge/service";
-import { redirect } from "next/navigation";
+import {
+  GenerateQuestionsForm,
+  type GenerateQuestionsState
+} from "@/components/generate-questions-form";
 import { generateForKnowledgePoint } from "@/lib/questions/service";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TopNav } from "@/components/top-nav";
 
 export const dynamic = "force-dynamic";
@@ -272,16 +274,12 @@ export default async function DomainsPage({
                                         </form>
                                       ) : null}
                                     </details>
-                                    <form action={generateQuestionsAction} className="mt-4">
-                                      <input
-                                        name="knowledge_point_id"
-                                        type="hidden"
-                                        value={point.id}
-                                      />
-                                      <PendingSubmitButton className="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
-                                        生成题目
-                                      </PendingSubmitButton>
-                                    </form>
+                                    <GenerateQuestionsForm
+                                      action={generateQuestionsAction}
+                                      buttonClassName="border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink"
+                                      className="mt-4"
+                                      knowledgePointId={point.id}
+                                    />
                                   </article>
                                 ))
                               )}
@@ -366,7 +364,10 @@ async function archiveKnowledgePointAction(formData: FormData) {
   revalidateStructurePaths();
 }
 
-async function generateQuestionsAction(formData: FormData) {
+async function generateQuestionsAction(
+  _state: GenerateQuestionsState,
+  formData: FormData
+): Promise<GenerateQuestionsState> {
   "use server";
 
   const knowledgePointId = getRequiredFormValue(formData, "knowledge_point_id");
@@ -380,9 +381,16 @@ async function generateQuestionsAction(formData: FormData) {
     revalidatePath("/");
     revalidatePath("/domains");
     revalidatePath("/questions");
+    return {
+      status: "success",
+      message: "生成完成，题目已进入待确认流程。"
+    };
   } catch {
     revalidatePath("/domains");
-    redirect("/domains?generation_status=failed");
+    return {
+      status: "failed",
+      message: "生成题目失败：后台模型调用没有成功，请稍后重试或查看调用记录。"
+    };
   }
 }
 

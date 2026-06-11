@@ -2192,3 +2192,35 @@ docs/knowledge-qa-mvp-plan.md
 2026-06-11 11:29:21 重启本地 3000 服务：停止 3000 PID 23088，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 9912，/api/health 返回 200，`/?generation_status=failed` 和 `/domains?generation_status=failed` 均返回 HTTP 200。
 2026-06-11 11:29:21 已提示用户查看修复：刷新 `http://localhost:3000/` 后，再次点击“生成题目”如果后台模型失败，会显示“生成题目失败”提示，不再出现 Runtime Error。
 ```
+
+## 54. 生成题目 Server Action 响应稳定性修复
+
+- [x] 将生成题目从裸 Server Action 表单改为 `useActionState` 客户端表单。
+- [x] 生成失败时由表单组件内联展示失败状态，不再使用 Server Action redirect。
+- [x] 首页最近知识点生成入口接入新的 `GenerateQuestionsForm`。
+- [x] 首页知识点列表生成入口接入新的 `GenerateQuestionsForm`。
+- [x] 知识结构页知识点生成入口接入新的 `GenerateQuestionsForm`。
+- [x] 补充 `GenerateQuestionsForm` 组件测试，覆盖知识点 ID 和失败提示渲染。
+- [x] 执行 TypeScript 类型检查。
+- [x] 执行单元和集成测试。
+- [x] 执行首页 E2E 展示用例。
+- [x] 执行 Next.js 生产构建。
+- [x] 执行文档时间戳检查。
+- [x] 重启本地 3000 服务并提示用户查看修复。
+
+验证记录：
+
+```text
+2026-06-11 17:36:34 第 54 章启动：用户反馈生成失败后仍出现 `An unexpected response was received from the server`；判断为 Server Action 失败后 redirect 与表单协议交互不稳定。
+2026-06-11 17:36:34 修复实现：新增 `src/components/generate-questions-form.tsx`，用 `useActionState` 承接生成题目的成功/失败状态；首页和 `/domains` 的生成 action 改为返回状态对象，不再 redirect。
+2026-06-11 17:36:34 测试实现：新增 `src/components/generate-questions-form.test.tsx`，覆盖知识点 ID 隐藏字段和失败提示内联展示。
+2026-06-11 17:36:34 首次构建失败：dev server 占用构建缓存时出现 `PageNotFoundError: Cannot find module for page: /api/health`；停止 3000 dev server 后重跑构建通过。
+2026-06-11 17:36:34 cmd /c npx tsc --noEmit：通过。
+2026-06-11 17:36:34 cmd /c npx vitest run src/components/generate-questions-form.test.tsx：通过，1 个测试文件，2 条测试用例。
+2026-06-11 17:36:34 cmd /c npm run test：通过，25 个测试文件，72 条测试用例。
+2026-06-11 17:36:34 cmd /c npm run build：通过。
+2026-06-11 17:36:34 cmd /c npx playwright test tests/e2e/home.spec.ts --grep "shows the local knowledge QA workspace"：通过，1 条首页展示用例。
+2026-06-11 17:39:47 cmd /c npm run docs:check-timestamps：通过。
+2026-06-11 17:39:47 重启本地 3000 服务：启动后 3000 监听 PID 26728，保留 codegraph 30001 PID 6740；/api/health、`/` 和 `/domains` 均返回 HTTP 200。
+2026-06-11 17:39:47 已提示用户查看修复：刷新 `http://localhost:3000/` 后，点击知识点“生成题目”失败时会在按钮下方显示错误，不再出现 Runtime Error 或 unexpected response。
+```
