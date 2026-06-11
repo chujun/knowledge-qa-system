@@ -8,6 +8,9 @@ test("shows the local knowledge QA workspace", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "知识问答工作台" })).toBeVisible();
   await expect(page.getByText("当前页面已经读取真实本地数据")).toBeVisible();
   await expect(page.getByText("Local Runtime")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "下一步建议" })).toBeVisible();
+  await expect(page.getByText("选择知识点生成题目")).toBeVisible();
+  await expect(page.getByText(/MCP stdio 可调用/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "创建知识结构" })).toBeVisible();
   await expect(page.getByRole("link", { name: "知识结构管理" })).toBeVisible();
   await expect(page.getByRole("link", { name: "题库管理" })).toBeVisible();

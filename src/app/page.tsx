@@ -49,6 +49,7 @@ export default async function Home({
   const firstQuestion = data.questions.items[0];
   const firstProfile = data.mastery.items[0];
   const firstPoint = data.knowledgePoints.items[0];
+  const firstReviewItem = data.reviewItems.items[0];
   const dimensionScores = firstProfile?.dimension_scores ?? {};
 
   return (
@@ -89,7 +90,7 @@ export default async function Home({
               <p className="text-xs uppercase tracking-[0.22em] text-moss">Local Runtime</p>
               <p className="mt-3 text-2xl font-semibold">Codex + MiniMax-M3</p>
               <p className="mt-2 text-sm leading-6 text-ink/65">
-                Web 本地单用户；API/Agent 调用使用 API Key；MCP stdio 已预留。
+                Web 本地单用户；API/Agent 调用使用 API Key；MCP stdio 可调用。
               </p>
             </div>
           </div>
@@ -108,6 +109,113 @@ export default async function Home({
                 当前页面已经读取真实本地数据：待确认队列、知识点、正式题库、掌握画像和错误集。
                 数据为空时会显示下一步入口，而不是演示假数据。
               </p>
+            </div>
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[1.05fr_1.35fr]" aria-label="下一步建议">
+            <div className="border border-ink/20 bg-white/30 p-5 shadow-line">
+              <p className="text-xs uppercase tracking-[0.2em] text-clay">Next Step</p>
+              <h2 className="mt-3 font-display text-4xl leading-none">下一步建议</h2>
+              <div className="mt-6 grid gap-3">
+                <WorkflowStep
+                  current={data.reviewItems.total > 0}
+                  label="确认入库"
+                  meta={`${data.reviewItems.total} 个待确认`}
+                  step="1"
+                />
+                <WorkflowStep
+                  current={!!firstPoint && data.reviewItems.total === 0}
+                  label="选择知识点生成题目"
+                  meta={firstPoint?.name ?? "等待知识点"}
+                  step="2"
+                />
+                <WorkflowStep
+                  current={!!firstQuestion && !firstReviewItem}
+                  label="答题评分"
+                  meta={firstQuestion ? "题库已有题目" : "等待题目"}
+                  step="3"
+                />
+                <WorkflowStep
+                  current={!!firstProfile}
+                  label="查看掌握画像"
+                  meta={firstProfile ? "已形成画像" : "等待答题记录"}
+                  step="4"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {firstReviewItem ? (
+                <NextAction
+                  actionLabel="编辑确认"
+                  href={`/review/${firstReviewItem.review_item_id}`}
+                  label="处理待确认"
+                  meta={getReviewTitle(firstReviewItem.preview)}
+                  status="可执行"
+                />
+              ) : (
+                <NextAction
+                  actionLabel="Agent 接入"
+                  href="/integrations"
+                  label="沉淀会话"
+                  meta="Codex CLI / MCP stdio"
+                  status="可接入"
+                />
+              )}
+
+              {firstPoint ? (
+                <form
+                  action={generateQuestionsAction}
+                  className="border border-ink/15 bg-white/35 p-4 shadow-line"
+                >
+                  <input name="knowledge_point_id" type="hidden" value={firstPoint.id} />
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-moss">可执行</p>
+                      <h3 className="mt-3 text-2xl font-semibold leading-tight">生成题目</h3>
+                      <p className="mt-3 text-sm leading-6 text-ink/65">{firstPoint.name}</p>
+                    </div>
+                    <span className="bg-ink/10 px-2 py-1 text-xs">知识点</span>
+                  </div>
+                  <button className="mt-5 border border-clay bg-clay px-3 py-2 text-sm text-paper transition hover:bg-ink">
+                    为最近知识点生成题目
+                  </button>
+                </form>
+              ) : (
+                <NextAction
+                  actionLabel="创建结构"
+                  href="#领域"
+                  label="创建知识点"
+                  meta="领域 / 主题 / 知识点"
+                  status="待准备"
+                />
+              )}
+
+              {firstQuestion ? (
+                <NextAction
+                  actionLabel="进入题目"
+                  href={`/questions/${firstQuestion.id}`}
+                  label="提交答案"
+                  meta={firstQuestion.question_version?.stem ?? "题干版本缺失"}
+                  status={firstQuestion.status}
+                />
+              ) : (
+                <NextAction
+                  actionLabel="查看题库"
+                  href="/questions"
+                  label="题库状态"
+                  meta="等待生成题目"
+                  status="待准备"
+                />
+              )}
+
+              <NextAction
+                actionLabel="开始练习"
+                href="/practice"
+                label="练习安排"
+                meta={firstProfile ? "按薄弱维度提问" : "答题后更精准"}
+                status={firstProfile ? "可执行" : "待画像"}
+              />
             </div>
           </section>
 
@@ -673,6 +781,75 @@ function WorkbenchLink({
         {label}
       </span>
       <span className="mt-3 block text-sm leading-6 text-ink/65">{description}</span>
+    </Link>
+  );
+}
+
+function WorkflowStep({
+  current,
+  label,
+  meta,
+  step
+}: {
+  current: boolean;
+  label: string;
+  meta: string;
+  step: string;
+}) {
+  return (
+    <div
+      className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 border px-3 py-3 ${
+        current ? "border-clay bg-white/70" : "border-ink/15 bg-white/35"
+      }`}
+    >
+      <span
+        className={`flex h-9 w-9 items-center justify-center text-sm ${
+          current ? "bg-clay text-paper" : "bg-ink/10 text-ink/65"
+        }`}
+      >
+        {step}
+      </span>
+      <div className="min-w-0">
+        <p className="font-semibold leading-tight">{label}</p>
+        <p className="mt-1 truncate text-sm text-ink/60">{meta}</p>
+      </div>
+      <span className="whitespace-nowrap text-xs text-ink/45">
+        {current ? "当前" : "后续"}
+      </span>
+    </div>
+  );
+}
+
+function NextAction({
+  actionLabel,
+  href,
+  label,
+  meta,
+  status
+}: {
+  actionLabel: string;
+  href: string;
+  label: string;
+  meta: string;
+  status: string;
+}) {
+  return (
+    <Link
+      className="group border border-ink/15 bg-white/35 p-4 shadow-line transition hover:border-clay hover:bg-white/65"
+      href={href}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.18em] text-moss">{status}</p>
+          <h3 className="mt-3 text-2xl font-semibold leading-tight group-hover:text-clay">
+            {label}
+          </h3>
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-ink/65">{meta}</p>
+        </div>
+        <span className="whitespace-nowrap border border-ink/15 bg-white/60 px-2 py-1 text-xs text-ink/65">
+          {actionLabel}
+        </span>
+      </div>
     </Link>
   );
 }
