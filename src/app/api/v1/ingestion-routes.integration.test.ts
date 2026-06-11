@@ -34,6 +34,7 @@ describe("ingestion and review API routes", () => {
 
     await applyMigration("20260607172000_add_core_knowledge_models");
     await applyMigration("20260607183000_add_ingestion_review_models");
+    await applyMigration("20260607184500_add_question_generation_models");
 
     externalConversationRoute = await import(
       "./ingestions/external-conversation/route"
@@ -66,6 +67,8 @@ describe("ingestion and review API routes", () => {
         context_type: "summary",
         conversation_summary:
           "用户正在学习 GitHub Actions，希望了解 workflow、触发条件、jobs 与 steps。",
+        source_model_name: "MiniMax-M3",
+        source_model_version: "MiniMax-M3",
         instruction: "围绕 GitHub Actions 准备理解型和应用型问答",
         target_domain_hint: "计算机"
       })
@@ -78,6 +81,8 @@ describe("ingestion and review API routes", () => {
     expect(body.data.questions_preview).toHaveLength(2);
     expect(body.data.review_item_id).toBeTruthy();
     expect(body.data.review_url).toContain("review");
+    expect(body.data.review_url).toContain(body.data.review_item_id);
+    expect(body.data.review_url).not.toContain(body.data.ingestion_task_id);
 
     const taskResponse = await ingestionTaskRoute.GET(
       authedRequest(
@@ -93,6 +98,23 @@ describe("ingestion and review API routes", () => {
 
     expect(taskResponse.status).toBe(200);
     expect(taskBody.data.ingestion_task_id).toBe(body.data.ingestion_task_id);
+    expect(taskBody.data.review_url).toContain(body.data.review_item_id);
+
+    const record = await prisma.generationRecord.findFirst({
+      where: {
+        targetType: "ingestion_task",
+        targetId: body.data.ingestion_task_id,
+        callType: "external_conversation_ingestion"
+      }
+    });
+
+    expect(record).toMatchObject({
+      modelName: "MiniMax-M3",
+      modelVersion: "MiniMax-M3",
+      aiAgent: "Codex",
+      status: "success"
+    });
+    expect(record?.latencyMs).toBeGreaterThanOrEqual(0);
 
     const reviewListResponse = await reviewItemsRoute.GET(
       authedRequest("http://localhost/api/v1/review-items?status=pending")

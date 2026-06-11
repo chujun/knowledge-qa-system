@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import { appConfig } from "@/lib/config";
 import { buildExternalConversationIdempotencyKey } from "@/lib/domain/ingestion";
 import { prisma } from "@/lib/db/prisma";
 import { getDefaultUser } from "@/lib/knowledge/service";
@@ -17,6 +18,8 @@ export const createExternalConversationIngestionSchema = z
     ]),
     conversation_content: z.string().trim().max(20000).optional(),
     conversation_summary: z.string().trim().max(4000).optional(),
+    source_model_name: z.string().trim().max(160).optional(),
+    source_model_version: z.string().trim().max(160).optional(),
     instruction: z.string().trim().min(1).max(4000),
     target_topic_id: z.string().trim().optional().nullable(),
     target_domain_hint: z.string().trim().max(160).optional(),
@@ -68,6 +71,7 @@ export type CreateExternalConversationIngestionInput = z.infer<
 export async function createExternalConversationIngestion(
   input: CreateExternalConversationIngestionInput
 ) {
+  const startedAt = Date.now();
   const user = await getDefaultUser();
   const idempotencyKey = buildExternalConversationIdempotencyKey({
     sourceSystem: input.source_system,
@@ -128,6 +132,23 @@ export async function createExternalConversationIngestion(
         targetId: task.id,
         previewJson: JSON.stringify(preview),
         status: input.direct_confirm ? "confirmed" : "pending"
+      }
+    });
+
+    await tx.generationRecord.create({
+      data: {
+        userId: user.id,
+        targetType: "ingestion_task",
+        targetId: task.id,
+        callType: "external_conversation_ingestion",
+        modelName: input.source_model_name ?? appConfig.defaultModel,
+        modelVersion: input.source_model_version ?? null,
+        aiAgent: input.source_system,
+        promptVersion: "external-conversation-ingestion-v1",
+        inputTokens: null,
+        outputTokens: null,
+        latencyMs: Date.now() - startedAt,
+        status: "success"
       }
     });
 
@@ -422,7 +443,9 @@ function serializeIngestionTaskWithPreview(task: {
     status: task.status,
     ...preview,
     review_item_id: task.reviewItems[0]?.id ?? null,
-    review_url: `http://localhost:3000/review/${task.id}`,
+    review_url: task.reviewItems[0]?.id
+      ? `http://localhost:3000/review/${task.reviewItems[0].id}`
+      : null,
     created_at: task.createdAt.toISOString(),
     updated_at: task.updatedAt.toISOString()
   };

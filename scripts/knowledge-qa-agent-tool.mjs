@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
+
 const toolName = process.argv[2];
 const args = parseArgs(process.argv.slice(3));
 
@@ -18,7 +20,7 @@ if (!apiKey) {
   fail("KNOWLEDGE_QA_API_KEY is required.");
 }
 
-const input = parseInput(args.inputJson);
+const input = parseInput(args);
 
 try {
   const result = await callTool(toolName, input, { apiBaseUrl, apiKey });
@@ -178,6 +180,8 @@ function parseArgs(items) {
       parsed.help = true;
     } else if (item === "--input-json") {
       parsed.inputJson = items[++index];
+    } else if (item === "--input-json-file") {
+      parsed.inputJsonFile = items[++index];
     } else if (item === "--api-base-url") {
       parsed.apiBaseUrl = items[++index];
     } else if (item === "--api-key") {
@@ -190,7 +194,11 @@ function parseArgs(items) {
   return parsed;
 }
 
-function parseInput(value) {
+function parseInput(args) {
+  const value = args.inputJsonFile
+    ? readFileSync(args.inputJsonFile, "utf8").replace(/^\uFEFF/, "")
+    : args.inputJson;
+
   if (!value) {
     return {};
   }
@@ -198,7 +206,7 @@ function parseInput(value) {
   try {
     return JSON.parse(value);
   } catch {
-    throw new Error("--input-json must be valid JSON.");
+    throw new Error("--input-json or --input-json-file must be valid JSON.");
   }
 }
 
@@ -220,6 +228,7 @@ function printHelp() {
 
 Usage:
   node scripts/knowledge-qa-agent-tool.mjs <tool_name> --input-json '<json>'
+  node scripts/knowledge-qa-agent-tool.mjs <tool_name> --input-json-file .\\tmp\\agent-input.json
 
 Environment:
   KNOWLEDGE_QA_API_BASE_URL  Default: http://localhost:3000/api/v1
@@ -233,5 +242,6 @@ Tools:
 
 Example:
   node scripts/knowledge-qa-agent-tool.mjs qa_get_review_queue --input-json '{"status":"pending","limit":5}'
+  node scripts/knowledge-qa-agent-tool.mjs qa_create_from_conversation --input-json-file .\\tmp\\agent-input.json
 `);
 }

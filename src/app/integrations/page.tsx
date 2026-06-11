@@ -7,11 +7,16 @@ const commands = {
   env: `$env:KNOWLEDGE_QA_API_BASE_URL = "http://localhost:3000/api/v1"\n$env:KNOWLEDGE_QA_API_KEY = "<your-api-key>"`,
   agentHelp: "npm run agent:tool -- --help",
   agentCreate:
-    'npm run agent:tool -- qa_create_from_conversation --input-json \'{ "source_system": "Codex", "context_type": "summary", "conversation_summary": "讨论了 GitHub Actions workflow 触发条件。", "instruction": "生成理解题和应用题", "target_domain_hint": "计算机" }\'',
+    'npm run agent:tool -- qa_create_from_conversation --input-json-file .\\tmp\\agent-input.json',
+  agentInputFile:
+    '{ "source_system": "Codex", "source_model_name": "MiniMax-M3", "context_type": "summary", "conversation_summary": "讨论了 GitHub Actions workflow 触发条件。", "instruction": "生成理解题和应用题", "target_domain_hint": "计算机" }',
   mcpStart: "npm run mcp:stdio",
   mcpCheck: "npm run mcp:check",
+  mcpCallCheck: "npm run mcp:call-check",
+  claudeCodeConfig:
+    '{\n  "mcpServers": {\n    "knowledge-qa": {\n      "command": "node",\n      "args": ["D:/project/my/ai/learn-qa-system/scripts/knowledge-qa-mcp-stdio.mjs"],\n      "env": {\n        "KNOWLEDGE_QA_API_BASE_URL": "http://localhost:3000/api/v1",\n        "KNOWLEDGE_QA_API_KEY": "<your-api-key>"\n      }\n    }\n  }\n}',
   apiCreate:
-    'Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/v1/ingestions/external-conversation" -Headers @{ "x-api-key" = "<your-api-key>" } -ContentType "application/json" -Body \'{ "source_system": "Codex", "context_type": "summary", "conversation_summary": "讨论了 GitHub Actions workflow 触发条件。", "instruction": "生成理解题和应用题", "target_domain_hint": "计算机" }\''
+    'Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/v1/ingestions/external-conversation" -Headers @{ "x-api-key" = "<your-api-key>" } -ContentType "application/json" -Body \'{ "source_system": "Codex", "source_model_name": "MiniMax-M3", "context_type": "summary", "conversation_summary": "讨论了 GitHub Actions workflow 触发条件。", "instruction": "生成理解题和应用题", "target_domain_hint": "计算机" }\''
 };
 
 export default function IntegrationsPage() {
@@ -59,12 +64,15 @@ export default function IntegrationsPage() {
         <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
           <Panel eyebrow="Agent Tool CLI" title="命令行 Agent Tool">
             <CommandBlock value={commands.agentHelp} />
+            <CommandBlock value={commands.agentInputFile} />
             <CommandBlock value={commands.agentCreate} />
           </Panel>
 
           <Panel eyebrow="MCP Stdio" title="本地 MCP Server">
             <CommandBlock value={commands.mcpStart} />
             <CommandBlock value={commands.mcpCheck} />
+            <CommandBlock value={commands.mcpCallCheck} />
+            <CommandBlock value={commands.claudeCodeConfig} />
           </Panel>
         </section>
 

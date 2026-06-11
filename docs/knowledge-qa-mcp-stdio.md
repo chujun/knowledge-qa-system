@@ -23,7 +23,7 @@ qa_create_practice_session
 
 ## Agent 客户端配置思路
 
-将 MCP Server 命令配置为：
+Codex 或 Claude Code 中，将 MCP Server 命令配置为：
 
 ```text
 node scripts/knowledge-qa-mcp-stdio.mjs
@@ -36,10 +36,38 @@ KNOWLEDGE_QA_API_BASE_URL
 KNOWLEDGE_QA_API_KEY
 ```
 
+Claude Code 配置示例：
+
+```json
+{
+  "mcpServers": {
+    "knowledge-qa": {
+      "command": "node",
+      "args": ["D:/project/my/ai/learn-qa-system/scripts/knowledge-qa-mcp-stdio.mjs"],
+      "env": {
+        "KNOWLEDGE_QA_API_BASE_URL": "http://localhost:3000/api/v1",
+        "KNOWLEDGE_QA_API_KEY": "<your-api-key>"
+      }
+    }
+  }
+}
+```
+
 ## 冒烟测试
 
 ```powershell
 node scripts/knowledge-qa-mcp-stdio.mjs --self-check
+npm run mcp:call-check
 ```
 
 该测试只验证 `initialize` 和 `tools/list`，不调用业务 API，因此不需要启动 Next.js 服务。
+
+`npm run mcp:call-check` 会启动 MCP stdio server，并完成：
+
+```text
+initialize
+tools/list
+tools/call qa_get_review_queue
+```
+
+该测试需要启动本地 Next.js 服务，并配置 `KNOWLEDGE_QA_API_KEY`。

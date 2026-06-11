@@ -2075,10 +2075,33 @@ docs/knowledge-qa-mvp-plan.md
 
 ## 50. AI Agent 真实接入验收
 
-- [ ] 输出 Codex 可用的 Agent Tool 调用配置说明。
-- [ ] 输出 Claude Code 可用的 MCP stdio 配置说明。
-- [ ] 使用 Agent Tool CLI 完成一次真实外部会话沉淀到待确认队列。
-- [ ] 使用 MCP stdio 完成 `tools/list` 和至少一次 `tools/call`。
-- [ ] Agent 返回内容包含轻量摘要、题目预览和 Web 确认链接。
-- [ ] 用户能从 Agent 返回链接进入 Web 页面编辑并确认入库。
-- [ ] 调用记录页能看到真实 Agent 来源、模型名、耗时和状态。
+- [x] 输出 Codex 可用的 Agent Tool 调用配置说明。
+- [x] 输出 Claude Code 可用的 MCP stdio 配置说明。
+- [x] 使用 Agent Tool CLI 完成一次真实外部会话沉淀到待确认队列。
+- [x] 使用 MCP stdio 完成 `tools/list` 和至少一次 `tools/call`。
+- [x] Agent 返回内容包含轻量摘要、题目预览和 Web 确认链接。
+- [x] 用户能从 Agent 返回链接进入 Web 页面编辑并确认入库。
+- [x] 调用记录页能看到真实 Agent 来源、模型名、耗时和状态。
+
+验证记录：
+
+```text
+2026-06-11 10:14:07 新增 MCP stdio 真实调用检查：新增 `scripts/check-mcp-stdio-call.mjs` 和 `npm run mcp:call-check`，覆盖 initialize、tools/list 和 tools/call qa_get_review_queue。
+2026-06-11 10:14:07 Agent Tool CLI 增强：新增 `--input-json-file`，解决 Windows PowerShell/cmd JSON 参数转义问题；读取文件时兼容 UTF-8 BOM。
+2026-06-11 10:14:07 修复 Agent 返回确认链接：`review_url` 从错误的 ingestion_task_id 改为 review_item_id，确保 `/review/<review_item_id>` 可直接打开待确认编辑页。
+2026-06-11 10:14:07 外部 Agent 接入记录增强：`qa_create_from_conversation` 支持 `source_model_name`、`source_model_version`；沉淀成功后写入 `GenerationRecord`，call_type 为 `external_conversation_ingestion`，记录 Agent、模型、耗时和状态。
+2026-06-11 10:14:07 接入说明更新：`docs/knowledge-qa-agent-tool-cli.md`、`docs/knowledge-qa-mcp-stdio.md` 和 `/integrations` 补充 Codex Agent Tool、Claude Code MCP stdio、`--input-json-file` 和 `npm run mcp:call-check` 示例。
+2026-06-11 10:14:07 cmd /c npx tsc --noEmit：通过。
+2026-06-11 10:14:07 cmd /c npx vitest run src/app/api/v1/ingestion-routes.integration.test.ts src/app/api/v1/records-routes.integration.test.ts src/lib/mcp/agent-tool-adapter.test.ts src/lib/mcp/tools.test.ts：通过，4 个测试文件，13 条测试用例。
+2026-06-11 10:14:07 cmd /c npm run mcp:check：通过，MCP stdio self-check passed。
+2026-06-11 10:14:07 cmd /c npm run mcp:call-check：通过，MCP stdio call-check passed；server 为 knowledge-qa-mcp-server；tools/list 返回 4 个工具；tools/call 返回 pending_items。
+2026-06-11 10:14:07 Agent Tool CLI 真实调用：通过，`qa_create_from_conversation` 创建 `cmq8v4th3000pc1rb13bkzlaq`，返回题目预览 2 道和确认链接 `http://localhost:3000/review/cmq8v4th7000rc1rb6diw3fat`。
+2026-06-11 10:14:07 Web 确认链接检查：通过，`/review/cmq8uv12s000jc1rbal8l7m8h` 返回 HTTP 200；PATCH 编辑待确认预览后 POST confirm 返回 confirmed。
+2026-06-11 10:14:07 调用记录检查：通过，数据库中存在 `external_conversation_ingestion` 记录，modelName=MiniMax-M3，modelVersion=MiniMax-M3，aiAgent=Codex，latencyMs=18，status=success；`/records?model_name=MiniMax-M3&ai_agent=Codex` 返回 HTTP 200 且包含 call_type、模型和状态。
+2026-06-11 10:18:34 cmd /c npm run test：通过，23 个测试文件，68 条测试用例。
+2026-06-11 10:18:34 cmd /c npm run build：通过，Agent/MCP 真实接入验收链路进入 Next.js 生产构建。
+2026-06-11 10:18:34 cmd /c npm run docs:check-timestamps：通过。
+2026-06-11 10:18:34 重启本地 3000 服务：停止 3000 PID 8756，保留 codegraph 30001 PID 6740；启动后 3000 监听 PID 25376，/api/health 返回 200。
+2026-06-11 10:18:34 `/integrations` 冒烟检查：通过，页面包含 `--input-json-file`、`mcp:call-check` 和 `mcpServers` Claude Code 配置示例。
+2026-06-11 10:18:34 已提示用户查看新功能：刷新 `http://localhost:3000/integrations` 查看 Agent Tool 和 MCP stdio 接入验收能力。
+```

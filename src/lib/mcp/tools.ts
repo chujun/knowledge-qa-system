@@ -12,6 +12,8 @@ export const createFromConversationInputSchema = z
     ]),
     conversation_content: z.string().optional(),
     conversation_summary: z.string().optional(),
+    source_model_name: z.string().optional(),
+    source_model_version: z.string().optional(),
     instruction: z.string().min(1),
     target_topic_id: z.string().optional(),
     target_domain_hint: z.string().optional(),

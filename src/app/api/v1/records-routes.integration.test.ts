@@ -70,6 +70,7 @@ describe("record query API routes", () => {
         conversation_id: "records-test-conversation",
         context_type: "summary",
         conversation_summary: "讨论了 GitHub Actions workflow 触发条件。",
+        source_model_name: "MiniMax-M3",
         instruction: "沉淀为知识问答"
       })
     );
@@ -99,6 +100,22 @@ describe("record query API routes", () => {
       conversation_id: "records-test-conversation"
     });
     expect(sourceBody.data[0].source_content_length).toBe(0);
+
+    const agentIngestionRecordsResponse = await generationRecordsRoute.GET(
+      authedRequest(
+        "http://localhost/api/v1/generation-records?target_type=ingestion_task&call_type=external_conversation_ingestion"
+      )
+    );
+    const agentIngestionRecordsBody = await agentIngestionRecordsResponse.json();
+
+    expect(agentIngestionRecordsResponse.status).toBe(200);
+    expect(agentIngestionRecordsBody.data[0]).toMatchObject({
+      model_name: "MiniMax-M3",
+      ai_agent: "Codex",
+      call_type: "external_conversation_ingestion",
+      status: "success"
+    });
+    expect(agentIngestionRecordsBody.data[0].latency_ms).toBeGreaterThanOrEqual(0);
 
     const generationRecordsResponse = await generationRecordsRoute.GET(
       authedRequest(

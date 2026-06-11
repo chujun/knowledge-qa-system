@@ -20,6 +20,8 @@ const tools = [
         },
         conversation_content: { type: "string" },
         conversation_summary: { type: "string" },
+        source_model_name: { type: "string" },
+        source_model_version: { type: "string" },
         instruction: { type: "string" },
         target_topic_id: { type: "string" },
         target_domain_hint: { type: "string" },
